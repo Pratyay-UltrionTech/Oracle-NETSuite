@@ -19,6 +19,7 @@ import {
   ClassOption,
   AccountOption,
   ItemOption,
+  VendorOption,
 } from '../types';
 import { getCurrencies, syncCurrencies as postSyncCurrencies } from '../services/currencyService';
 import {
@@ -47,6 +48,11 @@ import {
   fetchItems as getItemsPage,
   searchItems as searchItemsApi,
 } from '../services/itemService';
+import {
+  fetchVendors as getVendorsPage,
+  searchVendors as searchVendorsApi,
+  rowToVendorOption,
+} from '../services/vendorService';
 import { isEmployeesApiUrl } from '../lib/fieldDataSourceOptions';
 import {
   isDedicatedHsnFieldId,
@@ -57,6 +63,7 @@ import {
   NETSUITE_CLASS_DATA_SOURCE,
   NETSUITE_ACCOUNT_DATA_SOURCE,
   NETSUITE_ITEM_DATA_SOURCE,
+  NETSUITE_VENDOR_DATA_SOURCE,
   applyFormFieldDataSource,
   sortItemSublistFields,
 } from '../lib/netsuiteMasterData';
@@ -101,7 +108,18 @@ const CATALOGUES: Record<TransactionType, CatalogueData> = {
     fields: [
       // --- PRIMARY INFORMATION ---
       mapNetSuiteField('customform', 'Custom Form', 'select', 'Primary Information', 'Main', true, 'body', null),
-      mapNetSuiteField('entity', 'Vendor', 'select', 'Primary Information', 'Main', true, 'body', null),
+      mapNetSuiteField(
+        'entity',
+        'Vendor',
+        'select',
+        'Primary Information',
+        'Main',
+        true,
+        'body',
+        null,
+        { ...NETSUITE_VENDOR_DATA_SOURCE },
+        'NetSuite vendor (live lookup)',
+      ),
       mapNetSuiteField('otherrefnum', 'Vendor #', 'text', 'Primary Information', 'Main'),
       mapNetSuiteField('employee', 'Employee', 'select', 'Primary Information', 'Main', false, 'body', null, {
         type: 'netsuite_employees',
@@ -188,7 +206,7 @@ const CATALOGUES: Record<TransactionType, CatalogueData> = {
 
       // --- BILLING ---
       mapNetSuiteField('terms', 'Terms', 'select', 'Billing', 'Billing', false, 'body', null),
-      mapNetSuiteField('billaddress', 'Vendor', 'address', 'Billing', 'Billing'),
+      mapNetSuiteField('billaddress', 'Billing Address', 'address', 'Billing', 'Billing'),
       mapNetSuiteField('billingaddress', 'Billing Address Summary', 'summary', 'Billing', 'Billing'),
       mapNetSuiteField('billaddressee', 'Billing Addressee', 'text', 'Billing', 'Billing'),
       mapNetSuiteField('billattention', 'Billing Attention', 'text', 'Billing', 'Billing'),
@@ -367,7 +385,18 @@ const CATALOGUES: Record<TransactionType, CatalogueData> = {
     tabs: ['Main', 'Expenses'], 
     fieldGroups: ['Primary Information', 'Expenses'], 
     fields: [
-      mapNetSuiteField('entity', 'Vendor', 'select', 'Primary Information', 'Main', true, 'body', null),
+      mapNetSuiteField(
+        'entity',
+        'Vendor',
+        'select',
+        'Primary Information',
+        'Main',
+        true,
+        'body',
+        null,
+        { ...NETSUITE_VENDOR_DATA_SOURCE },
+        'NetSuite vendor (live lookup)',
+      ),
       mapNetSuiteField('trandate', 'Date', 'date', 'Primary Information', 'Main', true),
       mapNetSuiteField('account', 'Account', 'select', 'Expenses', 'Expenses', true, 'sublist', 'expense'),
       mapNetSuiteField('amount', 'Amount', 'currency', 'Expenses', 'Expenses', true, 'sublist', 'expense'),
@@ -516,6 +545,20 @@ function normalizeFieldDataSource(ds: any): any {
         searchKey: 'displayName',
         ...ds.apiConfig,
         url: ds.apiConfig?.url || 'items/search',
+      },
+    };
+  }
+  if (ds.type === 'netsuite_vendor_live') {
+    return {
+      type: 'netsuite_vendor_live',
+      endpoint: ds.endpoint || 'vendors/search',
+      apiConfig: {
+        method: 'GET',
+        labelKey: 'displayName',
+        valueKey: 'internalId',
+        searchKey: 'displayName',
+        ...ds.apiConfig,
+        url: ds.apiConfig?.url || 'vendors/search',
       },
     };
   }
@@ -764,6 +807,11 @@ export const useStore = create<AppState>((set, get) => ({
   itemListPage: 1,
   itemListLimit: 50,
   loadingItems: false,
+  vendorOptions: [] as VendorOption[],
+  vendorListCount: 0,
+  vendorListPage: 1,
+  vendorListLimit: 50,
+  loadingVendors: false,
   isLoading: false,
   error: null,
   activeTabId: '',
@@ -1439,6 +1487,40 @@ export const useStore = create<AppState>((set, get) => ({
         hsnCode: row.hsnCode ?? '',
         gstRate: row.gstRate ?? '',
       }));
+    } catch {
+      return [];
+    }
+  },
+
+  fetchVendors: async (opts) => {
+    set({ loadingVendors: true, error: null });
+    try {
+      const page = opts?.page ?? 1;
+      const limit = opts?.limit ?? 50;
+      const res = await getVendorsPage({ page, limit, search: opts?.search });
+      const options: VendorOption[] = (res.data ?? []).map(rowToVendorOption);
+      set({
+        vendorOptions: res.success ? options : [],
+        vendorListCount: res.count ?? 0,
+        vendorListPage: page,
+        vendorListLimit: limit,
+        loadingVendors: false,
+        error: res.success ? null : res.message || 'Unable to fetch vendor data',
+      });
+    } catch (err: any) {
+      set({
+        vendorOptions: [],
+        vendorListCount: 0,
+        error: err.response?.data?.detail || err.message,
+        loadingVendors: false,
+      });
+    }
+  },
+
+  searchVendors: async (q: string, page = 1, limit = 50) => {
+    try {
+      const res = await searchVendorsApi(q, page, limit);
+      return (res.data ?? []).map(rowToVendorOption);
     } catch {
       return [];
     }

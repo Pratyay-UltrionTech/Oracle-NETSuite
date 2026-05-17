@@ -1,18 +1,13 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Query
 from app.services.netsuite_service import get_employees, send_to_netsuite
 
 router = APIRouter(prefix="/api/netsuite", tags=["NetSuite"])
 
+
 @router.get("/employees")
-def fetch_employees():
-    """
-    Endpoint to fetch employees from NetSuite.
-    """
-    employees = get_employees()
-    if not employees:
-        # In a real scenario, you might want to return an empty list or a 500 depending on the failure
-        return []
-    return employees
+def fetch_employees(refresh: bool = Query(False, description="Bypass cache")):
+    """Employees for dropdowns (cached 5 min; stale fallback on rate limit)."""
+    return get_employees(force_refresh=refresh)
 
 @router.post("/test-submit")
 def test_submit():

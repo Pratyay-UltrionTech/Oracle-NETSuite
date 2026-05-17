@@ -19,7 +19,8 @@ import {
 import { cn } from '../lib/utils';
 import { sortItemSublistFields } from '../lib/netsuiteMasterData';
 import { buildItemRowAutoFill } from '../lib/itemAutoFill';
-import type { ItemOption } from '../types';
+import { buildVendorBodyAutoFill } from '../lib/vendorAutoFill';
+import type { ItemOption, VendorOption } from '../types';
 import {
   buildSubmissionValues,
   findLineItemsMissingHsnWhenTaxSet,
@@ -115,7 +116,17 @@ export default function FormFillPage() {
     );
   }
 
-  const handleInputChange = (fieldId: string, value: any) => {
+  const handleInputChange = (fieldId: string, value: any, vendor?: VendorOption) => {
+    if (fieldId.toLowerCase() === 'entity' && vendor && form) {
+      setFormValues(prev => {
+        const bodyFields = form.tabs.flatMap(t =>
+          t.fieldGroups.flatMap(g => g.fields),
+        );
+        const updates = buildVendorBodyAutoFill(vendor, bodyFields);
+        return { ...prev, [fieldId]: value, ...updates };
+      });
+      return;
+    }
     setFormValues(prev => ({ ...prev, [fieldId]: value }));
   };
 
@@ -302,7 +313,14 @@ export default function FormFillPage() {
                               fieldId={field.id}
                               fieldType={field.type}
                               value={formValues[field.id]}
-                              onChange={(val) => handleInputChange(field.id, val)}
+                              onChange={val => handleInputChange(field.id, val)}
+                              onVendorMasterSelect={
+                                field.id.toLowerCase() === 'entity' &&
+                                field.label.trim().toLowerCase() === 'vendor'
+                                  ? vendor =>
+                                      handleInputChange(field.id, vendor.internalId, vendor)
+                                  : undefined
+                              }
                               disabled={field.displayType === 'disabled'}
                               defaultValue={field.defaultValue}
                               checkBoxDefault={field.checkBoxDefault}

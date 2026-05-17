@@ -14,6 +14,12 @@ from .routes import (
     forms,
     hsn,
     locations,
+    departments,
+    classes,
+    accounts,
+    items,
+    vendors,
+    tax_nature,
     netsuite,
     submissions,
     users,
@@ -72,6 +78,12 @@ app.include_router(workflows.router, prefix="/api")
 app.include_router(currency.router, prefix="/api")
 app.include_router(hsn.router, prefix="/api")
 app.include_router(locations.router, prefix="/api")
+app.include_router(departments.router, prefix="/api")
+app.include_router(classes.router, prefix="/api")
+app.include_router(accounts.router, prefix="/api")
+app.include_router(items.router, prefix="/api")
+app.include_router(vendors.router, prefix="/api")
+app.include_router(tax_nature.router, prefix="/api")
 app.include_router(netsuite.router)
 
 

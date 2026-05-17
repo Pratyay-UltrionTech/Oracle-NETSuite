@@ -23,7 +23,8 @@ export type DataSourceTypeOption =
   | 'netsuite_department'
   | 'netsuite_class_live'
   | 'netsuite_account_live'
-  | 'netsuite_item_live';
+  | 'netsuite_item_live'
+  | 'netsuite_vendor_live';
 
 export function isEmployeesApiUrl(url?: string): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -109,6 +110,14 @@ export function getDataSourceOptionsForField(fieldId: string): {
     ];
   }
 
+  if (id === 'entity') {
+    return [
+      { label: 'Static', value: 'static' },
+      { label: 'NetSuite Vendors', value: 'netsuite_vendor_live' },
+      { label: 'API', value: 'api' },
+    ];
+  }
+
   return [
     { label: 'Static', value: 'static' },
     { label: 'API', value: 'api' },
@@ -129,6 +138,7 @@ export function resolveDataSourceSelectValue(ds: any): DataSourceTypeOption {
     t === 'netsuite_class_live' ||
     t === 'netsuite_account_live' ||
     t === 'netsuite_item_live' ||
+    t === 'netsuite_vendor_live' ||
     t === 'static'
   ) {
     return t as DataSourceTypeOption;

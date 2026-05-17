@@ -370,6 +370,63 @@ export function applyAccountFieldDataSource(field: Field): Field {
   };
 }
 
+/** NetSuite Vendor REST — PO vendor (searchable, paginated). */
+export const NETSUITE_VENDOR_DATA_SOURCE: DataSource = {
+  type: 'netsuite_vendor_live',
+  endpoint: 'vendors/search',
+  apiConfig: {
+    url: 'vendors/search',
+    method: 'GET',
+    labelKey: 'displayName',
+    valueKey: 'internalId',
+    searchKey: 'displayName',
+  },
+};
+
+export function isVendorEntityField(field: Field): boolean {
+  const id = field.id.toLowerCase();
+  if (id !== 'entity') return false;
+  return field.label.trim().toLowerCase() === 'vendor';
+}
+
+export function formatVendorOptionLabel(row: {
+  displayName?: string;
+  vendorCode?: string;
+}): string {
+  const name = String(row.displayName ?? '').trim();
+  if (name) return name;
+  const code = String(row.vendorCode ?? '').trim();
+  return code || 'Unknown';
+}
+
+export function formatVendorOptionTitle(row: {
+  displayName?: string;
+  vendorCode?: string;
+  email?: string;
+  phone?: string;
+  subsidiary?: string;
+  address?: string;
+}): string {
+  const lines = [
+    formatVendorOptionLabel(row),
+    row.vendorCode ? `Code: ${row.vendorCode}` : '',
+    row.email ? `Email: ${row.email}` : '',
+    row.phone ? `Phone: ${row.phone}` : '',
+    row.subsidiary ? `Subsidiary: ${row.subsidiary}` : '',
+    row.address ? `Address: ${row.address}` : '',
+  ].filter(Boolean);
+  return lines.join('\n');
+}
+
+export function applyVendorFieldDataSource(field: Field): Field {
+  if (!isVendorEntityField(field)) return field;
+  if (field.dataSource?.type === 'netsuite_vendor_live') return field;
+  return {
+    ...field,
+    dataSource: { ...NETSUITE_VENDOR_DATA_SOURCE },
+  };
+}
+
 /** NetSuite Item REST — PO line items (searchable, paginated). */
 export const NETSUITE_ITEM_DATA_SOURCE: DataSource = {
   type: 'netsuite_item_live',
@@ -431,12 +488,14 @@ export function applyItemFieldDataSource(field: Field): Field {
 
 /** Apply all NetSuite live master-data presets for known field ids. */
 export function applyFormFieldDataSource(field: Field): Field {
-  return applyItemFieldDataSource(
-    applyAccountFieldDataSource(
-      applyTaxNatureFieldDataSource(
-        applyClassFieldDataSource(
-          applyDepartmentFieldDataSource(
-            applyHsnFieldDataSource(applyLocationFieldDataSource(field)),
+  return applyVendorFieldDataSource(
+    applyItemFieldDataSource(
+      applyAccountFieldDataSource(
+        applyTaxNatureFieldDataSource(
+          applyClassFieldDataSource(
+            applyDepartmentFieldDataSource(
+              applyHsnFieldDataSource(applyLocationFieldDataSource(field)),
+            ),
           ),
         ),
       ),

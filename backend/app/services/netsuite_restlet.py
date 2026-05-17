@@ -17,6 +17,24 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 
+class NetSuiteRateLimitError(requests.HTTPError):
+    """NetSuite governance limit (e.g. SSS_REQUEST_LIMIT_EXCEEDED)."""
+
+
+def _netsuite_error_code(body: Any) -> Optional[str]:
+    if not isinstance(body, dict):
+        return None
+    err = body.get("error")
+    if isinstance(err, dict):
+        code = str(err.get("code") or "").strip()
+        return code or None
+    return None
+
+
+def _is_rate_limited(status_code: int, body: Any) -> bool:
+    return status_code == 400 and _netsuite_error_code(body) == "SSS_REQUEST_LIMIT_EXCEEDED"
+
+
 def _oauth1() -> OAuth1:
     token = (settings.NETSUITE_ACCESS_TOKEN or settings.NETSUITE_TOKEN or "").strip()
     return OAuth1(
@@ -74,6 +92,28 @@ def restlet_get_sync(
             )
             body = {}
 
+        if _is_rate_limited(resp.status_code, body):
+            msg = _netsuite_error_code(body) or "SSS_REQUEST_LIMIT_EXCEEDED"
+            logger.warning(
+                "NetSuite RESTlet rate limited script=%s deploy=%s code=%s",
+                script,
+                deploy,
+                msg,
+            )
+            raise NetSuiteRateLimitError(
+                f"NetSuite request limit exceeded ({msg})",
+                response=resp,
+            )
+
+        if not resp.ok:
+            logger.warning(
+                "NetSuite RESTlet GET HTTP %s script=%s deploy=%s body=%s",
+                resp.status_code,
+                script,
+                deploy,
+                str(body)[:300],
+            )
+
         resp.raise_for_status()
         logger.info(
             "NetSuite RESTlet GET success script=%s deploy=%s status=%s",
@@ -103,14 +143,29 @@ def restlet_get_sync_with_retry(
     extra_params: Optional[Dict[str, str]] = None,
     max_retries: int = 3,
 ) -> Dict[str, Any]:
-    """Same as restlet_get_sync with exponential backoff on timeout / transport errors."""
+    """GET with backoff; uses longer waits when NetSuite returns governance rate limits."""
     last_exc: Optional[BaseException] = None
     for attempt in range(max_retries):
         try:
             return restlet_get_sync(
                 script, deploy, timeout=timeout, extra_params=extra_params
             )
+        except NetSuiteRateLimitError as exc:
+            last_exc = exc
+            wait_s = 20.0 + 15.0 * attempt
+            logger.warning(
+                "NetSuite rate limit — retry in %.0fs (attempt %s/%s) script=%s deploy=%s",
+                wait_s,
+                attempt + 1,
+                max_retries,
+                script,
+                deploy,
+            )
+            if attempt < max_retries - 1:
+                time.sleep(wait_s)
         except (requests.Timeout, requests.RequestException) as exc:
+            if isinstance(exc, NetSuiteRateLimitError):
+                raise
             last_exc = exc
             wait_s = min(8.0, 2.0**attempt)
             logger.warning(

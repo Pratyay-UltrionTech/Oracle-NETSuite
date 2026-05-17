@@ -7,25 +7,14 @@ from typing import Any, Dict, List, Optional
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from app.services.netsuite_service import fetch_locations_from_netsuite
+from app.services.netsuite_service import fetch_departments_from_netsuite
 
 logger = logging.getLogger(__name__)
 
 _MAX_SEARCH_LEN = 200
 _CACHE_TTL_SEC = 300  # in-memory only — never persisted to MongoDB
-_STALE_MAX_SEC = 1800
 
 _cache: Dict[str, Any] = {"rows": None, "at": 0.0}
-
-
-def _stale_rows() -> Optional[List[Dict[str, str]]]:
-    cached = _cache.get("rows")
-    if not isinstance(cached, list):
-        return None
-    age = time.time() - float(_cache.get("at") or 0)
-    if age > _STALE_MAX_SEC:
-        return None
-    return list(cached)
 
 
 def _sanitize_search(q: Optional[str]) -> str:
@@ -64,7 +53,7 @@ def _to_api_row(row: Dict[str, str]) -> Dict[str, Any]:
     }
 
 
-async def _load_locations(*, force_refresh: bool = False) -> List[Dict[str, str]]:
+async def _load_departments(*, force_refresh: bool = False) -> List[Dict[str, str]]:
     """Fetch from NetSuite RESTlet; optional short-lived process memory cache."""
     now = time.time()
     cached = _cache.get("rows")
@@ -75,24 +64,11 @@ async def _load_locations(*, force_refresh: bool = False) -> List[Dict[str, str]
     ):
         return cached
 
-    rows = await fetch_locations_from_netsuite()
-    if rows:
-        _cache["rows"] = rows
-        _cache["at"] = now
-        logger.info("Location cache refreshed from NetSuite count=%s", len(rows))
-        return rows
-
-    stale = _stale_rows()
-    if stale is not None:
-        logger.warning(
-            "Location fetch failed — serving stale in-memory cache count=%s",
-            len(stale),
-        )
-        return stale
-
-    _cache["rows"] = []
+    rows = await fetch_departments_from_netsuite()
+    _cache["rows"] = rows
     _cache["at"] = now
-    return []
+    logger.info("Department cache refreshed from NetSuite count=%s", len(rows))
+    return rows
 
 
 def _filter_rows(
@@ -113,9 +89,9 @@ def _filter_rows(
     return out
 
 
-async def refresh_locations_from_netsuite() -> Dict[str, Any]:
+async def refresh_departments_from_netsuite() -> Dict[str, Any]:
     """Force-refresh in-memory cache from NetSuite (no database write)."""
-    rows = await _load_locations(force_refresh=True)
+    rows = await _load_departments(force_refresh=True)
     return {
         "success": True,
         "fetched": len(rows),
@@ -124,7 +100,7 @@ async def refresh_locations_from_netsuite() -> Dict[str, Any]:
     }
 
 
-async def get_locations_page(
+async def get_departments_page(
     db: AsyncIOMotorDatabase | None,
     *,
     page: int = 1,
@@ -133,11 +109,11 @@ async def get_locations_page(
     include_inactive: bool = False,
     subsidiary: Optional[str] = None,
 ) -> Dict[str, Any]:
-    del db, include_inactive  # live NetSuite data only
+    del db, include_inactive
     page = max(1, page)
     limit = min(max(1, limit), 200)
     rows = _filter_rows(
-        await _load_locations(),
+        await _load_departments(),
         search=search,
         subsidiary=subsidiary,
     )
@@ -154,23 +130,19 @@ async def get_locations_page(
     }
 
 
-async def search_locations(
+async def search_departments(
     db: AsyncIOMotorDatabase | None,
     *,
     q: str,
     limit: int = 50,
-    include_inactive: bool = False,
     subsidiary: Optional[str] = None,
-    performed_by: Optional[str] = None,
+    include_inactive: bool = False,
 ) -> Dict[str, Any]:
-    del db, include_inactive, performed_by
-    s = _sanitize_search(q)
-    if not s:
-        return {"success": True, "count": 0, "data": [], "source": "netsuite"}
+    del db, include_inactive
     lim = min(max(1, limit), 100)
     rows = _filter_rows(
-        await _load_locations(),
-        search=s,
+        await _load_departments(),
+        search=q,
         subsidiary=subsidiary,
     )[:lim]
     return {
@@ -181,24 +153,21 @@ async def search_locations(
     }
 
 
-async def get_location_by_internal_id(
+async def get_department_by_internal_id(
     db: AsyncIOMotorDatabase | None, internal_id: str
 ) -> Optional[Dict[str, Any]]:
     del db
     iid = str(internal_id).strip()
     if not iid:
         return None
-    for row in await _load_locations():
+    for row in await _load_departments():
         if str(row.get("internalId")) == iid:
             return _to_api_row(row)
     return None
 
 
-async def get_location_by_id(
-    db: AsyncIOMotorDatabase | None,
-    location_id: str,
-    *,
-    performed_by: Optional[str] = None,
+async def get_department_by_id(
+    db: AsyncIOMotorDatabase | None, department_id: str
 ) -> Optional[Dict[str, Any]]:
-    del performed_by
-    return await get_location_by_internal_id(db, location_id)
+    del db
+    return await get_department_by_internal_id(None, department_id)

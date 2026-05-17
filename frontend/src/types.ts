@@ -38,7 +38,8 @@ export interface DataSource {
     | 'netsuite_department'
     | 'netsuite_class_live'
     | 'netsuite_account_live'
-    | 'netsuite_item_live';
+    | 'netsuite_item_live'
+    | 'netsuite_vendor_live';
   options?: FieldOption[];
   /** Optional REST path relative to /api (mirrors apiConfig.url for presets). */
   endpoint?: string;
@@ -250,6 +251,47 @@ export interface AccountListResponse {
   source?: string;
 }
 
+export interface VendorOption {
+  internalId: string;
+  vendorCode: string;
+  displayName: string;
+  email: string;
+  phone: string;
+  subsidiary: string;
+  address: string;
+  isPerson: boolean;
+  companyName: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface VendorRow {
+  _id: string;
+  internalId: string;
+  vendorCode: string;
+  displayName: string;
+  email?: string;
+  phone?: string;
+  subsidiary?: string;
+  address?: string;
+  isPerson?: boolean;
+  companyName?: string;
+  firstName?: string;
+  lastName?: string;
+  source?: string;
+  isActive?: boolean;
+}
+
+export interface VendorListResponse {
+  success: boolean;
+  count: number;
+  page?: number;
+  limit?: number;
+  data: VendorRow[];
+  message?: string;
+  source?: string;
+}
+
 export interface ItemOption {
   internalId: string;
   displayName: string;
@@ -385,6 +427,11 @@ export interface AppState {
   itemListPage: number;
   itemListLimit: number;
   loadingItems: boolean;
+  vendorOptions: VendorOption[];
+  vendorListCount: number;
+  vendorListPage: number;
+  vendorListLimit: number;
+  loadingVendors: boolean;
   isLoading: boolean;
   error: string | null;
   
@@ -441,6 +488,8 @@ export interface AppState {
   searchAccounts: (q: string, page?: number, limit?: number) => Promise<AccountOption[]>;
   fetchItems: (opts?: { page?: number; limit?: number; search?: string }) => Promise<void>;
   searchItems: (q: string, page?: number, limit?: number) => Promise<ItemOption[]>;
+  fetchVendors: (opts?: { page?: number; limit?: number; search?: string }) => Promise<void>;
+  searchVendors: (q: string, page?: number, limit?: number) => Promise<VendorOption[]>;
 
   // Form Management
   createForm: (name: string, companyId: string, transactionType: TransactionType, tabs?: Tab[]) => Promise<void>;

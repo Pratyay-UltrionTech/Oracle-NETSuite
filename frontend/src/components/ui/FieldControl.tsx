@@ -27,6 +27,7 @@ import {
   isTaxNatureFieldId,
   NETSUITE_ACCOUNT_DATA_SOURCE,
   NETSUITE_ITEM_DATA_SOURCE,
+  NETSUITE_VENDOR_DATA_SOURCE,
   NETSUITE_CLASS_DATA_SOURCE,
   NETSUITE_DEPARTMENT_DATA_SOURCE,
   NETSUITE_HSN_DATA_SOURCE,
@@ -35,7 +36,8 @@ import {
 } from '../../lib/netsuiteMasterData';
 import { AccountAsyncSelect } from './AccountAsyncSelect';
 import { ItemAsyncSelect } from './ItemAsyncSelect';
-import type { DataSource, ItemOption } from '../../types';
+import { VendorAsyncSelect } from './VendorAsyncSelect';
+import type { DataSource, ItemOption, VendorOption } from '../../types';
 
 const OPTIONS_CACHE_TTL_MS = 5 * 60 * 1000;
 const optionsCache = new Map<string, { at: number; opts: { label: string; value: string }[] }>();
@@ -137,6 +139,8 @@ interface FieldControlProps {
   showIntegrationHints?: boolean;
   /** Fired when a NetSuite item row is chosen (line-item auto-fill). */
   onItemMasterSelect?: (item: ItemOption) => void;
+  /** Fired when a NetSuite vendor is chosen (body auto-fill). */
+  onVendorMasterSelect?: (vendor: VendorOption) => void;
 }
 
 /**
@@ -159,6 +163,7 @@ export function FieldControl({
   fieldId,
   showIntegrationHints = true,
   onItemMasterSelect,
+  onVendorMasterSelect,
 }: FieldControlProps) {
   const resolvedDataSource = React.useMemo(() => {
     if (dataSource?.type === 'netsuite_hsn') return dataSource;
@@ -209,12 +214,24 @@ export function FieldControl({
         type: 'netsuite_item_live' as const,
       };
     }
+    if (dataSource?.type === 'netsuite_vendor_live') return dataSource;
+    if (
+      fieldId &&
+      fieldId.toLowerCase() === 'entity' &&
+      (label?.trim().toLowerCase() === 'vendor' || dataSource?.type === 'netsuite_vendor_live')
+    ) {
+      return {
+        ...NETSUITE_VENDOR_DATA_SOURCE,
+        ...dataSource,
+        type: 'netsuite_vendor_live' as const,
+      };
+    }
     if (dataSource?.type === 'netsuite_location') return dataSource;
     if (fieldId && isLocationFieldId(fieldId)) {
       return { ...NETSUITE_LOCATION_DATA_SOURCE, ...dataSource, type: 'netsuite_location' as const };
     }
     return dataSource;
-  }, [dataSource, fieldId]);
+  }, [dataSource, fieldId, label]);
   /** Base classes shared by all input-like controls */
   const baseInput = cn(
     'w-full h-9 border border-ns-border rounded-sm px-3 text-[12px] text-ns-text bg-white',
@@ -362,7 +379,11 @@ export function FieldControl({
       setLoadError(null);
       return;
     }
-    if (ds?.type === 'netsuite_account_live' || ds?.type === 'netsuite_item_live') {
+    if (
+      ds?.type === 'netsuite_account_live' ||
+      ds?.type === 'netsuite_item_live' ||
+      ds?.type === 'netsuite_vendor_live'
+    ) {
       setOptions([]);
       setLoadError(null);
       return;
@@ -395,6 +416,19 @@ export function FieldControl({
           value={value}
           onChange={onChange}
           onItemSelect={onItemMasterSelect}
+          disabled={disabled}
+          preview={preview}
+          label={label}
+          className={className}
+        />
+      );
+    }
+    if (ds?.type === 'netsuite_vendor_live') {
+      return (
+        <VendorAsyncSelect
+          value={value}
+          onChange={onChange}
+          onVendorSelect={onVendorMasterSelect}
           disabled={disabled}
           preview={preview}
           label={label}

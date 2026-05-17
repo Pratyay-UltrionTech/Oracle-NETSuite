@@ -42,7 +42,9 @@ export default function PropertiesPanel({ selectedField }: { selectedField: Fiel
                         ? 'NetSuite Accounts (current)'
                         : resolved === 'netsuite_item_live'
                           ? 'NetSuite Items (current)'
-                          : `${resolved} (current)`;
+                          : resolved === 'netsuite_vendor_live'
+                            ? 'NetSuite Vendors (current)'
+                            : `${resolved} (current)`;
     return [...base, { label: legacy, value: resolved }];
   }, [
     selectedField?.id,
@@ -235,7 +237,8 @@ export default function PropertiesPanel({ selectedField }: { selectedField: Fiel
                       | 'netsuite_department'
                       | 'netsuite_class_live'
                       | 'netsuite_account_live'
-                      | 'netsuite_item_live';
+                      | 'netsuite_item_live'
+                      | 'netsuite_vendor_live';
                     if (v === 'static') {
                       handleUpdate({
                         dataSource: {
@@ -376,6 +379,22 @@ export default function PropertiesPanel({ selectedField }: { selectedField: Fiel
                           endpoint: 'items/search',
                           apiConfig: {
                             url: 'items/search',
+                            method: 'GET',
+                            labelKey: 'displayName',
+                            valueKey: 'internalId',
+                            searchKey: 'displayName',
+                          },
+                        },
+                      });
+                      return;
+                    }
+                    if (v === 'netsuite_vendor_live') {
+                      handleUpdate({
+                        dataSource: {
+                          type: 'netsuite_vendor_live',
+                          endpoint: 'vendors/search',
+                          apiConfig: {
+                            url: 'vendors/search',
                             method: 'GET',
                             labelKey: 'displayName',
                             valueKey: 'internalId',
