@@ -28,7 +28,8 @@ export default function UserTransactionHub() {
   const transactionType = (type === 'po' ? 'purchase_order' : 
                           type === 'so' ? 'sales_order' : 
                           type === 'ap' ? 'accounts_payable' : 
-                          type === 'ar' ? 'accounts_receivable' : 'purchase_order') as TransactionType;
+                          type === 'ar' ? 'accounts_receivable' :
+                          type === 'ir' ? 'item_receipt' : 'purchase_order') as TransactionType;
 
   const title = type?.toUpperCase() || 'Transactions';
   const fullTitle = transactionType.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');

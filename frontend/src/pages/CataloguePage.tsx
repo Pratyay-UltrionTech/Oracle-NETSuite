@@ -32,14 +32,16 @@ export default function CataloguePage() {
     'purchase-order': 'purchase_order',
     'sales-order': 'sales_order',
     'ap': 'accounts_payable',
-    'ar': 'accounts_receivable'
+    'ar': 'accounts_receivable',
+    'item-receipt': 'item_receipt'
   };
 
   const displayNames: Record<string, string> = {
     'purchase-order': 'Purchase Order Fields',
     'sales-order': 'Sales Order Fields',
     'ap': 'Accounts Payable Fields',
-    'ar': 'Accounts Receivable Fields'
+    'ar': 'Accounts Receivable Fields',
+    'item-receipt': 'Item Receipt Fields'
   };
 
   const transactionType = type ? typeMap[type] : 'purchase_order';

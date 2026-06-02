@@ -12,7 +12,12 @@ router = APIRouter(prefix="/catalogue", tags=["Field Catalogue"])
 def serialize_doc(doc):
     if not doc:
         return None
-    doc["_id"] = str(doc["_id"])
+    # Fallback catalogue rows (generated in-memory) may not have Mongo _id yet.
+    if "_id" in doc and doc["_id"] is not None:
+        doc["_id"] = str(doc["_id"])
+    else:
+        fallback_id = f'{doc.get("transactionType", "catalogue")}:{doc.get("internalId", "field")}'
+        doc["_id"] = fallback_id
     return doc
 
 @router.get("/", response_model=List[CatalogueFieldResponse])

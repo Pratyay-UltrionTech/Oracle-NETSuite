@@ -4,11 +4,26 @@ from bson import ObjectId
 from ..database import get_database
 from .activity import log_activity
 from .netsuite_service import send_to_netsuite
+from .item_receipt_service import send_item_receipt_to_netsuite
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
+
+
+def _send_submission_to_netsuite(submission: Dict[str, Any], submission_id: str) -> Dict[str, Any]:
+    if submission.get("transactionType") == "item_receipt":
+        return send_item_receipt_to_netsuite(submission)
+    payload = {
+        "firstname": submission.get("values", {}).get("firstName", ""),
+        "lastname": submission.get("values", {}).get("lastName", ""),
+        "email": submission.get("values", {}).get("email", ""),
+        "subsidiary": 1,
+        "submissionId": submission_id,
+        "formName": submission.get("formName"),
+    }
+    return send_to_netsuite(payload)
 
 async def trigger_workflow_level(submission: Dict[str, Any]):
     """
@@ -152,16 +167,7 @@ async def approve_submission(submission_id: str, user: Dict[str, Any]):
     else:
         submission["status"] = "approved"
         # Trigger NetSuite (Phase 5)
-        payload = {
-            "firstname": submission.get("values", {}).get("firstName", ""),
-            "lastname": submission.get("values", {}).get("lastName", ""),
-            "email": submission.get("values", {}).get("email", ""),
-            "subsidiary": 1,
-            "submissionId": submission_id,
-            "formName": submission.get("formName")
-        }
-        
-        ns_response = send_to_netsuite(payload)
+        ns_response = _send_submission_to_netsuite(submission, submission_id)
         
         if ns_response.get("status") == "success":
             submission["status"] = "submitted"
@@ -182,8 +188,22 @@ async def approve_submission(submission_id: str, user: Dict[str, Any]):
             }
         }
     )
-    
-    await log_activity(user["id"], "APPROVE_FORM", submission_id, "submission")
+
+    if submission.get("transactionType") == "item_receipt":
+        await db.item_receipt_submissions.update_one(
+            {"_id": ObjectId(submission_id)},
+            {
+                "$set": {
+                    "workflowStatus": submission["status"],
+                    "currentLevel": submission.get("currentLevel", 1),
+                    "updatedAt": datetime.utcnow(),
+                }
+            },
+        )
+
+    await log_activity(user["id"], "APPROVE_FORM", entity_id=submission_id, entity_type="submission")
+    if submission["status"] == "submitted":
+        await log_activity(user["id"], "SENT_TO_NETSUITE", entity_id=submission_id, entity_type="submission")
 
 async def reject_submission(submission_id: str, user: Dict[str, Any]):
     db = get_database()
@@ -231,5 +251,16 @@ async def reject_submission(submission_id: str, user: Dict[str, Any]):
             }
         }
     )
-    
-    await log_activity(user["id"], "REJECT_FORM", submission_id, "submission")
+
+    if submission.get("transactionType") == "item_receipt":
+        await db.item_receipt_submissions.update_one(
+            {"_id": ObjectId(submission_id)},
+            {
+                "$set": {
+                    "workflowStatus": "rejected",
+                    "updatedAt": datetime.utcnow(),
+                }
+            },
+        )
+
+    await log_activity(user["id"], "REJECT_FORM", entity_id=submission_id, entity_type="submission")

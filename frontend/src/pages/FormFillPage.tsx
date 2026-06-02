@@ -17,7 +17,7 @@ import {
   PlusCircle
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { sortItemSublistFields } from '../lib/netsuiteMasterData';
+import { sortItemReceiptSublistFields, sortItemSublistFields } from '../lib/netsuiteMasterData';
 import { buildItemRowAutoFill } from '../lib/itemAutoFill';
 import { buildVendorBodyAutoFill } from '../lib/vendorAutoFill';
 import { buildCustomerBodyAutoFill } from '../lib/customerAutoFill';
@@ -27,6 +27,7 @@ import {
   findLineItemsMissingHsnWhenTaxSet,
   itemSublistRowKey,
 } from '../lib/sublistSubmission';
+import api from '../api/client';
 
 export default function FormFillPage() {
   const { id } = useParams();
@@ -39,6 +40,15 @@ export default function FormFillPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [submissionResult, setSubmissionResult] = React.useState<any | null>(null);
+  const [itemRows, setItemRows] = React.useState<number[]>([0]);
+
+  const sortLineFields = React.useCallback(
+    (fields: CustomForm['tabs'][0]['itemSublist']) =>
+      form?.transactionType === 'item_receipt'
+        ? sortItemReceiptSublistFields(fields ?? [])
+        : sortItemSublistFields(fields ?? []),
+    [form?.transactionType],
+  );
 
   React.useEffect(() => {
     if (id) {
@@ -65,6 +75,12 @@ export default function FormFillPage() {
     }
   }, [form]);
 
+  React.useEffect(() => {
+    if (form?.transactionType === 'item_receipt') {
+      setItemRows([0]);
+    }
+  }, [form?.transactionType]);
+
   if (!form && isLoading) return (
     <CustomerLayout>
       <div className="flex items-center justify-center py-20">
@@ -81,7 +97,8 @@ export default function FormFillPage() {
     const transType = form.transactionType === 'purchase_order' ? 'po' : 
                      form.transactionType === 'sales_order' ? 'so' : 
                      form.transactionType === 'accounts_payable' ? 'ap' : 
-                     form.transactionType === 'accounts_receivable' ? 'ar' : 'po';
+                     form.transactionType === 'accounts_receivable' ? 'ar' :
+                     form.transactionType === 'item_receipt' ? 'ir' : 'po';
 
     return (
       <CustomerLayout>
@@ -122,6 +139,48 @@ export default function FormFillPage() {
     value: any,
     party?: VendorOption | CustomerOption,
   ) => {
+    if (
+      form?.transactionType === 'item_receipt' &&
+      fieldId.toLowerCase() === 'createdfrom' &&
+      value
+    ) {
+      void (async () => {
+        try {
+          const response = await api.get(`purchase-orders/${value}`);
+          const po = response.data || {};
+          const body = po.bodyFields || {};
+          const lines = Array.isArray(po.lineItems) ? po.lineItems : [];
+          setFormValues(prev => {
+            const next: Record<string, any> = {
+              ...prev,
+              [fieldId]: value,
+              entity: body.entity || prev.entity,
+              subsidiary: body.subsidiary || prev.subsidiary,
+              currency: body.currency || prev.currency,
+              custbody_rg_po_number: body.custbody_rg_po_number || prev.custbody_rg_po_number,
+              custbody_podate: body.custbody_podate || prev.custbody_podate,
+            };
+            lines.forEach((line: Record<string, any>, index: number) => {
+              next[itemSublistRowKey(index, 'receive')] = true;
+              next[itemSublistRowKey(index, 'item')] = line.item;
+              next[itemSublistRowKey(index, 'quantity')] = line.quantity;
+              next[itemSublistRowKey(index, 'rate')] = line.rate;
+              next[itemSublistRowKey(index, 'amount')] = line.amount;
+              next[itemSublistRowKey(index, 'location')] = line.location;
+              next[itemSublistRowKey(index, 'department')] = line.department;
+              next[itemSublistRowKey(index, 'class')] = line.class;
+              next[itemSublistRowKey(index, 'description')] = line.description;
+              next[itemSublistRowKey(index, 'poLineItem')] = line.poLineItem ?? `${index + 1}`;
+            });
+            return next;
+          });
+          setItemRows(lines.length > 0 ? lines.map((_: any, idx: number) => idx) : [0]);
+        } catch {
+          setFormValues(prev => ({ ...prev, [fieldId]: value }));
+        }
+      })();
+      return;
+    }
     if (fieldId.toLowerCase() === 'entity' && party && form) {
       setFormValues(prev => {
         const bodyFields = form.tabs.flatMap(t =>
@@ -168,7 +227,7 @@ export default function FormFillPage() {
           }
         });
       });
-      const itemFields = sortItemSublistFields(tab.itemSublist || []);
+      const itemFields = sortLineFields(tab.itemSublist || []);
       itemFields.forEach(field => {
         if (field.mandatory && !formValues[itemSublistRowKey(0, field.id)]) {
           missingFields = true;
@@ -215,7 +274,8 @@ export default function FormFillPage() {
                 const transType = form.transactionType === 'purchase_order' ? 'po' : 
                                  form.transactionType === 'sales_order' ? 'so' : 
                                  form.transactionType === 'accounts_payable' ? 'ap' : 
-                                 form.transactionType === 'accounts_receivable' ? 'ar' : 'po';
+                                 form.transactionType === 'accounts_receivable' ? 'ar' :
+                                 form.transactionType === 'item_receipt' ? 'ir' : 'po';
                 navigate(`/user/${transType}`);
               }}
               className="flex items-center gap-2 text-[10px] font-bold text-ns-text-muted hover:text-ns-blue transition-colors uppercase tracking-widest mb-4"
@@ -365,7 +425,12 @@ export default function FormFillPage() {
                         <table className="w-full text-left border-collapse">
                           <thead>
                             <tr className="bg-ns-gray-bg border-b border-ns-border">
-                              {sortItemSublistFields(tab.itemSublist).map(field => (
+                              {form.transactionType === 'item_receipt' && (
+                                <th className="px-3 py-2 text-[10px] font-bold text-ns-text-muted uppercase tracking-wider whitespace-nowrap">
+                                  Receive
+                                </th>
+                              )}
+                              {sortLineFields(tab.itemSublist).map(field => (
                                 <th key={field.id} className="px-3 py-2 text-[10px] font-bold text-ns-text-muted uppercase tracking-wider whitespace-nowrap">
                                   {field.label}{field.mandatory && <span className="text-red-500 ml-1">*</span>}
                                 </th>
@@ -374,7 +439,21 @@ export default function FormFillPage() {
                           </thead>
                           <tbody>
                             <tr className="border-b border-ns-border">
-                              {sortItemSublistFields(tab.itemSublist).map(field => (
+                              {form.transactionType === 'item_receipt' && (
+                                <td className="px-2 py-2 align-top min-w-[80px]">
+                                  <FieldControl
+                                    fieldId="receive"
+                                    fieldType="checkbox"
+                                    value={formValues[itemSublistRowKey(0, 'receive')]}
+                                    onChange={val =>
+                                      handleItemSublistChange(tab.itemSublist, 0, 'receive', val)
+                                    }
+                                    label="Receive"
+                                    preview={false}
+                                  />
+                                </td>
+                              )}
+                              {sortLineFields(tab.itemSublist).map(field => (
                                 <td
                                   key={field.id}
                                   className={cn(
@@ -416,9 +495,63 @@ export default function FormFillPage() {
                                 </td>
                               ))}
                             </tr>
+                            {form.transactionType === 'item_receipt' && itemRows.slice(1).map((rowIndex) => (
+                              <tr key={`row_${rowIndex}`} className="border-b border-ns-border">
+                                <td className="px-2 py-2 align-top min-w-[80px]">
+                                  <FieldControl
+                                    fieldId="receive"
+                                    fieldType="checkbox"
+                                    value={formValues[itemSublistRowKey(rowIndex, 'receive')]}
+                                    onChange={val =>
+                                      handleItemSublistChange(tab.itemSublist, rowIndex, 'receive', val)
+                                    }
+                                    label="Receive"
+                                    preview={false}
+                                  />
+                                </td>
+                                {sortLineFields(tab.itemSublist).map(field => (
+                                  <td key={`${rowIndex}_${field.id}`} className="px-2 py-2 align-top min-w-[120px]">
+                                    <FieldControl
+                                      fieldId={field.id}
+                                      fieldType={field.type}
+                                      value={formValues[itemSublistRowKey(rowIndex, field.id)]}
+                                      onChange={val => handleItemSublistChange(tab.itemSublist, rowIndex, field.id, val)}
+                                      onItemMasterSelect={
+                                        field.id.toLowerCase() === 'item'
+                                          ? item =>
+                                              handleItemSublistChange(
+                                                tab.itemSublist,
+                                                rowIndex,
+                                                field.id,
+                                                item.internalId,
+                                                item,
+                                              )
+                                          : undefined
+                                      }
+                                      label={field.label}
+                                      dataSource={field.dataSource}
+                                      preview={false}
+                                    />
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
                       </div>
+                      {form.transactionType === 'item_receipt' && (
+                        <div className="flex justify-end">
+                          <Button
+                            variant="secondary"
+                            className="mt-3"
+                            onClick={() =>
+                              setItemRows(prev => [...prev, (prev[prev.length - 1] ?? -1) + 1])
+                            }
+                          >
+                            Add Line
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
 

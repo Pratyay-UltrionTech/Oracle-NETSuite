@@ -24,6 +24,7 @@ from .routes import (
     netsuite,
     netsuite_datasources,
     submissions,
+    purchase_orders,
     users,
     workflows,
 )
@@ -75,6 +76,7 @@ app.include_router(users.router, prefix="/api")
 app.include_router(companies.router, prefix="/api")
 app.include_router(forms.router, prefix="/api")
 app.include_router(submissions.router, prefix="/api")
+app.include_router(purchase_orders.router, prefix="/api")
 app.include_router(catalogue.router, prefix="/api")
 app.include_router(workflows.router, prefix="/api")
 app.include_router(currency.router, prefix="/api")

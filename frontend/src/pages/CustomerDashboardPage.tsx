@@ -14,6 +14,7 @@ import {
   FileSearch
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { TransactionType } from '../types';
 
 export default function CustomerDashboardPage() {
   const { user, forms, catalogues, fetchMyForms, isLoading } = useStore();

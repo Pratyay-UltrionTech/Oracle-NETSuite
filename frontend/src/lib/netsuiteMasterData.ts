@@ -65,6 +65,26 @@ export function sortItemSublistFields(fields: Field[]): Field[] {
   return [...fields].sort((a, b) => rank(a.id) - rank(b.id) || a.label.localeCompare(b.label));
 }
 
+/** Item Receipt line grid — 8 catalogue columns (Receive is UI-only, not in catalogue). */
+export const ITEM_RECEIPT_LINE_FIELD_ORDER: string[] = [
+  'item',
+  'quantity',
+  'rate',
+  'amount',
+  'location',
+  'department',
+  'class',
+  'description',
+];
+
+export function sortItemReceiptSublistFields(fields: Field[]): Field[] {
+  const rank = (id: string) => {
+    const i = ITEM_RECEIPT_LINE_FIELD_ORDER.indexOf(id.toLowerCase());
+    return i === -1 ? 999 : i;
+  };
+  return [...fields].sort((a, b) => rank(a.id) - rank(b.id) || a.label.localeCompare(b.label));
+}
+
 export function formatHsnOptionLabel(row: {
   hsncode?: string;
   hsndescription?: string;

@@ -19,7 +19,6 @@ import {
   Users,
   GitBranch,
   UserCircle,
-  Plug,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -107,36 +106,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             );
           })}
 
-          {(user?.role === 'super_admin' || user?.role === 'client_admin') && (
-            <>
-              <div className={cn(
-                "pt-6 text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] px-3 mb-4 transition-all duration-300 whitespace-nowrap overflow-hidden",
-                isExpanded ? "opacity-100" : "opacity-0"
-              )}>
-                Master Data
-              </div>
-              <Link
-                to="/netsuite-connectors"
-                className={cn(
-                  "flex items-center rounded-sm text-sm font-semibold transition-all group/item whitespace-nowrap overflow-hidden relative",
-                  isExpanded ? "px-3 py-2.5 gap-3" : "px-0 py-3 justify-center gap-0",
-                  location.pathname === '/netsuite-connectors'
-                    ? "bg-ns-blue text-white shadow-lg shadow-ns-blue/20"
-                    : "text-white/60 hover:text-white hover:bg-white/5"
-                )}
-                title={!isExpanded ? "NetSuite Connectors" : ""}
-              >
-                <Plug size={18} className={cn("flex-shrink-0 transition-colors", location.pathname === '/netsuite-connectors' ? "text-white" : "text-white/40 group-hover/item:text-white")} />
-                <span className={cn(
-                  "transition-all duration-300 origin-left overflow-hidden",
-                  isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
-                )}>
-                  NetSuite Connectors
-                </span>
-              </Link>
-            </>
-          )}
-
           {user?.role === 'super_admin' && (
             <>
               <div className={cn(
@@ -150,6 +119,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 { name: 'Sales Order', path: '/catalogue/sales-order', icon: Tag },
                 { name: 'Accounts Payable', path: '/catalogue/ap', icon: CreditCard },
                 { name: 'Accounts Receivable', path: '/catalogue/ar', icon: Receipt },
+                { name: 'Item Receipt', path: '/catalogue/item-receipt', icon: Receipt },
               ].map((item) => {
                 const isActive = location.pathname === item.path;
                 return (

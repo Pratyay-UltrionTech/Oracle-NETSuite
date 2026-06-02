@@ -96,7 +96,12 @@ export interface Tab {
   expenseSublist?: Field[];
 }
 
-export type TransactionType = 'purchase_order' | 'sales_order' | 'accounts_payable' | 'accounts_receivable';
+export type TransactionType =
+  | 'purchase_order'
+  | 'sales_order'
+  | 'accounts_payable'
+  | 'accounts_receivable'
+  | 'item_receipt';
 
 export type UserRole = 'super_admin' | 'client_admin' | 'manager' | 'user';
 

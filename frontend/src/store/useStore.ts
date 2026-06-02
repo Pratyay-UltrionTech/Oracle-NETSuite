@@ -85,6 +85,7 @@ import {
   NETSUITE_VENDOR_DATA_SOURCE,
   NETSUITE_CUSTOMER_DATA_SOURCE,
   applyFormFieldDataSource,
+  sortItemReceiptSublistFields,
   sortItemSublistFields,
 } from '../lib/netsuiteMasterData';
 
@@ -481,6 +482,40 @@ const CATALOGUES: Record<TransactionType, CatalogueData> = {
       ),
     ] 
   },
+  item_receipt: {
+    name: 'Item Receipt',
+    tabs: ['Main', 'Items'],
+    fieldGroups: ['Primary Information'],
+    fields: [
+      mapNetSuiteField('trandate', 'Date', 'date', 'Primary Information', 'Main', true),
+      mapNetSuiteField('entity', 'Vendor', 'select', 'Primary Information', 'Main', true, 'body', null, { ...NETSUITE_VENDOR_DATA_SOURCE }),
+      mapNetSuiteField('custbody_rg_po_start_date', 'PO Start Date', 'date', 'Primary Information', 'Main'),
+      mapNetSuiteField('custbody_rg_po_end_date', 'PO End Date', 'date', 'Primary Information', 'Main'),
+      mapNetSuiteField('custbody_rg_po_number', 'PO Number', 'text', 'Primary Information', 'Main'),
+      mapNetSuiteField('subsidiary', 'Subsidiary', 'select', 'Primary Information', 'Main', true),
+      mapNetSuiteField('location', 'To Location', 'select', 'Primary Information', 'Main', true, 'body', null, { ...NETSUITE_LOCATION_DATA_SOURCE }),
+      mapNetSuiteField('currency', 'Currency', 'select', 'Primary Information', 'Main', true, 'body', null, {
+        type: 'netsuite_currency',
+        apiConfig: { url: 'currencies/', method: 'GET', labelKey: 'name', valueKey: 'internalId' },
+      }),
+      mapNetSuiteField('custbody_rg_prm_invoice_num', 'PRM Invoice Number', 'text', 'Primary Information', 'Main'),
+      mapNetSuiteField('custbody_rg_prm_total_amount', 'PRM Total Amount', 'currency', 'Primary Information', 'Main'),
+      mapNetSuiteField('createdfrom', 'Created From', 'select', 'Primary Information', 'Main', true, 'body', null, {
+        type: 'api',
+        apiConfig: { url: 'purchase-orders/search', method: 'GET', labelKey: 'displayLabel', valueKey: 'id' },
+      }),
+      mapNetSuiteField('postingperiod', 'Posting Period', 'select', 'Primary Information', 'Main', true),
+      mapNetSuiteField('custbody_podate', 'PO Date', 'text', 'Primary Information', 'Main'),
+      mapNetSuiteField('item', 'Item', 'select', 'Line Items', 'Items', true, 'sublist', 'item', { ...NETSUITE_ITEM_DATA_SOURCE }),
+      mapNetSuiteField('quantity', 'Quantity', 'float', 'Line Items', 'Items', true, 'sublist', 'item'),
+      mapNetSuiteField('rate', 'Rate', 'currency', 'Line Items', 'Items', false, 'sublist', 'item'),
+      mapNetSuiteField('amount', 'Amount', 'currency', 'Line Items', 'Items', false, 'sublist', 'item'),
+      mapNetSuiteField('location', 'Location', 'select', 'Line Items', 'Items', false, 'sublist', 'item', { ...NETSUITE_LOCATION_DATA_SOURCE }),
+      mapNetSuiteField('department', 'Department', 'select', 'Line Items', 'Items', false, 'sublist', 'item', { ...NETSUITE_DEPARTMENT_DATA_SOURCE }),
+      mapNetSuiteField('class', 'Class', 'select', 'Line Items', 'Items', false, 'sublist', 'item', { ...NETSUITE_CLASS_DATA_SOURCE }),
+      mapNetSuiteField('description', 'Description', 'text', 'Line Items', 'Items', false, 'sublist', 'item'),
+    ],
+  },
 };
 
 function normalizeFieldDataSource(ds: any): any {
@@ -806,11 +841,13 @@ const generateTemplateFromCatalogue = (id: string, name: string, description: st
     };
 
     if (tabName === 'Items') {
-      tab.itemSublist = sortItemSublistFields(
-        catalogue.fields.filter(
-          f => f.tab === tabName && f.section === 'sublist' && f.subSection === 'item',
-        ),
+      const itemFields = catalogue.fields.filter(
+        f => f.tab === tabName && f.section === 'sublist' && f.subSection === 'item',
       );
+      tab.itemSublist =
+        type === 'item_receipt'
+          ? sortItemReceiptSublistFields(itemFields)
+          : sortItemSublistFields(itemFields);
       tab.expenseSublist = catalogue.fields.filter(
         f => f.tab === tabName && f.section === 'sublist' && f.subSection === 'expense',
       );
@@ -835,6 +872,7 @@ const DEFAULT_TEMPLATES: any[] = [
   generateTemplateFromCatalogue('tpl_so_full', 'Comprehensive Sales Order', 'Sales order with complete classification, billing, and shipping details.', 'sales_order'),
   generateTemplateFromCatalogue('tpl_ap_full', 'Comprehensive Accounts Payable', 'A/P template with full accounting and approval structure.', 'accounts_payable'),
   generateTemplateFromCatalogue('tpl_ar_full', 'Comprehensive Accounts Receivable', 'A/R template including full items and journal controls.', 'accounts_receivable'),
+  generateTemplateFromCatalogue('tpl_ir_full', 'Comprehensive Item Receipt', 'Item receipt template with created-from PO and receiving grid.', 'item_receipt'),
 ];
 
 export const useStore = create<AppState>((set, get) => ({
@@ -851,7 +889,8 @@ export const useStore = create<AppState>((set, get) => ({
     purchase_order: null,
     sales_order: null,
     accounts_payable: null,
-    accounts_receivable: null
+    accounts_receivable: null,
+    item_receipt: null
   },
   currencies: [],
   loadingCurrencies: false,

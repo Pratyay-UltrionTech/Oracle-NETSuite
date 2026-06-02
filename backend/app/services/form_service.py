@@ -11,6 +11,12 @@ from .workflow_engine import trigger_workflow_level
 
 class FormService:
     @staticmethod
+    def _split_submission_values(values: Dict[str, Any]) -> Dict[str, Any]:
+        body = {k: v for k, v in values.items() if k not in {"lineItems", "expenseLines"}}
+        line_items = values.get("lineItems") if isinstance(values.get("lineItems"), list) else []
+        return {"bodyFields": body, "lineItems": line_items}
+
+    @staticmethod
     async def create_form(form_data: FormCreate, creator_email: str, creator_id: str) -> Dict[str, Any]:
         db = get_database()
         
@@ -383,6 +389,8 @@ class FormService:
                 ]
             })
 
+        split_values = FormService._split_submission_values(values or {})
+
         # STEP 4: Create submission
         submission = {
             "formId": form_id,
@@ -400,8 +408,12 @@ class FormService:
             "workflowId": str(workflow["_id"]),
 
             "approvals": approvals,
+            "values": values or {},
+            "bodyFields": split_values["bodyFields"],
+            "lineItems": split_values["lineItems"],
 
-            "submittedAt": datetime.utcnow()
+            "submittedAt": datetime.utcnow(),
+            "updatedAt": datetime.utcnow(),
         }
 
         # STEP 5: Save
@@ -413,12 +425,29 @@ class FormService:
             user["id"],
             "SUBMIT_FORM_WORKFLOW",
             entity_id=str(result.inserted_id),
-            entity_type="SUBMISSION",
+            entity_type="submission",
             metadata={
                 "formName": form["name"],
-                "companyId": form["companyId"]
+                "companyId": form["companyId"],
+                "transactionType": form["transactionType"],
             }
         )
+
+        if form["transactionType"] == "item_receipt":
+            await db.item_receipt_submissions.insert_one(
+                {
+                    "_id": result.inserted_id,
+                    "companyId": form["companyId"],
+                    "templateId": form_id,
+                    "submittedBy": user["id"],
+                    "workflowStatus": "pending",
+                    "currentLevel": 1,
+                    "bodyFields": split_values["bodyFields"],
+                    "lineItems": split_values["lineItems"],
+                    "createdAt": datetime.utcnow(),
+                    "updatedAt": datetime.utcnow(),
+                }
+            )
 
         # STEP 7: Trigger Level 1
         await trigger_workflow_level(submission)
