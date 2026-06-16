@@ -224,7 +224,7 @@ export default function WorkflowManagementPage() {
             <Button 
               onClick={handleSaveWorkflow} 
               disabled={isSaving}
-              className="gap-2 px-8 h-10 bg-ns-navy hover:bg-ns-navy/90 text-white shadow-lg shadow-ns-navy/20"
+              className="gap-2 px-8 h-10 bg-ns-blue hover:bg-ns-blue-dark text-white shadow-lg shadow-ns-blue/20"
             >
               {isSaving ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white animate-spin rounded-full" />

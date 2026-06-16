@@ -52,17 +52,17 @@ export default function LoginPage() {
   const currentError = storeError || errorSpace;
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-ns-light-blue flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background Decorative Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-ns-blue/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-ns-navy/5 rounded-full blur-[120px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-ns-blue/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-ns-blue/5 rounded-full blur-[120px]" />
       </div>
 
       <div className="w-full max-w-md bg-white rounded-sm shadow-2xl overflow-hidden border border-ns-border relative z-10 animate-in fade-in zoom-in-95 duration-500">
-        <div className="bg-ns-navy p-8 text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-ns-blue" />
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-ns-blue rounded-sm mb-4 shadow-xl transform transition-transform hover:scale-105 duration-300">
+        <div className="bg-ns-blue p-8 text-center relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-ns-blue-dark" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-ns-blue-dark rounded-sm mb-4 shadow-xl transform transition-transform hover:scale-105 duration-300">
             <ShieldCheck size={32} className="text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">NetSuite Form Bridge</h1>
@@ -79,7 +79,7 @@ export default function LoginPage() {
               )}
               
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-ns-navy">Personnel Email</Label>
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-ns-blue">Personnel Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 text-gray-400" size={16} />
                   <Input 
@@ -88,14 +88,14 @@ export default function LoginPage() {
                     value={email} 
                     onChange={(e) => setEmail(e.target.value)} 
                     required 
-                    className="h-11 pl-10 bg-ns-gray-bg border-ns-border focus:bg-white transition-all"
+                    className="h-11 pl-10 bg-ns-light-blue border-ns-border focus:bg-white transition-all"
                   />
                 </div>
               </div>
               
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-ns-navy">Security Key</Label>
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-ns-blue">Security Key</Label>
                   <button 
                     type="button" 
                     onClick={() => setIsForgotMode(true)}
@@ -110,11 +110,11 @@ export default function LoginPage() {
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 
                   required 
-                  className="h-11 bg-ns-gray-bg border-ns-border focus:bg-white transition-all"
+                  className="h-11 bg-ns-light-blue border-ns-border focus:bg-white transition-all"
                 />
               </div>
               
-              <Button type="submit" disabled={isLoading} className="w-full h-11 bg-ns-navy hover:bg-ns-navy/90 text-sm font-bold gap-2 shadow-lg shadow-ns-navy/20 uppercase tracking-widest">
+              <Button type="submit" disabled={isLoading} className="w-full h-11 bg-ns-blue hover:bg-ns-blue-dark text-sm font-bold gap-2 shadow-lg shadow-ns-blue/20 uppercase tracking-widest">
                 {isLoading ? (
                   <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
@@ -130,14 +130,14 @@ export default function LoginPage() {
               <button 
                 type="button" 
                 onClick={() => setIsForgotMode(false)}
-                className="flex items-center gap-2 text-[10px] font-bold text-ns-text-muted hover:text-ns-navy uppercase tracking-widest mb-2 transition-colors"
+                className="flex items-center gap-2 text-[10px] font-bold text-ns-text-muted hover:text-ns-blue uppercase tracking-widest mb-2 transition-colors"
               >
                 <ArrowLeft size={14} />
                 Return to Access
               </button>
               
               <div className="space-y-2 text-center pb-2">
-                <h2 className="text-lg font-bold text-ns-navy">Reset Protocol</h2>
+                <h2 className="text-lg font-bold text-ns-blue">Reset Protocol</h2>
                 <p className="text-xs text-ns-text-muted">Enter your email to receive an authorization link.</p>
               </div>
 
@@ -151,18 +151,18 @@ export default function LoginPage() {
               )}
               
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-ns-navy">Personnel Email</Label>
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-ns-blue">Personnel Email</Label>
                 <Input 
                   type="email" 
                   placeholder="Enter email address"
                   value={forgotEmail} 
                   onChange={(e) => setForgotEmail(e.target.value)} 
                   required 
-                  className="h-11 bg-ns-gray-bg border-ns-border focus:bg-white transition-all"
+                  className="h-11 bg-ns-light-blue border-ns-border focus:bg-white transition-all"
                 />
               </div>
               
-              <Button type="submit" disabled={isLoading} className="w-full h-11 bg-ns-blue hover:bg-ns-blue/90 text-sm font-bold gap-2 shadow-lg shadow-ns-blue/20 uppercase tracking-widest">
+              <Button type="submit" disabled={isLoading} className="w-full h-11 bg-ns-blue hover:bg-ns-blue-dark text-sm font-bold gap-2 shadow-lg shadow-ns-blue/20 uppercase tracking-widest">
                 {isLoading ? (
                   <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (

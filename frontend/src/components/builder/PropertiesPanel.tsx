@@ -242,7 +242,7 @@ export default function PropertiesPanel({ selectedField }: { selectedField: Fiel
                 className="font-bold text-ns-navy"
               />
             </div>
-            <div className="flex items-center justify-between p-3 bg-blue-50/30 rounded-sm border border-ns-blue/10">
+            <div className="flex items-center justify-between p-3 bg-ns-blue-soft/50 rounded-sm border border-ns-blue/10">
               <div className="flex flex-col">
                 <span className="text-[11px] font-bold text-ns-navy uppercase tracking-wide">Mandatory</span>
                 <span className="text-[10px] text-ns-text-muted">Required NetSuite Logic</span>

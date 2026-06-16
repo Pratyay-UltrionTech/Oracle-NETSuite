@@ -4,6 +4,10 @@ from app.services.purchase_order_netsuite_service import (
     create_purchase_order_in_netsuite,
     sample_purchase_order_payload,
 )
+from app.services.vendor_bill_netsuite_service import (
+    create_vendor_bill_in_netsuite,
+    sample_vendor_bill_payload,
+)
 
 router = APIRouter(prefix="/api/netsuite", tags=["NetSuite"])
 
@@ -34,3 +38,12 @@ def test_purchase_order():
     """
     payload = sample_purchase_order_payload()
     return create_purchase_order_in_netsuite(payload)
+
+
+@router.post("/test-vendor-bill")
+def test_vendor_bill():
+    """
+    Test endpoint that sends sample Vendor Bill data to the NetSuite VB RESTlet.
+    """
+    payload = sample_vendor_bill_payload()
+    return create_vendor_bill_in_netsuite(payload)

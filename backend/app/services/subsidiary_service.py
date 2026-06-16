@@ -93,12 +93,55 @@ def _looks_like_internal_id(value: Any) -> bool:
     return bool(s) and s.isdigit()
 
 
+def _subsidiary_name_key(name: str) -> str:
+    """Normalize subsidiary labels for fuzzy matching (hierarchy, suffixes, lists)."""
+    s = re.sub(r"\s+", " ", str(name or "").strip().lower())
+    if not s:
+        return ""
+    if "," in s:
+        s = s.split(",")[0].strip()
+    if ":" in s:
+        parts = [p.strip() for p in s.split(":") if p.strip()]
+        s = parts[-1] if parts else s
+    for suffix in (
+        " private limited",
+        " pvt. ltd.",
+        " pvt ltd",
+        " llc",
+        " inc",
+        " ltd",
+    ):
+        if s.endswith(suffix):
+            s = s[: -len(suffix)].strip()
+    return s
+
+
+def _match_subsidiary_name(raw: str, candidate_name: str) -> bool:
+    raw_lower = raw.strip().lower()
+    name_lower = candidate_name.strip().lower()
+    if not raw_lower or not name_lower:
+        return False
+    if raw_lower == name_lower:
+        return True
+    if raw_lower in name_lower or name_lower in raw_lower:
+        return True
+    raw_key = _subsidiary_name_key(raw)
+    name_key = _subsidiary_name_key(candidate_name)
+    if raw_key and name_key and raw_key == name_key:
+        return True
+    if raw_key and name_key and (raw_key in name_key or name_key in raw_key):
+        return True
+    return False
+
+
 async def resolve_subsidiary_internal_id(
     value: Any,
+    *,
+    force_refresh: bool = False,
 ) -> tuple[str, Optional[str]]:
     """
     Resolve a subsidiary field value to NetSuite internalId.
-    Returns (internalId, displayName if resolved from label).
+    Returns (internalId, displayName if resolved from label). Never returns a label as the id.
     """
     raw = str(value or "").strip()
     if not raw:
@@ -106,17 +149,17 @@ async def resolve_subsidiary_internal_id(
     if _looks_like_internal_id(raw):
         return raw, None
 
-    rows = await _load_subsidiaries()
-    lower = raw.lower()
+    rows = await _load_subsidiaries(force_refresh=force_refresh)
     for row in rows:
         name = str(row.get("name") or "").strip()
         iid = str(row.get("internalId") or "").strip()
         if not iid:
             continue
-        if lower == name.lower():
-            return iid, name
-        if lower in name.lower() or name.lower() in lower:
+        if _match_subsidiary_name(raw, name):
             return iid, name
 
+    if not force_refresh:
+        return await resolve_subsidiary_internal_id(value, force_refresh=True)
+
     logger.warning("Subsidiary value could not be resolved to internalId: %s", raw[:120])
-    return raw, None
+    return "", None

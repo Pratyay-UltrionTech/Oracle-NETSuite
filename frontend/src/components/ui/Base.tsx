@@ -10,7 +10,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', ...props }, ref) => {
     const variants = {
-      primary: 'bg-ns-blue text-white hover:bg-[#4a5d7a] border border-[#4a5d7a] shadow-sm active:shadow-inner',
+      primary: 'bg-ns-blue text-white hover:bg-ns-blue-dark border border-ns-blue-dark shadow-sm active:shadow-inner',
       secondary: 'bg-white text-ns-text hover:bg-gray-50 border border-ns-border shadow-sm active:bg-gray-100',
       outline: 'bg-transparent text-ns-blue border border-ns-blue hover:bg-ns-blue/5',
       ghost: 'bg-transparent text-ns-text hover:bg-gray-100',
@@ -48,7 +48,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         ref={ref}
         className={cn(
-          'flex h-8 w-full rounded-sm border border-ns-border bg-white px-3 py-1 text-xs transition-all placeholder:text-gray-400 focus:outline-none focus:border-ns-blue focus:ring-1 focus:ring-ns-blue/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500',
+          'flex h-8 w-full rounded-sm border border-ns-border bg-ns-light-blue px-3 py-1 text-xs transition-all placeholder:text-ns-text-muted/60 focus:outline-none focus:border-ns-blue focus:ring-1 focus:ring-ns-blue/20 focus:bg-white disabled:cursor-not-allowed disabled:bg-ns-blue-soft/50 disabled:text-ns-text-muted',
           className
         )}
         {...props}
@@ -68,7 +68,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       <select
         ref={ref}
         className={cn(
-          'flex h-8 w-full rounded-sm border border-ns-border bg-white px-3 py-1 text-xs transition-all focus:outline-none focus:border-ns-blue focus:ring-1 focus:ring-ns-blue/20 disabled:cursor-not-allowed disabled:bg-gray-50 appearance-none bg-[url("data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E")] bg-[length:12px_12px] bg-[right_8px_center] bg-no-repeat pr-8',
+          'flex h-8 w-full rounded-sm border border-ns-border bg-ns-light-blue px-3 py-1 text-xs transition-all focus:outline-none focus:border-ns-blue focus:ring-1 focus:ring-ns-blue/20 focus:bg-white disabled:cursor-not-allowed disabled:bg-ns-blue-soft/50 appearance-none bg-[url("data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E")] bg-[length:12px_12px] bg-[right_8px_center] bg-no-repeat pr-8',
           className
         )}
         {...props}
@@ -112,9 +112,9 @@ export const Label = ({ children, className, mandatory, helpText }: { children: 
         <div className="text-gray-300 hover:text-ns-blue transition-colors cursor-help">
           <Info size={11} strokeWidth={3} />
         </div>
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 bg-[#2d3e50] text-white text-[10px] font-medium leading-relaxed rounded shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 text-center">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 bg-ns-blue text-white text-[10px] font-medium leading-relaxed rounded shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 text-center">
           {helpText}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#2d3e50]" />
+          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-ns-blue" />
         </div>
       </div>
     )}

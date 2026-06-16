@@ -833,11 +833,39 @@ async def fetch_vendors_from_netsuite() -> List[Dict[str, str]]:
         is_person = raw_type is True or str(raw_type).lower() in ("true", "1", "t")
         sub_raw = item.get("subsidiary")
         sub_id = item.get("subsidiaryId") or item.get("subsidiaryInternalId")
-        if sub_id is None and sub_raw is not None and str(sub_raw).strip().isdigit():
-            sub_id = sub_raw
         sub_name = ""
-        if sub_raw is not None and not str(sub_raw).strip().isdigit():
-            sub_name = str(sub_raw)
+        if isinstance(sub_raw, dict):
+            sub_id = sub_id or sub_raw.get("value") or sub_raw.get("id") or sub_raw.get("internalId")
+            sub_name = str(
+                sub_raw.get("text") or sub_raw.get("name") or sub_raw.get("label") or ""
+            )
+        elif isinstance(sub_raw, list) and sub_raw:
+            first = sub_raw[0]
+            if isinstance(first, dict):
+                sub_id = sub_id or first.get("value") or first.get("id") or first.get("internalId")
+                sub_name = str(
+                    first.get("text") or first.get("name") or first.get("label") or ""
+                )
+            elif first is not None and str(first).strip():
+                first_s = str(first).strip()
+                if first_s.isdigit():
+                    sub_id = sub_id or first_s
+                else:
+                    sub_name = first_s
+        elif sub_raw is not None:
+            raw_s = str(sub_raw).strip()
+            if raw_s.isdigit():
+                sub_id = sub_id or raw_s
+            else:
+                sub_name = raw_s
+        if sub_id is None and sub_name:
+            sub_id = ""
+        elif sub_id is None:
+            sub_id = ""
+        if not sub_name and sub_raw is not None and not isinstance(sub_raw, (dict, list)):
+            raw_s = str(sub_raw).strip()
+            if raw_s and not raw_s.isdigit():
+                sub_name = raw_s
         out.append(
             {
                 "internalId": iid_s,

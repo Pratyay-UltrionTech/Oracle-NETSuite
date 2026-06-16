@@ -227,7 +227,7 @@ export default function CataloguePage() {
                     <td className="px-6 py-4 text-[10px] font-bold text-ns-text-muted uppercase tracking-widest text-center">
                       <span className={cn(
                         "px-2 py-1 rounded-sm border",
-                        field.section === 'body' ? "bg-blue-50 text-blue-600 border-blue-100" : "bg-purple-50 text-purple-600 border-purple-100"
+                        field.section === 'body' ? "bg-ns-blue-soft text-ns-blue border-ns-blue/20" : "bg-purple-50 text-purple-600 border-purple-100"
                       )}>
                         {field.section === 'sublist' ? `${field.subSection}` : 'body'}
                       </span>

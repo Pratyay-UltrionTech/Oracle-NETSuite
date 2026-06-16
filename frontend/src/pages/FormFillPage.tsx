@@ -29,11 +29,13 @@ import {
 } from '../lib/sublistSubmission';
 import {
   collectMissingRequiredFields,
+  collectVendorBillSyncIssues,
   formatMissingFieldLabel,
   type MissingFieldRef,
 } from '../lib/formValidation';
 import { transactionTypeToSlug } from '../lib/transactionRegistry';
 import { exchangeRateForCurrency } from '../lib/currencyExchange';
+import { resolveSubsidiaryInternalId } from '../lib/subsidiaryResolve';
 import api from '../api/client';
 
 export default function FormFillPage() {
@@ -163,8 +165,14 @@ export default function FormFillPage() {
               <>
                 {submissionResult.poId && (
                   <div className="flex justify-between items-center mb-3">
-                    <span className="text-[10px] font-bold text-ns-text-muted uppercase tracking-widest">NetSuite ID</span>
+                    <span className="text-[10px] font-bold text-ns-text-muted uppercase tracking-widest">NetSuite PO ID</span>
                     <span className="text-xs font-bold text-ns-navy uppercase tracking-wider">{submissionResult.poId}</span>
+                  </div>
+                )}
+                {submissionResult.billId && (
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-[10px] font-bold text-ns-text-muted uppercase tracking-widest">NetSuite Bill ID</span>
+                    <span className="text-xs font-bold text-ns-navy uppercase tracking-wider">{submissionResult.billId}</span>
                   </div>
                 )}
                 {submissionResult.documentNumber && (
@@ -255,7 +263,7 @@ export default function FormFillPage() {
       return;
     }
     if (fieldId.toLowerCase() === 'entity' && party && form) {
-      setFormValues(prev => {
+      void (async () => {
         const bodyFields = form.tabs.flatMap(t =>
           t.fieldGroups.flatMap(g => g.fields),
         );
@@ -263,12 +271,41 @@ export default function FormFillPage() {
         const updates = isVendor
           ? buildVendorBodyAutoFill(party as VendorOption, bodyFields)
           : buildCustomerBodyAutoFill(party as CustomerOption, bodyFields);
-        const next = { ...prev, [fieldId]: value, ...updates };
-        if (isVendor && updates.currency && form.transactionType === 'vendor_bill') {
-          next.exchangerate = exchangeRateForCurrency(updates.currency, currencies);
+
+        if (isVendor) {
+          const vendor = party as VendorOption;
+          const currentSub = updates.subsidiary;
+          const needsResolve =
+            !currentSub ||
+            !/^\d+$/.test(currentSub) ||
+            (!currentSub && Boolean(vendor.subsidiary || vendor.subsidiaryId));
+          if (needsResolve && (vendor.subsidiary || vendor.subsidiaryId)) {
+            try {
+              const response = await api.get('subsidiaries/');
+              const rows = Array.isArray(response.data) ? response.data : [];
+              const resolved = resolveSubsidiaryInternalId(
+                vendor.subsidiaryId || vendor.subsidiary || currentSub || '',
+                rows,
+              );
+              if (resolved) {
+                updates.subsidiary = resolved;
+              } else {
+                delete updates.subsidiary;
+              }
+            } catch {
+              delete updates.subsidiary;
+            }
+          }
         }
-        return next;
-      });
+
+        setFormValues(prev => {
+          const next = { ...prev, [fieldId]: value, ...updates };
+          if (isVendor && updates.currency && form.transactionType === 'vendor_bill') {
+            next.exchangerate = exchangeRateForCurrency(updates.currency, currencies);
+          }
+          return next;
+        });
+      })();
       return;
     }
     if (fieldId.toLowerCase() === 'currency' && form?.transactionType === 'vendor_bill') {
@@ -330,6 +367,18 @@ export default function FormFillPage() {
       setSubmitError(null);
       focusMissingField(missing[0]);
       return;
+    }
+
+    if (form.transactionType === 'vendor_bill') {
+      const syncIssues = collectVendorBillSyncIssues(form, formValues, {
+        itemRowIndexes: itemRows,
+      });
+      if (syncIssues.length > 0) {
+        setMissingFields(syncIssues);
+        setSubmitError(null);
+        focusMissingField(syncIssues[0]);
+        return;
+      }
     }
 
     setMissingFields([]);

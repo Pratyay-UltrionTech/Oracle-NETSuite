@@ -14,6 +14,7 @@ from .workflow_engine import (
     complete_submission_netsuite_sync,
 )
 from .purchase_order_netsuite_service import build_purchase_order_sync_update, is_netsuite_po_success
+from .vendor_bill_netsuite_service import build_vendor_bill_sync_update, is_netsuite_vb_success
 
 class FormService:
     @staticmethod
@@ -474,7 +475,9 @@ class FormService:
             "workflowRequired": False,
             "directSync": True,
             "poId": sync_result.get("poId"),
+            "billId": sync_result.get("billId"),
             "documentNumber": sync_result.get("documentNumber"),
+            "syncStatus": sync_result.get("syncStatus"),
             "netsuiteSyncError": sync_result.get("netsuiteSyncError"),
         }
 
@@ -574,6 +577,10 @@ class FormService:
             update_data = build_purchase_order_sync_update(ns_response, submission_id)
             is_success = is_netsuite_po_success(ns_response)
             activity_action = "NETSUITE_PO_SYNCED" if is_success else "NETSUITE_PO_SYNC_FAILED"
+        elif submission.get("transactionType") == "vendor_bill":
+            update_data = build_vendor_bill_sync_update(ns_response, submission_id)
+            is_success = is_netsuite_vb_success(ns_response)
+            activity_action = "NETSUITE_VB_SYNCED" if is_success else "NETSUITE_VB_SYNC_FAILED"
         else:
             is_success = ns_response.get("status") == "success"
             update_data = {
@@ -605,8 +612,11 @@ class FormService:
         return {
             "message": "Retry processed",
             "status": update_data["status"],
-            "netsuiteId": update_data.get("netsuiteId") or update_data.get("poId"),
+            "netsuiteId": update_data.get("netsuiteId") or update_data.get("poId") or update_data.get("billId"),
+            "poId": update_data.get("poId"),
+            "billId": update_data.get("billId"),
             "documentNumber": update_data.get("documentNumber"),
+            "syncStatus": update_data.get("syncStatus"),
         }
 
     @staticmethod

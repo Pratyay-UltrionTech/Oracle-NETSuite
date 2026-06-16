@@ -152,7 +152,7 @@ export default function ProfileSettingsPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-ns-navy hover:bg-ns-navy/90 text-white font-bold py-2.5 px-8 rounded-sm shadow-lg shadow-ns-navy/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                  className="bg-ns-blue hover:bg-ns-blue-dark text-white font-bold py-2.5 px-8 rounded-sm shadow-lg shadow-ns-blue/20 transition-all flex items-center gap-2 disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <>

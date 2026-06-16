@@ -420,6 +420,8 @@ export interface Submission {
   netsuiteAt?: string;
   netsuiteId?: string;
   poId?: string;
+  billId?: string;
+  syncStatus?: string;
   documentNumber?: string;
   netsuiteSyncError?: string;
   errorMessage?: string;

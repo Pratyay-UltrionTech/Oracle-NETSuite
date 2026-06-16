@@ -128,7 +128,7 @@ export default function BuilderPage() {
 
         <DragOverlay>
           {activeDragItem ? (
-            <div className="bg-white border border-[#607799] p-2 rounded shadow-lg text-xs font-medium flex items-center gap-2 w-48 opacity-80">
+            <div className="bg-white border border-ns-blue p-2 rounded shadow-lg text-xs font-medium flex items-center gap-2 w-48 opacity-80">
               <div className="w-4 h-4 bg-gray-200 rounded" />
               {activeDragItem.label}
             </div>

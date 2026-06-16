@@ -43,16 +43,16 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-ns-light-blue flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-ns-blue/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-ns-navy/5 rounded-full blur-[120px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-ns-blue/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-ns-blue/5 rounded-full blur-[120px]" />
       </div>
 
       <div className="w-full max-w-md bg-white rounded-sm shadow-2xl overflow-hidden border border-ns-border relative z-10 animate-in fade-in zoom-in-95 duration-500">
-        <div className="bg-ns-navy p-8 text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-ns-blue" />
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-ns-blue rounded-sm mb-4 shadow-xl">
+        <div className="bg-ns-blue p-8 text-center relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-ns-blue-dark" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-ns-blue-dark rounded-sm mb-4 shadow-xl">
             <ShieldCheck size={32} className="text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Security Protocol</h1>
@@ -66,17 +66,17 @@ export default function ResetPasswordPage() {
                 <CheckCircle2 size={32} />
               </div>
               <div className="space-y-2">
-                <h2 className="text-xl font-bold text-ns-navy">Key Reset Successful</h2>
+                <h2 className="text-xl font-bold text-ns-blue">Key Reset Successful</h2>
                 <p className="text-sm text-ns-text-muted">Your security credentials have been updated. Redirecting to access portal...</p>
               </div>
-              <Button onClick={() => navigate('/')} className="w-full h-11 bg-ns-navy hover:bg-ns-navy/90 text-sm font-bold gap-2 uppercase tracking-widest">
+              <Button onClick={() => navigate('/')} className="w-full h-11 bg-ns-blue hover:bg-ns-blue-dark text-sm font-bold gap-2 uppercase tracking-widest">
                 Return to Access <ArrowRight size={18} />
               </Button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-1 text-center pb-2">
-                <h2 className="text-lg font-bold text-ns-navy">Credential Reset</h2>
+                <h2 className="text-lg font-bold text-ns-blue">Credential Reset</h2>
                 <p className="text-xs text-ns-text-muted">Establish a secure 8-character security key for your account.</p>
               </div>
 
@@ -88,7 +88,7 @@ export default function ResetPasswordPage() {
               )}
               
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-ns-navy">New Security Key</Label>
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-ns-blue">New Security Key</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 text-gray-400" size={16} />
                   <Input 
@@ -97,13 +97,13 @@ export default function ResetPasswordPage() {
                     value={newPassword} 
                     onChange={(e) => setNewPassword(e.target.value)} 
                     required 
-                    className="h-11 pl-10 bg-ns-gray-bg border-ns-border focus:bg-white transition-all"
+                    className="h-11 pl-10 bg-ns-light-blue border-ns-border focus:bg-white transition-all"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-ns-navy">Confirm Security Key</Label>
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-ns-blue">Confirm Security Key</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 text-gray-400" size={16} />
                   <Input 
@@ -112,12 +112,12 @@ export default function ResetPasswordPage() {
                     value={confirmPassword} 
                     onChange={(e) => setConfirmPassword(e.target.value)} 
                     required 
-                    className="h-11 pl-10 bg-ns-gray-bg border-ns-border focus:bg-white transition-all"
+                    className="h-11 pl-10 bg-ns-light-blue border-ns-border focus:bg-white transition-all"
                   />
                 </div>
               </div>
               
-              <Button type="submit" disabled={isLoading || !token} className="w-full h-11 bg-ns-navy hover:bg-ns-navy/90 text-sm font-bold gap-2 shadow-lg shadow-ns-navy/20 uppercase tracking-widest">
+              <Button type="submit" disabled={isLoading || !token} className="w-full h-11 bg-ns-blue hover:bg-ns-blue-dark text-sm font-bold gap-2 shadow-lg shadow-ns-blue/20 uppercase tracking-widest">
                 {isLoading ? (
                   <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (

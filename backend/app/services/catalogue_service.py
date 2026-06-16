@@ -290,7 +290,16 @@ class CatalogueService:
                 },
             )
         )
-        add(f("subsidiary", "Subsidiary", "select", group="Classification", required=True))
+        add(
+            f(
+                "subsidiary",
+                "Subsidiary",
+                "select",
+                group="Classification",
+                required=True,
+                ds={"type": "netsuite_subsidiary"},
+            )
+        )
         add(f("location", "Location", "select", group="Classification", ds={"type": "netsuite_location"}))
         add(f("class", "Class", "select", group="Classification", ds={"type": "netsuite_class_live"}))
         add(f("custbody_in_gst_pos", "Place Of Supply", "select", group="Classification"))

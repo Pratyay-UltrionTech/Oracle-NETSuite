@@ -47,11 +47,12 @@ export default function UserTransactionHub() {
     switch (status.toLowerCase()) {
       case 'submitted':
       case 'synced_to_netsuite':
+      case 'SYNCED_TO_NETSUITE':
       case 'completed':
       case 'approved':
         return (
           <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-wider border border-green-200">
-            <CheckCircle2 size={10} /> {status === 'submitted' || status === 'synced_to_netsuite' ? 'Completed' : 'Approved'}
+            <CheckCircle2 size={10} /> {status === 'submitted' || status.toLowerCase() === 'synced_to_netsuite' ? 'Completed' : 'Approved'}
           </div>
         );
       case 'pending':
@@ -229,7 +230,7 @@ export default function UserTransactionHub() {
                       {new Date(sub.submittedAt!).toLocaleString()}
                     </TD>
                     <TD className="text-[11px] font-mono text-ns-navy">
-                      {sub.netsuiteId || (sub.status === 'pending' ? 'Processing...' : 'N/A')}
+                      {sub.billId || sub.poId || sub.netsuiteId || (sub.status === 'pending' ? 'Processing...' : 'N/A')}
                     </TD>
                     <TD className="px-6 text-right">
                       <Button variant="ghost" size="sm" className="h-8 px-2 hover:bg-ns-blue/10 hover:text-ns-blue" title="View Details">

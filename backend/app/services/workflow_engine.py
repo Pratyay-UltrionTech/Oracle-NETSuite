@@ -10,6 +10,7 @@ from .purchase_order_netsuite_service import (
     build_purchase_order_sync_update,
     send_purchase_order_to_netsuite,
 )
+from .vendor_bill_netsuite_service import build_vendor_bill_sync_update
 import os
 from dotenv import load_dotenv
 
@@ -25,7 +26,7 @@ async def _send_submission_to_netsuite(
     if tx == "item_receipt":
         return send_item_receipt_to_netsuite(submission)
     if tx == "vendor_bill":
-        return send_vendor_bill_to_netsuite(submission)
+        return await send_vendor_bill_to_netsuite(submission)
     if tx == "purchase_order":
         return await send_purchase_order_to_netsuite(submission)
     payload = {
@@ -86,7 +87,9 @@ def _netsuite_sync_update_fields(submission: Dict[str, Any]) -> Dict[str, Any]:
         "netsuiteError",
         "netsuiteSyncError",
         "poId",
+        "billId",
         "documentNumber",
+        "syncStatus",
         "submissionId",
     ):
         if key in submission:
@@ -153,6 +156,28 @@ async def _log_netsuite_sync_activity(
             )
         return
 
+    if tx == "vendor_bill":
+        if status == "SYNCED_TO_NETSUITE":
+            await log_activity(
+                user_id,
+                "NETSUITE_VB_SYNCED",
+                entity_id=submission_id,
+                entity_type="submission",
+                metadata={
+                    "billId": submission.get("billId"),
+                    "documentNumber": submission.get("documentNumber"),
+                },
+            )
+        elif status == "NETSUITE_SYNC_FAILED":
+            await log_activity(
+                user_id,
+                "NETSUITE_VB_SYNC_FAILED",
+                entity_id=submission_id,
+                entity_type="submission",
+                metadata={"error": submission.get("netsuiteSyncError")},
+            )
+        return
+
     if status == "submitted":
         await log_activity(
             user_id,
@@ -194,7 +219,9 @@ async def complete_submission_netsuite_sync(
     return {
         "status": submission["status"],
         "poId": submission.get("poId"),
+        "billId": submission.get("billId"),
         "documentNumber": submission.get("documentNumber"),
+        "syncStatus": submission.get("syncStatus"),
         "netsuiteSyncError": submission.get("netsuiteSyncError") or submission.get("netsuiteError"),
     }
 
@@ -207,6 +234,11 @@ def _apply_netsuite_sync_to_submission(
     tx = submission.get("transactionType")
     if tx == "purchase_order":
         sync_update = build_purchase_order_sync_update(ns_response, submission_id)
+        submission.update(sync_update)
+        return
+
+    if tx == "vendor_bill":
+        sync_update = build_vendor_bill_sync_update(ns_response, submission_id)
         submission.update(sync_update)
         return
 

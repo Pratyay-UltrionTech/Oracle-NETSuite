@@ -18,15 +18,18 @@ import {
   Settings,
   CheckCircle,
   Clock,
-  UserCircle
+  UserCircle,
+  PanelLeftClose,
+  PanelLeft,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useSidebarExpanded } from '../../lib/useSidebarExpanded';
 
 export default function CustomerLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, companies = [] } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isExpanded, setIsExpanded] = React.useState(false);
+  const { isExpanded, toggle: toggleSidebar } = useSidebarExpanded('customer-sidebar-expanded');
 
   const company = user?.companyId ? (companies || []).find(c => c.id === user.companyId) : null;
 
@@ -50,21 +53,33 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
     <div className="h-screen bg-ns-gray-bg flex overflow-hidden">
       {/* Sidebar */}
       <aside 
-        onMouseEnter={() => setIsExpanded(true)}
-        onMouseLeave={() => setIsExpanded(false)}
         className={cn(
-          "bg-ns-navy h-screen flex-shrink-0 flex flex-col shadow-2xl z-30 transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] relative group/sidebar",
+          "bg-ns-navy h-screen flex-shrink-0 flex flex-col shadow-2xl z-30 transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] relative",
           isExpanded ? "w-64" : "w-16"
         )}
       >
-        <div className={cn("p-6 flex items-center gap-3 transition-all duration-300", !isExpanded && "px-6")}>
-          <div className="w-8 h-8 bg-ns-blue rounded-sm flex-shrink-0 flex items-center justify-center font-bold text-lg shadow-inner text-white">N</div>
-          <span className={cn(
-            "font-bold text-lg tracking-tight text-white italic transition-all duration-300 origin-left overflow-hidden",
-            isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
-          )}>
-            FormBridge
-          </span>
+        <div className={cn(
+          "p-4 flex items-center transition-all duration-300 border-b border-white/5",
+          isExpanded ? "justify-between gap-2 px-4" : "justify-center px-2"
+        )}>
+          {isExpanded && (
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 bg-ns-blue rounded-sm flex-shrink-0 flex items-center justify-center font-bold text-lg shadow-inner text-white">N</div>
+              <span className="font-bold text-lg tracking-tight text-white italic truncate">
+                FormBridge
+              </span>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className="flex-shrink-0 p-2 rounded-sm text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+            title={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
+            aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
+            aria-expanded={isExpanded}
+          >
+            {isExpanded ? <PanelLeftClose size={18} /> : <PanelLeft size={18} />}
+          </button>
         </div>
         
         <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto custom-scrollbar overflow-x-hidden">
@@ -138,7 +153,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
           )}>
             Account
           </div>
-          {menuItems.slice(6).map((item) => {
+          {menuItems.slice(7).map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link
@@ -224,6 +239,17 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
         {/* Header */}
         <header className="h-16 bg-white border-b border-ns-border flex items-center justify-between px-8 z-20">
           <div className="flex items-center gap-4 flex-1">
+            {!isExpanded && (
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                className="p-2 rounded-sm text-ns-text-muted hover:text-ns-blue hover:bg-ns-blue/5 transition-colors"
+                title="Expand sidebar"
+                aria-label="Expand sidebar"
+              >
+                <PanelLeft size={18} />
+              </button>
+            )}
             <div className="flex items-center gap-2 px-3 py-1.5 bg-ns-gray-bg rounded-sm border border-ns-border">
               <Building size={14} className="text-ns-blue" />
               <span className="text-xs font-bold text-ns-navy">{user?.companyName || 'Authorized Entity'}</span>
@@ -255,7 +281,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
         </header>
 
         {/* Viewport */}
-        <main className="flex-1 overflow-auto p-8 bg-[#f5f7f9] custom-scrollbar">
+        <main className="flex-1 overflow-auto p-8 bg-ns-light-blue custom-scrollbar">
           <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
             {children}
           </div>

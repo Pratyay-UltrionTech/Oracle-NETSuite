@@ -97,7 +97,7 @@ export default function StaffManagementPage() {
   const getRoleBadge = (role: UserRole) => {
     switch (role) {
       case 'super_admin': return <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">Super Admin</span>;
-      case 'client_admin': return <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">Client Admin</span>;
+      case 'client_admin': return <span className="bg-ns-blue/10 text-ns-blue px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">Client Admin</span>;
       case 'manager': return <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">Manager</span>;
       default: return <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">User</span>;
     }
@@ -117,7 +117,7 @@ export default function StaffManagementPage() {
         {(currentUser?.role === 'super_admin' || currentUser?.role === 'client_admin') && (
           <button 
             onClick={() => setIsAddModalOpen(true)}
-            className="bg-ns-blue hover:bg-ns-blue/90 text-white font-bold py-2 px-6 rounded-sm shadow-lg shadow-ns-blue/20 transition-all flex items-center gap-2"
+            className="bg-ns-blue hover:bg-ns-blue-dark text-white font-bold py-2 px-6 rounded-sm shadow-lg shadow-ns-blue/20 transition-all flex items-center gap-2"
           >
             <UserPlus size={18} />
             Authorize Personnel
@@ -402,7 +402,7 @@ export default function StaffManagementPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-ns-blue hover:bg-ns-blue/90 text-white font-bold py-2 px-6 rounded-sm shadow-lg shadow-ns-blue/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                  className="bg-ns-blue hover:bg-ns-blue-dark text-white font-bold py-2 px-6 rounded-sm shadow-lg shadow-ns-blue/20 transition-all flex items-center gap-2 disabled:opacity-50"
                 >
                   {isSubmitting ? 'Authorizing...' : 'Grant Access'}
                 </button>

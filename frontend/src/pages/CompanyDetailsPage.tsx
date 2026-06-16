@@ -185,7 +185,7 @@ export default function CompanyDetailsPage() {
                   </TD>
                   <TD>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                      emp.role === 'client_admin' ? 'bg-blue-100 text-blue-700' :
+                      emp.role === 'client_admin' ? 'bg-ns-blue/10 text-ns-blue' :
                       emp.role === 'manager' ? 'bg-amber-100 text-amber-700' :
                       'bg-gray-100 text-gray-700'
                     }`}>

@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     NETSUITE_PO_SCRIPT: str = "customscript_rg_rest_api_po_create"
     NETSUITE_PO_DEPLOY: str = "1"
 
+    NETSUITE_VB_SCRIPT: str = "customscript_rg_restapi_create_bill_rec"
+    NETSUITE_VB_DEPLOY: str = "1"
+
     NETSUITE_CONSUMER_KEY: str = ""
     NETSUITE_CONSUMER_SECRET: str = ""
     NETSUITE_ACCESS_TOKEN: str = ""

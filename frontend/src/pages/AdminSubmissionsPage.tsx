@@ -110,13 +110,23 @@ export default function AdminSubmissionsPage() {
                         sub.status === 'pending' ? "bg-amber-100 text-amber-700" :
                         "bg-gray-100 text-gray-700"
                       )}>
-                        {sub.status === 'submitted' || sub.status === 'SYNCED_TO_NETSUITE' ? 'Synchronized' : sub.status === 'NETSUITE_SYNC_FAILED' ? 'Sync Failed' : sub.status}
+                        {sub.status === 'SYNCED_TO_NETSUITE'
+                          ? 'Synced to NetSuite'
+                          : sub.status === 'submitted'
+                            ? 'Synchronized'
+                            : sub.status === 'NETSUITE_SYNC_FAILED'
+                              ? 'Sync Failed'
+                              : sub.status}
                       </span>
-                      {(sub.netsuiteId || sub.poId) && (
-                        <span className="text-[9px] font-mono text-ns-text-muted">NS ID: {sub.poId || sub.netsuiteId}</span>
+                      {(sub.netsuiteId || sub.poId || sub.billId) && (
+                        <span className="text-[9px] font-mono text-ns-text-muted">
+                          {sub.billId ? `Bill ID: ${sub.billId}` : `NS ID: ${sub.poId || sub.netsuiteId}`}
+                        </span>
                       )}
                       {sub.documentNumber && (
-                        <span className="text-[9px] font-mono text-ns-text-muted">PO #: {sub.documentNumber}</span>
+                        <span className="text-[9px] font-mono text-ns-text-muted">
+                          {sub.billId ? `Doc #: ${sub.documentNumber}` : `PO #: ${sub.documentNumber}`}
+                        </span>
                       )}
                       {(sub.errorMessage || sub.netsuiteSyncError) && (
                         <span className="text-[9px] text-red-500 italic truncate max-w-[150px]">{sub.netsuiteSyncError || sub.errorMessage}</span>
