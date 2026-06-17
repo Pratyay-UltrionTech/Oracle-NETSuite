@@ -2,6 +2,8 @@ import * as React from 'react';
 import { useStore } from '../store/useStore';
 import AdminLayout from '../components/layout/AdminLayout';
 import CustomerLayout from '../components/layout/CustomerLayout';
+import { PageHeader, Card } from '../components/admin';
+import { cn } from '../lib/utils';
 import { Lock, User, Mail, Building, Briefcase, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function ProfileSettingsPage() {
@@ -42,15 +44,15 @@ export default function ProfileSettingsPage() {
 
   return (
     <Layout>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-ns-navy">Profile Settings</h1>
-        <p className="text-ns-text-muted text-sm mt-1">Manage your account information and security protocols.</p>
-      </div>
+      <div className="space-y-6">
+        <PageHeader
+          title="Profile settings"
+          subtitle="Manage your account information and security."
+        />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Profile Info */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-sm border border-ns-border shadow-sm p-6">
+          <Card>
             <div className="flex flex-col items-center text-center">
               <div className="w-24 h-24 rounded-full bg-ns-blue/10 border-4 border-white shadow-md flex items-center justify-center text-ns-blue mb-4">
                 <User size={48} />
@@ -88,22 +90,21 @@ export default function ProfileSettingsPage() {
                 </div>
               )}
             </div>
-          </div>
+          </Card>
         </div>
 
-        {/* Security / Password Change */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-sm border border-ns-border shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-ns-border bg-ns-gray-bg flex items-center gap-2">
-              <Lock size={18} className="text-ns-navy" />
-              <h3 className="font-bold text-ns-navy">Security Protocols</h3>
+          <Card padding="none" className="overflow-hidden">
+            <div className="px-6 py-4 border-b border-ns-border bg-ns-page-bg flex items-center gap-2">
+              <Lock size={18} className="text-ns-blue" />
+              <h3 className="font-semibold text-ns-text">Change password</h3>
             </div>
             
             <form onSubmit={handlePasswordChange} className="p-6 space-y-6">
               {status && (
                 <div className={cn(
-                  "p-4 rounded-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-2",
-                  status.type === 'success' ? "bg-green-50 border border-green-200 text-green-800" : "bg-red-50 border border-red-200 text-red-800"
+                  "p-4 rounded-ns-md flex items-start gap-3 animate-in fade-in slide-in-from-top-2",
+                  status.type === 'success' ? "bg-status-approved-bg border border-green-200 text-green-800" : "bg-status-rejected-bg border border-red-200 text-red-800"
                 )}>
                   {status.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
                   <p className="text-sm font-medium">{status.message}</p>
@@ -118,7 +119,7 @@ export default function ProfileSettingsPage() {
                     required
                     value={oldPassword}
                     onChange={(e) => setOldPassword(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-ns-gray-bg border border-ns-border rounded-sm focus:outline-none focus:border-ns-blue transition-all"
+                    className="w-full px-4 py-2.5 bg-ns-gray-bg border border-ns-border rounded-ns-md focus:outline-none focus:border-ns-blue transition-all"
                     placeholder="Enter current password"
                   />
                 </div>
@@ -130,7 +131,7 @@ export default function ProfileSettingsPage() {
                     required
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-ns-gray-bg border border-ns-border rounded-sm focus:outline-none focus:border-ns-blue transition-all"
+                    className="w-full px-4 py-2.5 bg-ns-gray-bg border border-ns-border rounded-ns-md focus:outline-none focus:border-ns-blue transition-all"
                     placeholder="Min. 6 characters"
                   />
                 </div>
@@ -142,7 +143,7 @@ export default function ProfileSettingsPage() {
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-ns-gray-bg border border-ns-border rounded-sm focus:outline-none focus:border-ns-blue transition-all"
+                    className="w-full px-4 py-2.5 bg-ns-gray-bg border border-ns-border rounded-ns-md focus:outline-none focus:border-ns-blue transition-all"
                     placeholder="Repeat new password"
                   />
                 </div>
@@ -152,7 +153,7 @@ export default function ProfileSettingsPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-ns-blue hover:bg-ns-blue-dark text-white font-bold py-2.5 px-8 rounded-sm shadow-lg shadow-ns-blue/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                  className="bg-ns-blue hover:bg-ns-blue-dark text-white font-bold py-2.5 px-8 rounded-ns-md shadow-lg shadow-ns-blue/20 transition-all flex items-center gap-2 disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <>
@@ -168,13 +169,10 @@ export default function ProfileSettingsPage() {
                 </button>
               </div>
             </form>
-          </div>
+          </Card>
         </div>
+      </div>
       </div>
     </Layout>
   );
-}
-
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(' ');
 }

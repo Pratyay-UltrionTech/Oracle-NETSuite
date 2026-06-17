@@ -4,7 +4,8 @@ import { useStore } from '../store/useStore';
 import AdminLayout from '../components/layout/AdminLayout';
 import { Button, Input, Select, Label } from '../components/ui/Base';
 import { Table, THead, TBody, TR, TH, TD, Modal, ConfirmModal } from '../components/ui/Complex';
-import { Users, Plus, Mail, IdCard, Briefcase, Trash2, ArrowLeft, Shield, AlertCircle } from 'lucide-react';
+import { PageHeader, KPICard, Card, RoleBadge } from '../components/admin';
+import { Users, Plus, Mail, IdCard, Briefcase, Trash2, ArrowLeft, AlertCircle } from 'lucide-react';
 
 export default function CompanyDetailsPage() {
   const { id } = useParams();
@@ -86,74 +87,33 @@ export default function CompanyDetailsPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-8">
-        <div className="flex flex-col gap-4">
-          <button 
-            onClick={() => navigate('/companies')}
-            className="flex items-center gap-2 text-xs font-bold text-ns-text-muted hover:text-ns-blue transition-colors uppercase tracking-widest"
-          >
-            <ArrowLeft size={14} /> Back to Directory
-          </button>
-          
-          <div className="flex justify-between items-end">
-            <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-sm bg-ns-navy text-white flex items-center justify-center font-bold text-2xl shadow-xl">
-                {company.name.substring(0, 2).toUpperCase()}
-              </div>
-              <div>
-                <div className="flex items-center gap-2 text-ns-blue mb-1">
-                  <Shield size={14} />
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Authorized Client Environment</span>
-                </div>
-                <h1 className="text-3xl font-bold text-ns-text">{company.name}</h1>
-                <p className="text-sm text-ns-text-muted mt-1">Personnel Ledger & Access Token Management</p>
-              </div>
-            </div>
-            <Button onClick={() => setIsModalOpen(true)} className="gap-2 px-6 h-10">
+      <div className="space-y-6">
+        <button
+          onClick={() => navigate('/companies')}
+          className="flex items-center gap-2 text-xs font-medium text-ns-text-muted hover:text-ns-blue transition-colors w-fit"
+        >
+          <ArrowLeft size={14} /> Back to companies
+        </button>
+
+        <PageHeader
+          eyebrow="Company management"
+          title={company.name}
+          subtitle="Personnel ledger and access management"
+          actions={
+            <Button onClick={() => setIsModalOpen(true)} className="gap-2">
               <Plus size={18} />
-              Onboard Employee
+              Add employee
             </Button>
-          </div>
+          }
+        />
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <KPICard label="Total employees" value={companyEmployees.length} subtext="Active roster" subtextVariant="info" />
+          <KPICard label="Established" value={company.createdAt?.split('T')[0] || '—'} subtext="Registration date" subtextVariant="neutral" />
+          <KPICard label="Entity ID" value={company.id.substring(0, 8)} subtext="Internal reference" subtextVariant="neutral" />
         </div>
 
-        {/* Info Grid */}
-        <div className="grid grid-cols-3 gap-6">
-          <div className="bg-white p-6 border border-ns-border rounded-sm ns-panel-shadow flex items-center gap-4">
-            <div className="w-12 h-12 bg-ns-blue/10 rounded-full flex items-center justify-center text-ns-blue">
-              <Users size={22} />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-ns-text-muted uppercase tracking-widest mb-0.5">Active Staff</p>
-              <p className="text-2xl font-bold text-ns-navy tracking-tight">{companyEmployees.length}</p>
-            </div>
-          </div>
-          <div className="bg-white p-6 border border-ns-border rounded-sm ns-panel-shadow flex items-center gap-4">
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
-              <IdCard size={22} />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-ns-text-muted uppercase tracking-widest mb-0.5">Auth Status</p>
-              <p className="text-2xl font-bold text-ns-navy tracking-tight">Synchronized</p>
-            </div>
-          </div>
-          <div className="bg-white p-6 border border-ns-border rounded-sm ns-panel-shadow flex items-center gap-4">
-            <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center text-amber-600">
-              <Briefcase size={22} />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-ns-text-muted uppercase tracking-widest mb-0.5">Sub-Entity ID</p>
-              <p className="text-lg font-mono font-bold text-ns-navy tracking-tighter uppercase">{company.id}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Employee Table */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-center text-[10px] font-bold text-ns-text-muted uppercase tracking-[0.2em] px-1">
-            <span>Corporate Personnel Ledger</span>
-            <span>Last Updated: {new Date().toLocaleDateString()}</span>
-          </div>
-          <Table>
+        <Table>
             <THead>
               <TR>
                 <TH>Name / Employee ID</TH>
@@ -179,25 +139,19 @@ export default function CompanyDetailsPage() {
                     </div>
                   </TD>
                   <TD>
-                    <span className="text-[10px] bg-ns-gray-bg border border-ns-border px-2 py-1 rounded-sm font-bold text-ns-navy grayscale">
+                    <span className="text-[10px] bg-ns-gray-bg border border-ns-border px-2 py-1 rounded-ns-md font-bold text-ns-navy grayscale">
                       {emp.jobTitle || 'Unassigned'}
                     </span>
                   </TD>
                   <TD>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                      emp.role === 'client_admin' ? 'bg-ns-blue/10 text-ns-blue' :
-                      emp.role === 'manager' ? 'bg-amber-100 text-amber-700' :
-                      'bg-gray-100 text-gray-700'
-                    }`}>
-                      {emp.role.replace('_', ' ')}
-                    </span>
+                    <RoleBadge role={emp.role} />
                   </TD>
                   <TD className="px-6 text-right">
                     <Button 
                       variant="ghost" 
                       size="icon" 
                       onClick={() => setDeleteUserId(emp.id)}
-                      className="h-8 w-8 text-ns-text-muted hover:text-red-500 hover:bg-red-50 transition-all rounded-full"
+                      className="h-8 w-8 text-ns-text-muted hover:text-red-500 hover:bg-status-rejected-bg transition-all rounded-full"
                     >
                       <Trash2 size={13} />
                     </Button>
@@ -213,9 +167,7 @@ export default function CompanyDetailsPage() {
               )}
             </TBody>
           </Table>
-        </div>
 
-        {/* Modal */}
         <Modal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
@@ -231,12 +183,12 @@ export default function CompanyDetailsPage() {
         >
           <form className="space-y-5" onSubmit={handleAddEmployee}>
             {errorMsg ? (
-              <div className="p-3 bg-red-50 border border-red-200 text-[11px] text-red-600 rounded-sm font-bold flex items-center gap-2">
+              <div className="p-3 bg-status-rejected-bg border border-red-200 text-[11px] text-status-rejected rounded-ns-md font-bold flex items-center gap-2">
                 <AlertCircle size={14} />
                 {errorMsg}
               </div>
             ) : (
-              <div className="p-3 bg-amber-50 border border-amber-200 text-[11px] text-amber-800 rounded-sm italic">
+              <div className="p-3 bg-status-pending-bg border border-amber-200 text-[11px] text-amber-800 rounded-ns-md italic">
                 Generating new user identity automatically activates Corporate Dashboard access for this entity.
               </div>
             )}

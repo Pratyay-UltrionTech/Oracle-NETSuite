@@ -25,6 +25,8 @@ import {
   type NetSuiteDatasourcePayload,
   type TestConnectionResult,
 } from '../services/netsuiteDatasourceService';
+import { PageHeader, KPICard, StatusBadge, Card } from '../components/admin';
+import { useStore } from '../store/useStore';
 
 const emptyForm: NetSuiteDatasourcePayload = {
   name: '',
@@ -42,6 +44,8 @@ const emptyForm: NetSuiteDatasourcePayload = {
 };
 
 export default function NetSuiteDatasourceManagementPage() {
+  const { user } = useStore();
+  const isSuperAdmin = user?.role === 'super_admin';
   const [items, setItems] = React.useState<NetSuiteDatasource[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [modalOpen, setModalOpen] = React.useState(false);
@@ -154,45 +158,53 @@ export default function NetSuiteDatasourceManagementPage() {
   const statusBadge = (key: string) => {
     const s = syncMap[key];
     if (!s || s.status === 'never') {
-      return <span className="text-[10px] text-gray-400">Not synced</span>;
+      return <StatusBadge variant="draft">Not synced</StatusBadge>;
     }
     if (s.status === 'error') {
-      return <span className="text-[10px] text-red-600 font-semibold">Error</span>;
+      return <StatusBadge variant="rejected">Error</StatusBadge>;
     }
     return (
-      <span className="text-[10px] text-green-600 font-semibold">
-        OK · {s.responseCount} rows · {s.latencyMs ?? '—'}ms
-      </span>
+      <StatusBadge variant="synced">
+        Synced · {s.responseCount} rows · {s.latencyMs ?? '—'}ms
+      </StatusBadge>
     );
   };
 
+  const activeConnectors = items.filter(i => i.isActive).length;
+  const syncedCount = Object.values(syncMap).filter(s => s.status !== 'error' && s.status !== 'never').length;
+  const errorCount = Object.values(syncMap).filter(s => s.status === 'error').length;
+
   return (
     <AdminLayout>
-      <div className="space-y-8">
-        <div className="flex justify-between items-end">
-          <div>
-            <div className="flex items-center gap-2 text-ns-blue mb-1">
-              <Plug size={16} />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Master Data</span>
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="NetSuite integration"
+          title="NetSuite configuration"
+          subtitle="Configure RESTlet script IDs and field mappings without code changes."
+          actions={
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={() => void load()} className="gap-2">
+                <RefreshCcw size={16} />
+                Refresh
+              </Button>
+              <Button onClick={openCreate} className="gap-2">
+                <Plus size={18} />
+                Add connector
+              </Button>
             </div>
-            <h1 className="text-3xl font-bold text-ns-text">NetSuite Connectors</h1>
-            <p className="text-sm text-ns-text-muted mt-1">
-              Configure RESTlet script IDs and field mappings without code changes.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => void load()} className="gap-2">
-              <RefreshCcw size={16} />
-              Refresh
-            </Button>
-            <Button onClick={openCreate} className="gap-2 px-6">
-              <Plus size={18} />
-              Add Connector
-            </Button>
-          </div>
-        </div>
+          }
+        />
 
-        <Table>
+        {isSuperAdmin && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <KPICard label="Total connectors" value={items.length} subtext={`${activeConnectors} active`} subtextVariant="info" />
+            <KPICard label="Synced endpoints" value={syncedCount} subtext="Healthy connections" subtextVariant="success" />
+            <KPICard label="Sync errors" value={errorCount} subtext={errorCount > 0 ? 'Requires attention' : 'All clear'} subtextVariant={errorCount > 0 ? 'danger' : 'success'} />
+          </div>
+        )}
+
+        <Card padding="none" className="overflow-hidden">
+        <Table className="border-0 shadow-none rounded-none">
           <THead>
             <TR>
               <TH>Name</TH>
@@ -216,7 +228,7 @@ export default function NetSuiteDatasourceManagementPage() {
                 <TR key={row.id}>
                   <TD className="font-semibold">{row.name}</TD>
                   <TD>
-                    <code className="text-[11px] bg-gray-100 px-1.5 py-0.5 rounded">{row.key}</code>
+                    <code className="text-[11px] bg-ns-page-bg px-1.5 py-0.5 rounded">{row.key}</code>
                   </TD>
                   <TD className="text-[11px] text-ns-text-muted max-w-[200px] truncate">
                     {row.scriptId} / {row.deployId}
@@ -247,6 +259,7 @@ export default function NetSuiteDatasourceManagementPage() {
               ))}
           </TBody>
         </Table>
+        </Card>
       </div>
 
       <Modal
@@ -287,7 +300,7 @@ export default function NetSuiteDatasourceManagementPage() {
             </motionPlaceholder>
             <motionPlaceholder>
               <Label>Deploy ID</Label>
-              <Input value="1" disabled className="bg-gray-50 text-gray-500" />
+              <Input value="1" disabled className="bg-ns-page-bg text-gray-500" />
               <p className="text-[9px] text-ns-text-muted mt-1">Fixed · OAuth from .env</p>
             </motionPlaceholder>
           </div>
@@ -336,7 +349,7 @@ export default function NetSuiteDatasourceManagementPage() {
           </motionPlaceholder>
 
           {editing && (
-            <div className="border border-ns-border rounded-sm p-3 bg-ns-light-blue/20 space-y-2">
+            <div className="border border-ns-border rounded-ns-md p-3 bg-ns-light-blue/20 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-ns-blue flex items-center gap-1">
                   <Zap size={12} /> Test Connection
@@ -347,7 +360,7 @@ export default function NetSuiteDatasourceManagementPage() {
               </div>
               {testResult && (
                 <div className="text-[11px] space-y-1">
-                  <p className={testResult.success ? 'text-green-700' : 'text-red-700'}>
+                  <p className={testResult.success ? 'text-status-approved' : 'text-status-rejected'}>
                     {testResult.success ? 'Connection OK' : testResult.message}
                     {testResult.latencyMs != null && ` · ${testResult.latencyMs}ms`}
                     {testResult.responseCount != null && ` · ${testResult.responseCount} records`}

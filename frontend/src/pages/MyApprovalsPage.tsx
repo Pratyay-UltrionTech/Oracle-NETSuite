@@ -69,7 +69,7 @@ export default function MyApprovalsPage() {
 
         <div className="grid grid-cols-1 gap-6">
           {pendingSubmissions.length === 0 && !isLoading ? (
-            <div className="bg-white border border-ns-border rounded-sm p-12 flex flex-col items-center justify-center text-center space-y-4 shadow-sm">
+            <div className="bg-white border border-ns-border rounded-ns-md p-12 flex flex-col items-center justify-center text-center space-y-4 shadow-sm">
               <div className="w-16 h-16 bg-ns-gray-bg rounded-full flex items-center justify-center text-ns-text-muted">
                 <Clock size={32} />
               </div>
@@ -82,7 +82,7 @@ export default function MyApprovalsPage() {
             </div>
           ) : (
             pendingSubmissions.map((submission) => (
-              <div key={submission.id} className="bg-white rounded-sm p-0 overflow-hidden border border-ns-border hover:shadow-lg transition-shadow">
+              <div key={submission.id} className="bg-white rounded-ns-md p-0 overflow-hidden border border-ns-border hover:shadow-lg transition-shadow">
                 <div className="flex flex-col md:flex-row">
                   {/* Status Sidebar */}
                   <div className="md:w-2 bg-ns-blue" />
@@ -117,7 +117,7 @@ export default function MyApprovalsPage() {
                       <div className="flex items-center gap-3">
                         <Button
                           variant="secondary"
-                          className="border-red-200 text-red-600 hover:bg-red-50 gap-2 h-11 px-6 font-bold"
+                          className="border-red-200 text-status-rejected hover:bg-status-rejected-bg gap-2 h-11 px-6 font-bold"
                           onClick={() => handleReject(submission.id)}
                         >
                           <XCircle size={18} />

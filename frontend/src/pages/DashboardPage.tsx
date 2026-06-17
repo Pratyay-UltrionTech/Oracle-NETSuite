@@ -124,7 +124,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white p-6 rounded-sm border border-ns-border ns-panel-shadow flex gap-6 items-end">
+        <div className="bg-white p-6 rounded-ns-md border border-ns-border ns-panel-shadow flex gap-6 items-end">
           <div className="flex-1">
             <Label className="flex items-center gap-2"><Search size={12} /> Repository Lookup</Label>
             <div className="relative">
@@ -193,8 +193,8 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[10px] text-ns-text-muted font-mono tracking-tighter uppercase whitespace-nowrap">ID: {form.id.substring(0, 8)}</span>
                         <span className={cn(
-                          "text-[8px] font-bold px-1 py-0.5 rounded-sm uppercase tracking-tighter whitespace-nowrap",
-                          form.source === 'template' ? "bg-green-100 text-green-700" : "bg-ns-gray-bg text-ns-text-muted border border-ns-border"
+                          "text-[8px] font-bold px-1 py-0.5 rounded-ns-md uppercase tracking-tighter whitespace-nowrap",
+                          form.source === 'template' ? "bg-status-approved-bg text-status-approved" : "bg-ns-gray-bg text-ns-text-muted border border-ns-border"
                         )}>
                           {form.source}
                         </span>
@@ -202,14 +202,14 @@ export default function DashboardPage() {
                     </div>
                   </TD>
                   <TD>
-                    <span className="text-[10px] font-bold text-ns-navy/70 bg-ns-light-blue/30 px-2 py-1 rounded-sm uppercase tracking-wider">
+                    <span className="text-[10px] font-bold text-ns-navy/70 bg-ns-light-blue/30 px-2 py-1 rounded-ns-md uppercase tracking-wider">
                       {catalogues[form.transactionType].name}
                     </span>
                   </TD>
                   <TD className="text-center">
                     <button
                       onClick={() => openAssignModal(form)}
-                      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-sm bg-ns-navy/5 border border-ns-border hover:border-ns-blue hover:text-ns-blue transition-all"
+                      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-ns-md bg-ns-navy/5 border border-ns-border hover:border-ns-blue hover:text-ns-blue transition-all"
                     >
                       <Users size={12} className="opacity-60" />
                       <span className="text-[10px] font-bold uppercase tracking-widest leading-none">
@@ -231,7 +231,7 @@ export default function DashboardPage() {
                       <Button variant="ghost" size="icon" onClick={() => openAssignModal(form)} title="Manage Entitlements" className="h-8 w-8 hover:bg-ns-navy hover:text-white rounded-full transition-all">
                         <Users size={13} />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => confirmDelete(form.id)} className="h-8 w-8 text-red-500 hover:bg-red-500 hover:text-white rounded-full transition-all" title="Purge Record">
+                      <Button variant="ghost" size="icon" onClick={() => confirmDelete(form.id)} className="h-8 w-8 text-red-500 hover:bg-status-rejected-bg0 hover:text-white rounded-full transition-all" title="Purge Record">
                         <Trash2 size={13} />
                       </Button>
                     </div>
@@ -256,19 +256,19 @@ export default function DashboardPage() {
         }
       >
         <div className="space-y-6">
-          <div className="p-4 bg-ns-blue/5 border border-ns-blue/10 rounded-sm">
+          <div className="p-4 bg-ns-blue/5 border border-ns-blue/10 rounded-ns-md">
             <h4 className="text-[10px] font-bold text-ns-blue uppercase tracking-widest mb-1">Authorization Context</h4>
             <p className="text-xs text-ns-navy font-bold">{getCompanyName(assignModal.companyId)}</p>
           </div>
 
           <div className="space-y-3">
             <Label>Select Authorized Employees</Label>
-            <div className="bg-ns-gray-bg border border-ns-border rounded-sm max-h-60 overflow-auto custom-scrollbar p-2 space-y-1">
+            <div className="bg-ns-gray-bg border border-ns-border rounded-ns-md max-h-60 overflow-auto custom-scrollbar p-2 space-y-1">
               {getEmployeesForCompany(assignModal.companyId).map(emp => (
                 <label
                   key={emp.id}
                   className={cn(
-                    "flex items-center gap-3 p-3 rounded-sm border cursor-pointer transition-all",
+                    "flex items-center gap-3 p-3 rounded-ns-md border cursor-pointer transition-all",
                     selectedEmployees.includes(emp.id) ? "bg-white border-ns-blue shadow-sm" : "border-transparent opacity-60 hover:opacity-100"
                   )}
                 >
@@ -351,7 +351,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => setCreationMethod('scratch')}
-                className={cn("p-6 border-2 rounded-sm text-left transition-all", creationMethod === 'scratch' ? "border-ns-blue bg-ns-blue/5" : "border-ns-border")}
+                className={cn("p-6 border-2 rounded-ns-md text-left transition-all", creationMethod === 'scratch' ? "border-ns-blue bg-ns-blue/5" : "border-ns-border")}
               >
                 <FileCode size={20} className="mb-2 text-ns-blue" />
                 <h4 className="font-bold text-sm">Blank Canvas</h4>
@@ -359,9 +359,9 @@ export default function DashboardPage() {
               </button>
               <button
                 onClick={() => { setCreationMethod('template'); setCreateStep(3); }}
-                className={cn("p-6 border-2 rounded-sm text-left transition-all", creationMethod === 'template' ? "border-ns-blue bg-ns-blue/5" : "border-ns-border")}
+                className={cn("p-6 border-2 rounded-ns-md text-left transition-all", creationMethod === 'template' ? "border-ns-blue bg-ns-blue/5" : "border-ns-border")}
               >
-                <Layout size={20} className="mb-2 text-green-600" />
+                <Layout size={20} className="mb-2 text-status-approved" />
                 <h4 className="font-bold text-sm">Use Blueprint</h4>
                 <p className="text-[10px] text-ns-text-muted mt-1 leading-relaxed">Clone standard industry configurations.</p>
               </button>
@@ -370,7 +370,7 @@ export default function DashboardPage() {
           {createStep === 3 && (
             <div className="space-y-2 max-h-[350px] overflow-auto pr-1 custom-scrollbar">
               {templates.filter(t => t.transactionType === newFormDetails.transactionType).map(t => (
-                <div key={t.id} className="p-4 border border-ns-border rounded-sm hover:border-ns-blue transition-all bg-white flex justify-between items-center group">
+                <div key={t.id} className="p-4 border border-ns-border rounded-ns-md hover:border-ns-blue transition-all bg-white flex justify-between items-center group">
                   <div className="flex flex-col">
                     <span className="text-sm font-bold text-ns-navy">{t.name}</span>
                     <span className="text-[10px] text-ns-text-muted truncate max-w-[250px] italic">{t.description}</span>

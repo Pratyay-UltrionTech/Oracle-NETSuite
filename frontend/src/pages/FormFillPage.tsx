@@ -134,7 +134,7 @@ export default function FormFillPage() {
         <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500">
           <div className={cn(
             "w-20 h-20 rounded-full flex items-center justify-center mb-8 border-4 border-white shadow-xl",
-            syncFailed ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600",
+            syncFailed ? "bg-status-rejected-bg text-status-rejected" : "bg-status-approved-bg text-status-approved",
           )}>
             {syncFailed ? <AlertCircle size={40} /> : <ShieldCheck size={40} />}
           </div>
@@ -145,13 +145,13 @@ export default function FormFillPage() {
                 : 'Submitted to NetSuite'
               : 'Submission Transmitted'}
           </h2>
-          <div className="mt-6 p-8 bg-white border border-ns-border rounded-sm shadow-sm max-w-sm w-full">
+          <div className="mt-6 p-8 bg-white border border-ns-border rounded-ns-md shadow-sm max-w-sm w-full">
             <div className="flex justify-between items-center mb-4 pb-4 border-b border-ns-border">
               <span className="text-[10px] font-bold text-ns-text-muted uppercase tracking-widest">Protocol Status</span>
               <span className={cn(
-                "text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm border",
+                "text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-ns-md border",
                 syncFailed
-                  ? "text-red-700 bg-red-50 border-red-200"
+                  ? "text-status-rejected bg-status-rejected-bg border-red-200"
                   : "text-ns-blue bg-ns-blue/5 border-ns-blue/10",
               )}>
                 {isDirectSync
@@ -182,7 +182,7 @@ export default function FormFillPage() {
                   </div>
                 )}
                 {submissionResult.netsuiteSyncError && (
-                  <p className="text-[11px] text-red-700 font-semibold mt-4 text-left">{submissionResult.netsuiteSyncError}</p>
+                  <p className="text-[11px] text-status-rejected font-semibold mt-4 text-left">{submissionResult.netsuiteSyncError}</p>
                 )}
               </>
             ) : (
@@ -422,7 +422,7 @@ export default function FormFillPage() {
               <ArrowLeft size={14} /> Back to Hub
             </button>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-ns-blue/10 rounded-sm flex items-center justify-center text-ns-blue">
+              <div className="w-10 h-10 bg-ns-blue/10 rounded-ns-md flex items-center justify-center text-ns-blue">
                 <FileCheck size={24} />
               </div>
               <div>
@@ -449,8 +449,8 @@ export default function FormFillPage() {
         </div>
 
         {missingFields.length > 0 && (
-          <div className="bg-red-50 p-4 rounded-sm border border-red-200 flex gap-4 items-start">
-            <AlertCircle className="text-red-600 shrink-0 mt-0.5" size={20} />
+          <div className="bg-status-rejected-bg p-4 rounded-ns-md border border-red-200 flex gap-4 items-start">
+            <AlertCircle className="text-status-rejected shrink-0 mt-0.5" size={20} />
             <div className="flex-1 min-w-0">
               <p className="text-xs text-red-900 font-bold">
                 Please complete {missingFields.length} required field{missingFields.length === 1 ? '' : 's'} before submitting:
@@ -473,28 +473,28 @@ export default function FormFillPage() {
         )}
 
         {submitError && (
-          <div className="bg-red-50 p-4 rounded-sm border border-red-200 flex gap-4 items-center">
-            <AlertCircle className="text-red-600 shrink-0" size={20} />
+          <div className="bg-status-rejected-bg p-4 rounded-ns-md border border-red-200 flex gap-4 items-center">
+            <AlertCircle className="text-status-rejected shrink-0" size={20} />
             <p className="text-xs text-red-900 font-bold">{submitError}</p>
           </div>
         )}
 
         {/* Security banner */}
-        <div className="bg-ns-navy p-4 rounded-sm border border-ns-border flex items-center justify-between">
+        <div className="bg-ns-blue-soft p-4 rounded-ns-card border border-ns-border flex items-center justify-between">
           <div className="flex items-center gap-3">
             <ShieldCheck size={20} className="text-ns-blue" />
-            <div className="text-white">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] leading-none mb-1">Authenticated Entry Mode</p>
-              <p className="text-xs font-medium text-white/70">Your entry is tracked for compliance. Ensure all data matches official records.</p>
+            <div>
+              <p className="text-xs font-semibold text-ns-text">Authenticated entry mode</p>
+              <p className="text-xs text-ns-text-muted mt-0.5">Your entry is tracked for compliance. Ensure all data matches official records.</p>
             </div>
           </div>
-          <div className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-sm text-[10px] font-mono text-white/50">
+          <div className="px-3 py-1.5 bg-white border border-ns-border rounded-ns-md text-[10px] font-mono text-ns-text-muted">
             SSL: AES-256
           </div>
         </div>
 
         {/* Form Content */}
-        <div className="bg-white rounded-sm border border-ns-border ns-panel-shadow min-h-[500px] flex flex-col">
+        <div className="bg-white rounded-ns-md border border-ns-border ns-panel-shadow min-h-[500px] flex flex-col">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <div className="px-8 bg-ns-gray-bg border-b">
               <TabsList className="bg-transparent border-none py-4">
@@ -502,7 +502,7 @@ export default function FormFillPage() {
                   <TabsTrigger
                     key={tab.id}
                     value={tab.id}
-                    className="data-[state=active]:bg-white data-[state=active]:shadow-sm border border-transparent rounded-sm font-bold text-xs uppercase tracking-wider px-6 h-10 transition-all"
+                    className="data-[state=active]:bg-white data-[state=active]:shadow-sm border border-transparent rounded-ns-md font-bold text-xs uppercase tracking-wider px-6 h-10 transition-all"
                   >
                     {tab.name}
                   </TabsTrigger>
@@ -528,13 +528,13 @@ export default function FormFillPage() {
                             key={field.id}
                             id={`field-${field.id}`}
                             className={cn(
-                              "space-y-1.5 rounded-sm transition-shadow",
+                              "space-y-1.5 rounded-ns-md transition-shadow",
                               (field.type === 'textarea' || field.type === 'address' || field.type === 'summary')
                               && "md:col-span-2 lg:col-span-3",
                               missingFields.some(f => f.domId === `field-${field.id}`) &&
-                                "ring-2 ring-red-400 ring-offset-2 bg-red-50/40 p-2 -m-2",
+                                "ring-2 ring-red-400 ring-offset-2 bg-status-rejected-bg/40 p-2 -m-2",
                               highlightedFieldId === `field-${field.id}` &&
-                                "ring-2 ring-red-500 ring-offset-2 bg-red-50/60 p-2 -m-2",
+                                "ring-2 ring-red-500 ring-offset-2 bg-status-rejected-bg/60 p-2 -m-2",
                             )}
                           >
                             <div className="flex justify-between items-center">
@@ -574,7 +574,7 @@ export default function FormFillPage() {
                           </div>
                         ))}
                         {group.fields.length === 0 && (
-                          <div className="col-span-full py-8 text-center bg-gray-50 border border-dashed rounded-sm border-gray-200">
+                          <div className="col-span-full py-8 text-center bg-ns-page-bg border border-dashed rounded-ns-md border-gray-200">
                             <p className="text-xs text-ns-text-muted italic">No fields configured for this section.</p>
                           </div>
                         )}
@@ -589,7 +589,7 @@ export default function FormFillPage() {
                         <div className="w-1 h-3 bg-purple-500 rounded-full" />
                         <h3 className="text-sm font-bold text-ns-navy uppercase tracking-[0.2em]">Line Items</h3>
                       </div>
-                      <div className="overflow-x-auto border border-ns-border rounded-sm">
+                      <div className="overflow-x-auto border border-ns-border rounded-ns-md">
                         <table className="w-full text-left border-collapse">
                           <thead>
                             <tr className="bg-ns-gray-bg border-b border-ns-border">
@@ -633,8 +633,8 @@ export default function FormFillPage() {
                                     field.dataSource?.type === 'netsuite_item_live'
                                       ? 'min-w-[280px]'
                                       : 'min-w-[120px]',
-                                    missingFields.some(f => f.domId === lineDomId) && 'bg-red-50 ring-2 ring-inset ring-red-300',
-                                    highlightedFieldId === lineDomId && 'bg-red-100 ring-2 ring-inset ring-red-500',
+                                    missingFields.some(f => f.domId === lineDomId) && 'bg-status-rejected-bg ring-2 ring-inset ring-red-300',
+                                    highlightedFieldId === lineDomId && 'bg-status-rejected-bg ring-2 ring-inset ring-red-500',
                                   )}
                                 >
                                   <FieldControl
@@ -693,8 +693,8 @@ export default function FormFillPage() {
                                     id={lineDomId}
                                     className={cn(
                                       'px-2 py-2 align-top min-w-[120px] transition-shadow',
-                                      missingFields.some(f => f.domId === lineDomId) && 'bg-red-50 ring-2 ring-inset ring-red-300',
-                                      highlightedFieldId === lineDomId && 'bg-red-100 ring-2 ring-inset ring-red-500',
+                                      missingFields.some(f => f.domId === lineDomId) && 'bg-status-rejected-bg ring-2 ring-inset ring-red-300',
+                                      highlightedFieldId === lineDomId && 'bg-status-rejected-bg ring-2 ring-inset ring-red-500',
                                     )}
                                   >
                                     <FieldControl
@@ -747,10 +747,10 @@ export default function FormFillPage() {
                   {tab.expenseSublist && tab.expenseSublist.length > 0 && (
                     <div className="space-y-4">
                       <div className="flex items-center gap-3 border-b border-ns-border pb-3">
-                        <div className="w-1 h-3 bg-amber-500 rounded-full" />
+                        <div className="w-1 h-3 bg-status-pending-bg0 rounded-full" />
                         <h3 className="text-sm font-bold text-ns-navy uppercase tracking-[0.2em]">Expenses</h3>
                       </div>
-                      <div className="overflow-x-auto border border-ns-border rounded-sm">
+                      <div className="overflow-x-auto border border-ns-border rounded-ns-md">
                         <table className="w-full text-left border-collapse">
                           <thead>
                             <tr className="bg-ns-gray-bg border-b border-ns-border">
@@ -775,8 +775,8 @@ export default function FormFillPage() {
                                     field.dataSource?.type === 'netsuite_customer_live'
                                       ? 'min-w-[280px]'
                                       : 'min-w-[120px]',
-                                    missingFields.some(f => f.domId === expenseDomId) && 'bg-red-50 ring-2 ring-inset ring-red-300',
-                                    highlightedFieldId === expenseDomId && 'bg-red-100 ring-2 ring-inset ring-red-500',
+                                    missingFields.some(f => f.domId === expenseDomId) && 'bg-status-rejected-bg ring-2 ring-inset ring-red-300',
+                                    highlightedFieldId === expenseDomId && 'bg-status-rejected-bg ring-2 ring-inset ring-red-500',
                                   )}
                                 >
                                   <FieldControl
@@ -816,8 +816,8 @@ export default function FormFillPage() {
         </div>
 
         {/* Compliance footer */}
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-sm flex gap-4 items-center">
-          <AlertCircle className="text-amber-600 shrink-0" size={20} />
+        <div className="p-4 bg-status-pending-bg border border-amber-200 rounded-ns-md flex gap-4 items-center">
+          <AlertCircle className="text-status-pending shrink-0" size={20} />
           <p className="text-[11px] text-amber-900 leading-relaxed font-semibold italic">
             Important: Submission constitutes a legally binding acknowledgment. Once transmitted, further editing requires administrative override.
           </p>

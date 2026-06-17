@@ -5,6 +5,7 @@ import AdminLayout from '../components/layout/AdminLayout';
 import { Button, Input, Select, Label } from '../components/ui/Base';
 import { Modal } from '../components/ui/Complex';
 import { Library, Layout, ShieldCheck, Settings2, FileCode, ChevronRight } from 'lucide-react';
+import { PageHeader, Card } from '../components/admin';
 import { FormTemplate, TransactionType } from '../types';
 
 export default function TemplatesPage() {
@@ -51,30 +52,25 @@ export default function TemplatesPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-8">
-        <div className="flex justify-between items-end">
-          <div>
-            <div className="flex items-center gap-2 text-ns-blue mb-1">
-              <Library size={16} />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Blueprint Library</span>
-            </div>
-            <h1 className="text-3xl font-bold text-ns-text">System Templates</h1>
-            <p className="text-sm text-ns-text-muted mt-1">Pre-configured industry standard transaction schemas ready for deployment.</p>
-          </div>
-        </div>
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="Blueprint library"
+          title="System templates"
+          subtitle="Pre-configured industry standard transaction schemas ready for deployment."
+        />
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {templates.map(template => (
-            <div key={template.id} className="bg-white p-6 rounded-sm border border-ns-border ns-panel-shadow flex flex-col transition-all hover:border-ns-blue hover:shadow-md">
+            <Card key={template.id} className="flex flex-col transition-all hover:border-ns-blue/40">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-sm bg-ns-light-blue/20 flex items-center justify-center text-ns-blue border border-ns-blue/20">
+                  <div className="w-12 h-12 rounded-ns-md bg-ns-light-blue/20 flex items-center justify-center text-ns-blue border border-ns-blue/20">
                     <Layout size={24} />
                   </div>
                   <div>
                     <h3 className="font-bold text-ns-navy text-lg">{template.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] font-bold text-white bg-ns-navy px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      <span className="text-[10px] font-semibold text-white bg-ns-blue px-2 py-0.5 rounded-full">
                         {catalogues[template.transactionType].name}
                       </span>
                       <span className="text-[10px] text-ns-text-muted font-mono tracking-tighter">
@@ -97,7 +93,7 @@ export default function TemplatesPage() {
               <div className="flex items-center justify-between mt-auto pt-4 border-t border-ns-border">
                 <div className="flex gap-2">
                   {template.tags.map(tag => (
-                    <span key={tag} className="text-[10px] bg-ns-gray-bg text-ns-text-muted border border-ns-border px-2 py-0.5 rounded-sm font-semibold">
+                    <span key={tag} className="text-[10px] bg-ns-gray-bg text-ns-text-muted border border-ns-border px-2 py-0.5 rounded-ns-md font-semibold">
                       {tag}
                     </span>
                   ))}
@@ -106,7 +102,7 @@ export default function TemplatesPage() {
                   Use Blueprint <ChevronRight size={14} />
                 </Button>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       </div>
@@ -123,7 +119,7 @@ export default function TemplatesPage() {
         }
       >
         <div className="space-y-6">
-          <div className="p-4 bg-ns-blue/5 border border-ns-blue/10 rounded-sm mb-4">
+          <div className="p-4 bg-ns-blue/5 border border-ns-blue/10 rounded-ns-md mb-4">
             <h4 className="text-[10px] font-bold text-ns-blue uppercase tracking-widest mb-1">Source Blueprint</h4>
             <div className="flex items-center gap-2">
               <FileCode size={14} className="text-ns-navy" />

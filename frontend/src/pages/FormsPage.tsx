@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
-import { TransactionType } from '../types';
+import { PageHeader, Card, StatusBadge } from '../components/admin';
 
 export default function FormsPage() {
   const navigate = useNavigate();
@@ -86,35 +86,26 @@ export default function FormsPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="flex justify-between items-end">
-          <div>
-            <div className="flex items-center gap-2 text-ns-blue mb-1">
-              <ShieldCheck size={16} />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em]">
-                {isSuperAdmin ? 'Global Forms' : 'Entity Form Assignments'}
-              </span>
-            </div>
-            <h1 className="text-3xl font-bold text-ns-text">
-              {isSuperAdmin ? 'Manage Forms' : 'Personnel Assignments'}
-            </h1>
-            <p className="text-sm text-ns-text-muted mt-1">
-              {isSuperAdmin
-                ? 'Configure and provision transaction schemas for client entities.'
-                : 'Assign active form protocols to your authorized personnel.'}
-            </p>
-          </div>
-          {isSuperAdmin && (
-            <Button onClick={() => navigate('/templates')} className="gap-2 px-6 h-10 shadow-lg shadow-ns-blue/20">
-              <Plus size={18} />
-              Provision New Schema
-            </Button>
-          )}
-        </div>
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow={isSuperAdmin ? 'Global forms' : 'Entity form assignments'}
+          title={isSuperAdmin ? 'Manage forms' : 'Personnel assignments'}
+          subtitle={
+            isSuperAdmin
+              ? 'Configure and provision transaction schemas for client entities.'
+              : 'Assign active form protocols to your authorized personnel.'
+          }
+          actions={
+            isSuperAdmin ? (
+              <Button onClick={() => navigate('/templates')} className="gap-2">
+                <Plus size={18} />
+                New form
+              </Button>
+            ) : undefined
+          }
+        />
 
-        {/* Global Toolbar */}
-        <div className="bg-white p-6 rounded-sm border border-ns-border ns-panel-shadow flex items-center justify-between gap-6">
+        <Card padding="md" className="flex items-center justify-between gap-6 flex-wrap">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-2.5 text-gray-400" size={14} />
             <Input
@@ -130,9 +121,8 @@ export default function FormsPage() {
               <Filter size={14} /> Refine Search
             </Button>
           </div>
-        </div>
+        </Card>
 
-        {/* Form List Table */}
         <Table>
           <THead>
             <TR>
@@ -171,7 +161,7 @@ export default function FormsPage() {
                   <TD>
                     <button
                       onClick={() => openAssignment(form)}
-                      className="flex items-center gap-1.5 px-2 py-1 rounded-sm bg-ns-blue/5 hover:bg-ns-blue/10 border border-ns-blue/20 text-[10px] font-bold text-ns-blue transition-colors"
+                      className="flex items-center gap-1.5 px-2 py-1 rounded-ns-md bg-ns-blue/5 hover:bg-ns-blue/10 border border-ns-blue/20 text-[10px] font-bold text-ns-blue transition-colors"
                     >
                       <Users size={12} />
                       {form.assignedTo?.length || 0} STAFF
@@ -193,7 +183,7 @@ export default function FormsPage() {
                             variant="ghost"
                             size="icon"
                             onClick={() => setDeleteConfirmId(form.id)}
-                            className="h-8 w-8 text-ns-text-muted hover:text-red-500 hover:bg-red-50 transition-all rounded-full"
+                            className="h-8 w-8 text-ns-text-muted hover:text-red-500 hover:bg-status-rejected-bg transition-all rounded-full"
                           >
                             <Trash2 size={13} />
                           </Button>
@@ -242,7 +232,7 @@ export default function FormsPage() {
             }
           >
             <div className="space-y-6">
-              <div className="p-4 bg-ns-navy rounded-sm text-white">
+              <div className="p-4 bg-ns-navy rounded-ns-md text-white">
                 <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">Target Protocol</p>
                 <h3 className="text-lg font-bold">{activeForm.name}</h3>
                 <p className="text-xs opacity-80 mt-1 italic">Assign authorized personnel from {companies.find(c => c.id === (activeForm.customerId || user?.companyId))?.name || 'your entity'}.</p>
@@ -254,7 +244,7 @@ export default function FormsPage() {
                     key={user.id}
                     onClick={() => toggleUserSelection(user.id)}
                     className={cn(
-                      "p-4 rounded-sm border cursor-pointer transition-all flex items-center justify-between group",
+                      "p-4 rounded-ns-md border cursor-pointer transition-all flex items-center justify-between group",
                       selectedUserIds.includes(user.id)
                         ? "bg-ns-blue/5 border-ns-blue shadow-inner"
                         : "bg-white border-ns-border hover:border-ns-blue/40"
@@ -280,7 +270,7 @@ export default function FormsPage() {
                   </div>
                 ))}
                 {relevantUsers.length === 0 && (
-                  <div className="p-12 text-center text-ns-text-muted bg-ns-gray-bg rounded-sm border border-dashed border-ns-border">
+                  <div className="p-12 text-center text-ns-text-muted bg-ns-gray-bg rounded-ns-md border border-dashed border-ns-border">
                     <p className="text-xs font-bold uppercase tracking-widest">No matching personnel recorded for this entity.</p>
                   </div>
                 )}

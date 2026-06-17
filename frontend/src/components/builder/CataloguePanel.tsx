@@ -21,9 +21,9 @@ const DraggableField = ({ field, isAdded, onToggle }: { field: any; isAdded: boo
       style={style}
       onClick={onToggle}
       className={cn(
-        "flex items-center gap-2 px-3 py-1.5 hover:bg-ns-gray-bg group border border-transparent rounded-sm cursor-pointer select-none transition-all",
+        "flex items-center gap-2 px-3 py-1.5 hover:bg-ns-gray-bg group border border-transparent rounded-ns-md cursor-pointer select-none transition-all",
         isDragging && "opacity-50 border-ns-blue bg-ns-blue/5 scale-95 shadow-lg z-[100]",
-        isAdded && "opacity-60 bg-gray-50"
+        isAdded && "opacity-60 bg-ns-page-bg"
       )}
     >
       <div {...listeners} {...attributes} className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-ns-blue transition-colors p-0.5">
@@ -33,7 +33,7 @@ const DraggableField = ({ field, isAdded, onToggle }: { field: any; isAdded: boo
       <div className="flex-1 flex flex-col min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-semibold truncate text-ns-navy">{field.label}</span>
-          {field.mandatory && <span className="w-1 h-1 rounded-full bg-red-500 flex-shrink-0" />}
+          {field.mandatory && <span className="w-1 h-1 rounded-full bg-status-rejected-bg0 flex-shrink-0" />}
           {isAdded && <Check size={10} className="text-green-500 ml-auto shrink-0" strokeWidth={4} />}
         </div>
       </div>
@@ -74,7 +74,7 @@ const TabFolder = ({ tab, search, addedFieldIds, toggleField }: any) => {
     <div className="border-b border-ns-border last:border-0">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-2 px-4 py-3 hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center gap-2 px-4 py-3 hover:bg-ns-page-bg transition-colors"
       >
         <div className="text-ns-blue"><TabIcon /></div>
         <span className="text-[10px] font-bold uppercase tracking-wider text-ns-navy flex-1 text-left">{tab.name}</span>
@@ -104,7 +104,7 @@ const TabFolder = ({ tab, search, addedFieldIds, toggleField }: any) => {
           {/* Render Subsections (Items/Expenses) */}
           {Object.entries(filteredSubSections).map(([subName, fields]: [string, any]) => (
             <div key={subName} className="mt-2 px-2">
-              <div className="px-2 py-1 text-[9px] font-bold text-purple-600 uppercase tracking-widest bg-purple-50 rounded-sm mb-1">{subName}</div>
+              <div className="px-2 py-1 text-[9px] font-bold text-purple-600 uppercase tracking-widest bg-purple-50 rounded-ns-md mb-1">{subName}</div>
               <div className="space-y-0.5">
                 {fields.map((field: any) => (
                   <React.Fragment key={field.id}>
@@ -148,7 +148,7 @@ export default function CataloguePanel() {
 
   return (
     <div className="flex flex-col h-full bg-white border-r border-ns-border">
-      <div className="p-4 border-b border-ns-border bg-gray-50/50">
+      <div className="p-4 border-b border-ns-border bg-ns-page-bg/50">
         <div className="flex justify-between items-center mb-3">
           <h2 className="text-[11px] font-bold text-ns-text uppercase tracking-[0.15em]">Field Catalogue</h2>
           <button 
@@ -190,7 +190,7 @@ export default function CataloguePanel() {
         )}
       </div>
       
-      <div className="p-4 border-t border-ns-border bg-gray-50/30">
+      <div className="p-4 border-t border-ns-border bg-ns-page-bg/30">
         <div className="flex items-center gap-2 text-[10px] text-ns-text-muted font-medium">
           <div className="w-2 h-2 rounded-full bg-ns-blue" />
           <span>{addedFieldIds.size} Fields Added</span>

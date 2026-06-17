@@ -90,7 +90,7 @@ export default function PropertiesPanel({ selectedField }: { selectedField: Fiel
   if (!selectedField || !currentForm) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-12 text-center text-gray-400 bg-white">
-        <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-6">
+        <div className="w-16 h-16 rounded-full bg-ns-page-bg flex items-center justify-center mb-6">
           <Settings2 size={32} className="opacity-20" />
         </div>
         <h3 className="text-xs font-bold text-ns-text uppercase tracking-widest mb-2">No Field Selected</h3>
@@ -220,12 +220,12 @@ export default function PropertiesPanel({ selectedField }: { selectedField: Fiel
 
   return (
     <div className="flex flex-col h-full bg-white border-l border-ns-border">
-      <div className="p-4 border-b border-ns-border bg-gray-50/50 flex items-center justify-between">
+      <div className="p-4 border-b border-ns-border bg-ns-page-bg/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Settings2 size={14} className="text-ns-blue" />
           <h2 className="text-[11px] font-bold text-ns-text uppercase tracking-[0.15em]">Field Properties</h2>
         </div>
-        <div className="text-[10px] font-mono text-ns-text-muted bg-gray-100 px-1.5 py-0.5 rounded">
+        <div className="text-[10px] font-mono text-ns-text-muted bg-ns-page-bg px-1.5 py-0.5 rounded">
           UUID: {selectedField.id.substring(0, 8)}
         </div>
       </div>
@@ -242,7 +242,7 @@ export default function PropertiesPanel({ selectedField }: { selectedField: Fiel
                 className="font-bold text-ns-navy"
               />
             </div>
-            <div className="flex items-center justify-between p-3 bg-ns-blue-soft/50 rounded-sm border border-ns-blue/10">
+            <div className="flex items-center justify-between p-3 bg-ns-blue-soft/50 rounded-ns-md border border-ns-blue/10">
               <div className="flex flex-col">
                 <span className="text-[11px] font-bold text-ns-navy uppercase tracking-wide">Mandatory</span>
                 <span className="text-[10px] text-ns-text-muted">Required NetSuite Logic</span>
@@ -531,7 +531,7 @@ export default function PropertiesPanel({ selectedField }: { selectedField: Fiel
               </div>
 
               {selectedField.dataSource?.type === 'netsuite_dynamic' && (
-                <div className="space-y-3 p-3 bg-ns-light-blue/30 rounded-sm border border-ns-blue/10">
+                <div className="space-y-3 p-3 bg-ns-light-blue/30 rounded-ns-md border border-ns-blue/10">
                   <Label>NetSuite RESTlet Script ID</Label>
                   <p className="text-[10px] text-ns-text-muted mb-2 font-medium bg-white/50 p-2 rounded">
                     Paste script only. Deploy is always 1. OAuth from server .env (not in vault).
@@ -599,7 +599,7 @@ export default function PropertiesPanel({ selectedField }: { selectedField: Fiel
                 selectedField.dataSource?.type === 'netsuite_hsn' ||
                 selectedField.dataSource?.type === 'netsuite_employees' ||
                 selectedField.dataSource?.type === 'netsuite_location') && (
-                <div className="space-y-3 p-3 bg-ns-light-blue/30 rounded-sm border border-ns-blue/10">
+                <div className="space-y-3 p-3 bg-ns-light-blue/30 rounded-ns-md border border-ns-blue/10">
                   <div>
                     <Label>API Configuration</Label>
                     <div className="text-[10px] text-ns-text-muted mb-2 font-medium bg-white/50 p-2 rounded">
@@ -667,24 +667,24 @@ export default function PropertiesPanel({ selectedField }: { selectedField: Fiel
         <section className="space-y-4">
           <h3 className="text-[10px] font-bold text-ns-blue uppercase tracking-[0.2em] border-b border-ns-blue/10 pb-2">Field Ordering</h3>
           <div className="grid grid-cols-4 gap-1">
-            <Button variant="secondary" size="icon" className="h-9 w-full rounded-sm" onClick={() => handleMoveField('top')} title="Move to Top"><ChevronsUp size={14}/></Button>
-            <Button variant="secondary" size="icon" className="h-9 w-full rounded-sm" onClick={() => handleMoveField('up')} title="Move Up"><ChevronUp size={14}/></Button>
-            <Button variant="secondary" size="icon" className="h-9 w-full rounded-sm" onClick={() => handleMoveField('down')} title="Move Down"><ChevronDown size={14}/></Button>
-            <Button variant="secondary" size="icon" className="h-9 w-full rounded-sm" onClick={() => handleMoveField('bottom')} title="Move to Bottom"><ChevronsDown size={14}/></Button>
+            <Button variant="secondary" size="icon" className="h-9 w-full rounded-ns-md" onClick={() => handleMoveField('top')} title="Move to Top"><ChevronsUp size={14}/></Button>
+            <Button variant="secondary" size="icon" className="h-9 w-full rounded-ns-md" onClick={() => handleMoveField('up')} title="Move Up"><ChevronUp size={14}/></Button>
+            <Button variant="secondary" size="icon" className="h-9 w-full rounded-ns-md" onClick={() => handleMoveField('down')} title="Move Down"><ChevronDown size={14}/></Button>
+            <Button variant="secondary" size="icon" className="h-9 w-full rounded-ns-md" onClick={() => handleMoveField('bottom')} title="Move to Bottom"><ChevronsDown size={14}/></Button>
           </div>
         </section>
 
         <section className="space-y-4">
           <h3 className="text-[10px] font-bold text-ns-blue uppercase tracking-[0.2em] border-b border-ns-blue/10 pb-2">Layout Settings</h3>
           <div className="grid grid-cols-1 gap-1">
-            <div className="flex items-center justify-between p-2.5 bg-gray-50/50 rounded-sm">
+            <div className="flex items-center justify-between p-2.5 bg-ns-page-bg/50 rounded-ns-md">
               <span className="text-[11px] font-medium text-ns-text">Break Column After</span>
               <Checkbox 
                 checked={selectedField.layout.columnBreak} 
                 onChange={(e) => handleUpdate({ layout: { ...selectedField.layout, columnBreak: e.target.checked } })} 
               />
             </div>
-            <div className="flex items-center justify-between p-2.5 bg-gray-50/50 rounded-sm">
+            <div className="flex items-center justify-between p-2.5 bg-ns-page-bg/50 rounded-ns-md">
               <span className="text-[11px] font-medium text-ns-text">Add Vertical Buffer</span>
               <Checkbox 
                 checked={selectedField.layout.spaceBefore} 
@@ -699,7 +699,7 @@ export default function PropertiesPanel({ selectedField }: { selectedField: Fiel
           <div>
             <Label>NetSuite Help Text</Label>
             <textarea 
-              className="w-full text-xs p-3 border border-ns-border rounded-sm focus:outline-none focus:ring-ns-blue/10 min-h-[80px] bg-gray-50/30 text-ns-text leading-relaxed"
+              className="w-full text-xs p-3 border border-ns-border rounded-ns-md focus:outline-none focus:ring-ns-blue/10 min-h-[80px] bg-ns-page-bg/30 text-ns-text leading-relaxed"
               value={selectedField.helpText || ''} 
               onChange={(e) => handleUpdate({ helpText: e.target.value })} 
               placeholder="Detailed explanation for system users..."
@@ -707,7 +707,7 @@ export default function PropertiesPanel({ selectedField }: { selectedField: Fiel
           </div>
         </section>
 
-        <div className="mt-8 p-4 bg-ns-navy text-white rounded-sm shadow-xl flex gap-3 relative overflow-hidden group border border-white/5">
+        <div className="mt-8 p-4 bg-ns-navy text-white rounded-ns-md shadow-xl flex gap-3 relative overflow-hidden group border border-white/5">
           <Info size={18} className="text-ns-blue shrink-0 animate-pulse" />
           <div className="space-y-1">
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-ns-blue">ERP Optimization</h4>

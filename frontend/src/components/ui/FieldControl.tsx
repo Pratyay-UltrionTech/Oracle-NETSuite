@@ -207,10 +207,10 @@ export function FieldControl({
   }, [dataSource, fieldId, label]);
   /** Base classes shared by all input-like controls */
   const baseInput = cn(
-    'w-full h-9 border border-ns-border rounded-sm px-3 text-[12px] text-ns-text bg-white',
+    'w-full h-9 border border-ns-border rounded-ns-md px-3 text-[12px] text-ns-text bg-white',
     'focus:outline-none focus:border-ns-blue focus:ring-2 focus:ring-ns-blue/10',
     'transition-all duration-150',
-    disabled && 'bg-gray-50 text-gray-400 cursor-not-allowed',
+    disabled && 'bg-ns-page-bg text-gray-400 cursor-not-allowed',
     className
   );
 
@@ -503,10 +503,10 @@ export function FieldControl({
           <select
             className={cn(
               'box-border w-full max-w-full min-w-0',
-              'h-9 border border-ns-border rounded-sm pl-3 pr-8 text-[12px] text-ns-text bg-white appearance-none truncate',
+              'h-9 border border-ns-border rounded-ns-md pl-3 pr-8 text-[12px] text-ns-text bg-white appearance-none truncate',
               'focus:outline-none focus:border-ns-blue focus:ring-2 focus:ring-ns-blue/10',
               'transition-all duration-150',
-              (disabled || loading) && 'bg-gray-50 text-gray-400 cursor-not-allowed',
+              (disabled || loading) && 'bg-ns-page-bg text-gray-400 cursor-not-allowed',
               loadError && 'border-red-300',
             )}
             value={value || ''}
@@ -581,8 +581,8 @@ export function FieldControl({
     return (
       <div
         className={cn(
-          'h-9 flex items-center gap-3 bg-white border border-ns-border rounded-sm px-3',
-          disabled && 'bg-gray-50',
+          'h-9 flex items-center gap-3 bg-white border border-ns-border rounded-ns-md px-3',
+          disabled && 'bg-ns-page-bg',
           className
         )}
       >
@@ -591,7 +591,7 @@ export function FieldControl({
           checked={isChecked}
           onChange={e => onChange?.(e.target.checked)}
           disabled={disabled || preview}
-          className="w-4 h-4 accent-ns-blue rounded-sm border-ns-border cursor-pointer"
+          className="w-4 h-4 accent-ns-blue rounded-ns-md border-ns-border cursor-pointer"
           aria-label={label}
         />
         <span className="text-[11px] text-ns-text-muted">
@@ -678,10 +678,10 @@ export function FieldControl({
     return (
       <textarea
         className={cn(
-          'w-full border border-ns-border rounded-sm px-3 py-2 text-[12px] text-ns-text bg-white resize-none',
+          'w-full border border-ns-border rounded-ns-md px-3 py-2 text-[12px] text-ns-text bg-white resize-none',
           'focus:outline-none focus:border-ns-blue focus:ring-2 focus:ring-ns-blue/10',
           'transition-all duration-150 min-h-[80px]',
-          disabled && 'bg-gray-50 text-gray-400 cursor-not-allowed',
+          disabled && 'bg-ns-page-bg text-gray-400 cursor-not-allowed',
           className
         )}
         value={value || ''}
@@ -698,7 +698,7 @@ export function FieldControl({
     return (
       <div
         className={cn(
-          'w-full border border-ns-border rounded-sm px-3 py-2 text-[12px] text-ns-text-muted bg-gray-50 min-h-[80px] relative',
+          'w-full border border-ns-border rounded-ns-md px-3 py-2 text-[12px] text-ns-text-muted bg-ns-page-bg min-h-[80px] relative',
           className
         )}
       >
@@ -723,7 +723,7 @@ export function FieldControl({
     return (
       <div
         className={cn(
-          'w-full border border-ns-border/60 rounded-sm px-3 py-2 text-[12px] bg-gray-50 text-ns-text-muted min-h-[80px] italic',
+          'w-full border border-ns-border/60 rounded-ns-md px-3 py-2 text-[12px] bg-ns-page-bg text-ns-text-muted min-h-[80px] italic',
           className
         )}
       >
@@ -770,7 +770,7 @@ export function FieldControlPreview({ fieldType, checkBoxDefault }: { fieldType:
 
   if (type === 'select' || type === 'recordref') {
     return (
-      <div className="h-8 border border-ns-border rounded-sm px-3 flex items-center justify-between bg-white text-[11px] text-gray-400 shadow-inner">
+      <div className="h-8 border border-ns-border rounded-ns-md px-3 flex items-center justify-between bg-white text-[11px] text-gray-400 shadow-inner">
         <span>— Select —</span>
         <ChevronDown size={12} className="text-ns-blue shrink-0" />
       </div>
@@ -780,12 +780,12 @@ export function FieldControlPreview({ fieldType, checkBoxDefault }: { fieldType:
   if (type === 'checkbox' || type === 'boolean') {
     const checked = checkBoxDefault === 'checked';
     return (
-      <div className="h-8 border border-ns-border rounded-sm px-3 flex items-center gap-2 bg-white shadow-inner">
+      <div className="h-8 border border-ns-border rounded-ns-md px-3 flex items-center gap-2 bg-white shadow-inner">
         <div className={cn(
-          'w-4 h-4 rounded-sm border-2 flex items-center justify-center flex-shrink-0',
+          'w-4 h-4 rounded-ns-md border-2 flex items-center justify-center flex-shrink-0',
           checked ? 'bg-ns-blue border-ns-blue' : 'bg-white border-gray-300'
         )}>
-          {checked && <div className="w-2 h-2 bg-white rounded-sm" />}
+          {checked && <div className="w-2 h-2 bg-white rounded-ns-md" />}
         </div>
         <span className="text-[11px] text-gray-400">{checked ? 'Checked' : 'Unchecked'}</span>
       </div>
@@ -794,7 +794,7 @@ export function FieldControlPreview({ fieldType, checkBoxDefault }: { fieldType:
 
   if (type === 'date' || type === 'datetime') {
     return (
-      <div className="h-8 border border-ns-border rounded-sm px-3 flex items-center justify-between bg-white text-[11px] text-gray-400 shadow-inner">
+      <div className="h-8 border border-ns-border rounded-ns-md px-3 flex items-center justify-between bg-white text-[11px] text-gray-400 shadow-inner">
         <span>DD/MM/YYYY</span>
         <Calendar size={12} className="text-gray-400 shrink-0" />
       </div>
@@ -803,7 +803,7 @@ export function FieldControlPreview({ fieldType, checkBoxDefault }: { fieldType:
 
   if (type === 'currency' || type === 'currency2' || type === 'float' || type === 'double') {
     return (
-      <div className="h-8 border border-ns-border rounded-sm px-3 flex items-center gap-1.5 bg-white text-[11px] text-gray-400 shadow-inner">
+      <div className="h-8 border border-ns-border rounded-ns-md px-3 flex items-center gap-1.5 bg-white text-[11px] text-gray-400 shadow-inner">
         <DollarSign size={12} className="text-gray-300" />
         <span>0.00</span>
       </div>
@@ -812,7 +812,7 @@ export function FieldControlPreview({ fieldType, checkBoxDefault }: { fieldType:
 
   if (type === 'percent') {
     return (
-      <div className="h-8 border border-ns-border rounded-sm px-3 flex items-center justify-between bg-white text-[11px] text-gray-400 shadow-inner">
+      <div className="h-8 border border-ns-border rounded-ns-md px-3 flex items-center justify-between bg-white text-[11px] text-gray-400 shadow-inner">
         <span>0.00</span>
         <span className="text-gray-400">%</span>
       </div>
@@ -821,7 +821,7 @@ export function FieldControlPreview({ fieldType, checkBoxDefault }: { fieldType:
 
   if (type === 'textarea') {
     return (
-      <div className="h-12 border border-ns-border rounded-sm px-3 py-1.5 bg-white text-[11px] text-gray-400 shadow-inner leading-tight">
+      <div className="h-12 border border-ns-border rounded-ns-md px-3 py-1.5 bg-white text-[11px] text-gray-400 shadow-inner leading-tight">
         <span className="opacity-60">Text area...</span>
       </div>
     );
@@ -829,7 +829,7 @@ export function FieldControlPreview({ fieldType, checkBoxDefault }: { fieldType:
 
   if (type === 'address' || type === 'summary') {
     return (
-      <div className="h-12 border border-ns-border/60 rounded-sm px-3 py-1.5 bg-gray-50 text-[11px] text-gray-400 italic flex items-start gap-2 leading-tight">
+      <div className="h-12 border border-ns-border/60 rounded-ns-md px-3 py-1.5 bg-ns-page-bg text-[11px] text-gray-400 italic flex items-start gap-2 leading-tight">
         <FileText size={12} className="mt-0.5 text-gray-300 shrink-0" />
         {type === 'address' ? '[Address Block]' : '[System Calculated]'}
       </div>
@@ -838,7 +838,7 @@ export function FieldControlPreview({ fieldType, checkBoxDefault }: { fieldType:
 
   if (type === 'emails') {
     return (
-      <div className="h-8 border border-ns-border rounded-sm px-3 flex items-center bg-white text-[11px] text-gray-400 shadow-inner">
+      <div className="h-8 border border-ns-border rounded-ns-md px-3 flex items-center bg-white text-[11px] text-gray-400 shadow-inner">
         <span>email@domain.com</span>
       </div>
     );
@@ -846,7 +846,7 @@ export function FieldControlPreview({ fieldType, checkBoxDefault }: { fieldType:
 
   // Default: plain text input preview
   return (
-    <div className="h-8 border border-ns-border rounded-sm px-3 flex items-center bg-white text-[11px] text-gray-400 shadow-inner">
+    <div className="h-8 border border-ns-border rounded-ns-md px-3 flex items-center bg-white text-[11px] text-gray-400 shadow-inner">
       <span>Text Input...</span>
     </div>
   );

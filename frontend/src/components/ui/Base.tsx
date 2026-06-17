@@ -11,24 +11,24 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', ...props }, ref) => {
     const variants = {
       primary: 'bg-ns-blue text-white hover:bg-ns-blue-dark border border-ns-blue-dark shadow-sm active:shadow-inner',
-      secondary: 'bg-white text-ns-text hover:bg-gray-50 border border-ns-border shadow-sm active:bg-gray-100',
-      outline: 'bg-transparent text-ns-blue border border-ns-blue hover:bg-ns-blue/5',
-      ghost: 'bg-transparent text-ns-text hover:bg-gray-100',
-      danger: 'bg-[#d9534f] text-white hover:bg-[#c9302c] border border-[#ac2925] shadow-sm',
+      secondary: 'bg-white text-ns-text hover:bg-ns-page-bg border border-ns-border shadow-sm active:bg-ns-page-bg',
+      outline: 'bg-transparent text-ns-blue border border-ns-blue hover:bg-ns-blue-soft',
+      ghost: 'bg-transparent text-ns-text hover:bg-ns-page-bg',
+      danger: 'bg-status-rejected text-white hover:opacity-90 border border-status-rejected shadow-sm',
     };
 
     const sizes = {
-      sm: 'px-2.5 py-1 text-[11px] h-7',
-      md: 'px-3.5 py-1.5 text-xs h-8',
-      lg: 'px-5 py-2 text-sm h-10',
-      icon: 'p-1.5 w-8 h-8',
+      sm: 'px-3 py-1.5 text-xs h-8',
+      md: 'px-4 py-2 text-sm h-9',
+      lg: 'px-5 py-2.5 text-sm h-10',
+      icon: 'p-2 w-9 h-9',
     };
 
     return (
       <button
         ref={ref}
         className={cn(
-          'inline-flex items-center justify-center rounded-sm transition-all focus:outline-none focus:ring-2 focus:ring-ns-blue/30 disabled:opacity-50 disabled:pointer-events-none font-semibold uppercase tracking-wide',
+          'inline-flex items-center justify-center rounded-ns-md transition-all focus:outline-none focus:ring-2 focus:ring-ns-blue/30 disabled:opacity-50 disabled:pointer-events-none font-medium',
           variants[variant],
           sizes[size],
           className
@@ -48,7 +48,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         ref={ref}
         className={cn(
-          'flex h-8 w-full rounded-sm border border-ns-border bg-ns-light-blue px-3 py-1 text-xs transition-all placeholder:text-ns-text-muted/60 focus:outline-none focus:border-ns-blue focus:ring-1 focus:ring-ns-blue/20 focus:bg-white disabled:cursor-not-allowed disabled:bg-ns-blue-soft/50 disabled:text-ns-text-muted',
+          'flex h-9 w-full rounded-ns-md border border-ns-border bg-white px-3 py-2 text-sm transition-all placeholder:text-ns-text-muted/60 focus:outline-none focus:border-ns-blue focus:ring-2 focus:ring-ns-blue/15 disabled:cursor-not-allowed disabled:bg-ns-page-bg disabled:text-ns-text-muted',
           className
         )}
         {...props}
@@ -68,7 +68,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       <select
         ref={ref}
         className={cn(
-          'flex h-8 w-full rounded-sm border border-ns-border bg-ns-light-blue px-3 py-1 text-xs transition-all focus:outline-none focus:border-ns-blue focus:ring-1 focus:ring-ns-blue/20 focus:bg-white disabled:cursor-not-allowed disabled:bg-ns-blue-soft/50 appearance-none bg-[url("data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E")] bg-[length:12px_12px] bg-[right_8px_center] bg-no-repeat pr-8',
+          'flex h-8 w-full rounded-ns-md border border-ns-border bg-ns-light-blue px-3 py-1 text-xs transition-all focus:outline-none focus:border-ns-blue focus:ring-1 focus:ring-ns-blue/20 focus:bg-white disabled:cursor-not-allowed disabled:bg-ns-blue-soft/50 appearance-none bg-[url("data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%20fill%3D%22none%22%20stroke%3D%22%23666%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E")] bg-[length:12px_12px] bg-[right_8px_center] bg-no-repeat pr-8',
           className
         )}
         {...props}
@@ -91,7 +91,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, React.InputHTMLAttrib
         type="checkbox"
         ref={ref}
         className={cn(
-          'h-3.5 w-3.5 rounded-sm border-ns-border text-ns-blue focus:ring-ns-blue transition-all cursor-pointer accent-ns-blue',
+          'h-3.5 w-3.5 rounded-ns-md border-ns-border text-ns-blue focus:ring-ns-blue transition-all cursor-pointer accent-ns-blue',
           className
         )}
         {...props}

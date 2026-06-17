@@ -13,8 +13,7 @@ import {
   PlayCircle,
   FileSearch
 } from 'lucide-react';
-import { cn } from '../lib/utils';
-import { TransactionType } from '../types';
+import { PageHeader, KPICard, StatusBadge } from '../components/admin';
 
 export default function CustomerDashboardPage() {
   const { user, forms, catalogues, fetchMyForms, isLoading } = useStore();
@@ -35,71 +34,44 @@ export default function CustomerDashboardPage() {
     const s = status?.toLowerCase() || 'not started';
     switch (s) {
       case 'submitted':
-        return (
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-wider border border-green-200">
-            <CheckCircle2 size={10} /> Submitted
-          </div>
-        );
+        return <StatusBadge variant="approved">Submitted</StatusBadge>;
       case 'pending':
-        return (
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider border border-amber-200">
-            <Clock size={10} /> Pending
-          </div>
-        );
+        return <StatusBadge variant="pending">Pending</StatusBadge>;
       case 'failed':
-        return (
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-bold uppercase tracking-wider border border-red-200">
-            <AlertCircle size={10} /> Failed
-          </div>
-        );
+        return <StatusBadge variant="rejected">Failed</StatusBadge>;
       default:
-        return (
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-bold uppercase tracking-wider border border-gray-200">
-            <PlayCircle size={10} /> Not Started
-          </div>
-        );
+        return <StatusBadge variant="draft">Not started</StatusBadge>;
     }
   };
 
   return (
     <CustomerLayout>
-      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div className="flex justify-between items-end">
-          <div>
-            <h1 className="text-3xl font-bold text-ns-navy tracking-tight">Assignment Ledger</h1>
-            <div className="flex items-center gap-2 mt-1">
-               <p className="text-sm text-ns-text-muted">Authorized transaction layouts pending your validation and submission.</p>
-               <span className="text-[10px] bg-ns-blue/10 text-ns-blue px-2 py-0.5 rounded-full font-bold uppercase tracking-widest border border-ns-blue/20">
-                  Authorized Entity: {user?.companyName || 'Corporate Participant'}
-               </span>
-            </div>
-          </div>
-        </div>
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="Vendor overview"
+          title={`Overview — ${user?.companyName || 'My company'}`}
+          subtitle="Authorized transaction layouts pending your validation and submission."
+        />
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-sm border border-ns-border shadow-sm flex items-center justify-between group hover:border-ns-blue transition-colors">
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold text-ns-text-muted uppercase tracking-[0.2em]">Pending Forms</p>
-              <p className="text-3xl font-bold text-ns-navy">{assignedForms.filter(f => getSubmissionStatus(f) !== 'submitted').length}</p>
-            </div>
-            <div className="w-12 h-12 bg-ns-blue/5 rounded-full flex items-center justify-center text-ns-blue group-hover:scale-110 transition-transform">
-              <FileSearch size={22} />
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-sm border border-ns-border shadow-sm flex items-center justify-between group hover:border-green-500 transition-colors">
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold text-ns-text-muted uppercase tracking-[0.2em]">Completed Tasks</p>
-              <p className="text-3xl font-bold text-ns-navy">{assignedForms.filter(f => getSubmissionStatus(f) === 'submitted').length}</p>
-            </div>
-            <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-green-600 group-hover:scale-110 transition-transform">
-              <CheckCircle2 size={22} />
-            </div>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <KPICard
+            label="Pending forms"
+            value={assignedForms.filter(f => getSubmissionStatus(f) !== 'submitted').length}
+            subtext="Awaiting action"
+            subtextVariant="warning"
+            icon={FileSearch}
+          />
+          <KPICard
+            label="Completed tasks"
+            value={assignedForms.filter(f => getSubmissionStatus(f) === 'submitted').length}
+            subtext="Submitted successfully"
+            subtextVariant="success"
+            icon={CheckCircle2}
+          />
         </div>
 
         {/* Assignments Table */}
-        <div className="bg-white rounded-sm border border-ns-border shadow-md overflow-hidden">
+        <div className="bg-white rounded-ns-md border border-ns-border shadow-md overflow-hidden">
           <div className="px-6 py-4 bg-ns-gray-bg border-b border-ns-border flex justify-between items-center">
             <span className="text-[10px] font-bold text-ns-navy uppercase tracking-[0.2em]">Assigned Transaction Profiles</span>
             <div className="flex gap-4 text-[10px] font-semibold text-ns-text-muted uppercase">
@@ -127,7 +99,7 @@ export default function CustomerDashboardPage() {
                   <TR key={form.id} className="group hover:bg-ns-light-blue/5 transition-all">
                     <TD className="py-5">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-ns-gray-bg border border-ns-border rounded-sm flex items-center justify-center text-ns-navy/30 group-hover:bg-ns-blue group-hover:text-white transition-all">
+                        <div className="w-10 h-10 bg-ns-gray-bg border border-ns-border rounded-ns-md flex items-center justify-center text-ns-navy/30 group-hover:bg-ns-blue group-hover:text-white transition-all">
                           <FileText size={18} />
                         </div>
                         <div>
@@ -146,7 +118,7 @@ export default function CustomerDashboardPage() {
                     </TD>
                     <TD className="text-center">
                       {form.currentLevel ? (
-                        <span className="text-[11px] font-bold text-ns-blue bg-ns-blue/5 px-2 py-0.5 rounded-sm border border-ns-blue/10">
+                        <span className="text-[11px] font-bold text-ns-blue bg-ns-blue/5 px-2 py-0.5 rounded-ns-md border border-ns-blue/10">
                           Level {form.currentLevel}
                         </span>
                       ) : (

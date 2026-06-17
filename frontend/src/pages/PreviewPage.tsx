@@ -34,7 +34,7 @@ function sublistColumnClass(field: Field): string {
 }
 
 const sublistThClass =
-  'p-3 text-[10px] font-black uppercase tracking-widest border-r border-white/10 last:border-0 whitespace-nowrap align-top';
+  'p-3 text-[11px] font-semibold uppercase tracking-wider border-r border-ns-border last:border-0 whitespace-nowrap align-top text-ns-text-muted';
 const sublistTdClass =
   'p-3 border-r border-ns-border last:border-0 align-top';
 
@@ -104,7 +104,7 @@ export default function PreviewPage() {
     <div className="min-h-screen bg-ns-gray-bg flex flex-col print:bg-white">
       {/* Notification Toast */}
       {notification && (
-        <div className="fixed top-20 right-6 z-[100] bg-ns-navy text-white px-6 py-3 rounded-sm shadow-2xl border-l-4 border-ns-blue animate-in fade-in slide-in-from-right-4 duration-300 flex items-center gap-3">
+        <div className="fixed top-20 right-6 z-[100] bg-ns-navy text-white px-6 py-3 rounded-ns-md shadow-2xl border-l-4 border-ns-blue animate-in fade-in slide-in-from-right-4 duration-300 flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-ns-blue animate-pulse" />
           <span className="text-xs font-bold uppercase tracking-widest">{notification.message}</span>
         </div>
@@ -134,7 +134,7 @@ export default function PreviewPage() {
           <div>
             <Label>Message</Label>
             <textarea 
-              className="w-full text-xs p-2 border border-ns-border rounded-sm focus:outline-none focus:ring-ns-blue/10 min-h-[100px] bg-white text-ns-text"
+              className="w-full text-xs p-2 border border-ns-border rounded-ns-md focus:outline-none focus:ring-ns-blue/10 min-h-[100px] bg-white text-ns-text"
               placeholder="Add an optional message..."
             />
           </div>
@@ -144,14 +144,14 @@ export default function PreviewPage() {
       {/* Top Bar */}
       <header className="bg-white border-b border-ns-border px-6 py-3 flex justify-between items-center sticky top-0 z-20 shadow-sm print:hidden">
         <div className="flex items-center gap-5">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/builder')} className="hover:bg-gray-100">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/builder')} className="hover:bg-ns-page-bg">
             <ChevronLeft size={20} />
           </Button>
           <div className="h-8 w-[1px] bg-ns-border" />
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-ns-text leading-tight">{catalogue.name}</h1>
-              <span className="px-2 py-0.5 bg-ns-light-blue text-ns-blue text-[10px] font-bold rounded-sm uppercase tracking-wider">Preview Mode</span>
+              <span className="px-2 py-0.5 bg-ns-light-blue text-ns-blue text-[10px] font-bold rounded-ns-md uppercase tracking-wider">Preview Mode</span>
             </div>
             <p className="text-[11px] text-ns-text-muted font-medium uppercase tracking-widest mt-0.5">Configuration: {currentForm.name}</p>
           </div>
@@ -167,7 +167,7 @@ export default function PreviewPage() {
             <Button 
               variant="secondary" 
               size="sm" 
-              className={cn("p-2 transition-colors", showMoreMenu && "bg-gray-100")}
+              className={cn("p-2 transition-colors", showMoreMenu && "bg-ns-page-bg")}
               onClick={() => setShowMoreMenu(!showMoreMenu)}
             >
               <MoreHorizontal size={16} />
@@ -179,7 +179,7 @@ export default function PreviewPage() {
                   className="fixed inset-0 z-30" 
                   onClick={() => setShowMoreMenu(false)} 
                 />
-                <div className="absolute right-0 mt-2 w-56 bg-white border border-ns-border rounded-sm shadow-xl z-40 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute right-0 mt-2 w-56 bg-white border border-ns-border rounded-ns-md shadow-xl z-40 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                   <div className="px-3 py-2 text-[10px] font-bold text-ns-text-muted uppercase tracking-[0.15em] border-b border-gray-50 mb-1">More Actions</div>
                   {[
                     { label: 'View Audit Trail', icon: MoreHorizontal },
@@ -214,7 +214,7 @@ export default function PreviewPage() {
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full min-w-0">
         <div className="space-y-8">
           {/* Dynamic Tabs & Sections */}
-          <div className="bg-white rounded-sm shadow-sm border border-ns-border overflow-hidden">
+          <div className="bg-white rounded-ns-md shadow-sm border border-ns-border overflow-hidden">
             <Tabs 
               tabs={currentForm.tabs.map(t => ({ id: t.id, label: t.name }))} 
               activeTab={activeTabId} 
@@ -228,7 +228,7 @@ export default function PreviewPage() {
                     <h3 className="text-[11px] font-black text-ns-text uppercase tracking-[0.2em] whitespace-nowrap">
                       {group.name}
                     </h3>
-                    <div className="h-[1px] bg-gray-100 w-full" />
+                    <div className="h-[1px] bg-ns-page-bg w-full" />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-x-16 gap-y-6">
@@ -270,10 +270,10 @@ export default function PreviewPage() {
                     <div className="h-[1px] bg-ns-blue/10 w-full" />
                   </div>
                   
-                  <div className="overflow-x-auto border border-ns-border rounded-sm bg-ns-gray-bg/50">
+                  <div className="overflow-x-auto border border-ns-border rounded-ns-md bg-ns-gray-bg/50">
                     <table className="text-left border-collapse w-max min-w-full">
                       <thead>
-                        <tr className="bg-ns-navy text-white">
+                        <tr className="bg-ns-page-bg text-ns-text-muted">
                           {sortItemFields(activeTab.itemSublist).map(field => (
                             <th key={field.id} className={sublistHeaderClass(field)}>
                               {field.label}
@@ -316,10 +316,10 @@ export default function PreviewPage() {
                     <div className="h-[1px] bg-ns-blue/10 w-full" />
                   </div>
                   
-                  <div className="overflow-x-auto border border-ns-border rounded-sm bg-ns-gray-bg/50">
+                  <div className="overflow-x-auto border border-ns-border rounded-ns-md bg-ns-gray-bg/50">
                     <table className="text-left border-collapse w-max min-w-full">
                       <thead>
-                        <tr className="bg-ns-navy text-white">
+                        <tr className="bg-ns-page-bg text-ns-text-muted">
                           {activeTab.expenseSublist.map(field => (
                             <th key={field.id} className={cn(sublistThClass, sublistColumnClass(field))}>
                               {field.label}

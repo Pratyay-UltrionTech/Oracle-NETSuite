@@ -1,11 +1,9 @@
 import * as React from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { 
-  Home, 
-  FileText, 
+import {
+  Home,
   LogOut,
-  User,
   Bell,
   Building,
   ShoppingBag,
@@ -14,16 +12,45 @@ import {
   PackageCheck,
   FileStack,
   ArrowUpRight,
-  Search,
   Settings,
-  CheckCircle,
-  Clock,
   UserCircle,
   PanelLeftClose,
   PanelLeft,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useSidebarExpanded } from '../../lib/useSidebarExpanded';
+import { StatusBadge } from '../admin';
+
+type NavItem = { name: string; icon: React.ElementType; path: string };
+
+function NavLink({
+  item,
+  isActive,
+  isExpanded,
+}: {
+  item: NavItem;
+  isActive: boolean;
+  isExpanded: boolean;
+}) {
+  return (
+    <Link
+      to={item.path}
+      className={cn(
+        'flex items-center rounded-ns-md text-sm font-medium transition-all whitespace-nowrap overflow-hidden',
+        isExpanded ? 'px-3 py-2.5 gap-3' : 'px-0 py-2.5 justify-center',
+        isActive
+          ? 'bg-ns-blue-soft text-ns-blue'
+          : 'text-ns-text-muted hover:text-ns-text hover:bg-ns-page-bg',
+      )}
+      title={!isExpanded ? item.name : ''}
+    >
+      <item.icon size={18} className={cn('flex-shrink-0', isActive ? 'text-ns-blue' : 'text-ns-text-muted')} />
+      <span className={cn('transition-all duration-300', isExpanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden')}>
+        {item.name}
+      </span>
+    </Link>
+  );
+}
 
 export default function CustomerLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, companies = [] } = useStore();
@@ -31,260 +58,171 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
   const location = useLocation();
   const { isExpanded, toggle: toggleSidebar } = useSidebarExpanded('customer-sidebar-expanded');
 
-  const company = user?.companyId ? (companies || []).find(c => c.id === user.companyId) : null;
+  const company = user?.companyId ? companies.find(c => c.id === user.companyId) : null;
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
-  const menuItems = [
-    { name: 'Dashboard', icon: Home, path: '/customer-dashboard' },
+  const mainNav: NavItem[] = [{ name: 'Overview', icon: Home, path: '/customer-dashboard' }];
+  const transactionNav: NavItem[] = [
     { name: 'Purchase Orders', icon: ShoppingBag, path: '/user/po' },
     { name: 'Sales Orders', icon: TrendingUp, path: '/user/so' },
     { name: 'Accounts Payable', icon: CreditCard, path: '/user/ap' },
     { name: 'Accounts Receivable', icon: ArrowUpRight, path: '/user/ar' },
     { name: 'Item Receipt', icon: PackageCheck, path: '/user/ir' },
     { name: 'Vendor Bills', icon: FileStack, path: '/user/vb' },
-    { name: 'Profile', icon: UserCircle, path: '/profile' },
   ];
+  const accountNav: NavItem[] = [{ name: 'Profile', icon: UserCircle, path: '/profile' }];
 
-  return (
-    <div className="h-screen bg-ns-gray-bg flex overflow-hidden">
-      {/* Sidebar */}
-      <aside 
+  const initials =
+    user?.name
+      ?.split(' ')
+      .map(n => n[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase() || 'U';
+
+  const renderSection = (label: string, items: NavItem[]) => (
+    <>
+      <div
         className={cn(
-          "bg-ns-navy h-screen flex-shrink-0 flex flex-col shadow-2xl z-30 transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] relative",
-          isExpanded ? "w-64" : "w-16"
+          'pt-4 pb-2 text-[10px] font-semibold text-ns-text-muted uppercase tracking-[0.15em] px-3',
+          isExpanded ? 'opacity-100' : 'opacity-0 h-0 pt-0 pb-0 overflow-hidden',
         )}
       >
-        <div className={cn(
-          "p-4 flex items-center transition-all duration-300 border-b border-white/5",
-          isExpanded ? "justify-between gap-2 px-4" : "justify-center px-2"
-        )}>
+        {label}
+      </div>
+      <div className="space-y-0.5">
+        {items.map(item => (
+          <NavLink
+            key={item.path}
+            item={item}
+            isActive={location.pathname === item.path}
+            isExpanded={isExpanded}
+          />
+        ))}
+      </div>
+    </>
+  );
+
+  return (
+    <div className="h-screen bg-ns-page-bg flex overflow-hidden">
+      <aside
+        className={cn(
+          'bg-ns-sidebar-bg h-screen flex-shrink-0 flex flex-col border-r border-ns-sidebar-border z-30 transition-all duration-300',
+          isExpanded ? 'w-60' : 'w-16',
+        )}
+      >
+        <div
+          className={cn(
+            'p-4 flex items-center border-b border-ns-sidebar-border',
+            isExpanded ? 'justify-between gap-2' : 'justify-center',
+          )}
+        >
           {isExpanded && (
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-8 h-8 bg-ns-blue rounded-sm flex-shrink-0 flex items-center justify-center font-bold text-lg shadow-inner text-white">N</div>
-              <span className="font-bold text-lg tracking-tight text-white italic truncate">
-                FormBridge
-              </span>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 bg-status-approved rounded-ns-md flex items-center justify-center text-xs font-bold text-white">
+                VP
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-sm text-ns-text truncate">Vendor Hub</p>
+                <p className="text-[10px] text-ns-text-muted truncate">Powered by NS Portal</p>
+              </div>
             </div>
           )}
           <button
             type="button"
             onClick={toggleSidebar}
-            className="flex-shrink-0 p-2 rounded-sm text-white/60 hover:text-white hover:bg-white/10 transition-colors"
-            title={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
+            className="p-1.5 rounded-ns-md text-ns-text-muted hover:text-ns-text hover:bg-ns-page-bg transition-colors"
             aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
-            aria-expanded={isExpanded}
           >
             {isExpanded ? <PanelLeftClose size={18} /> : <PanelLeft size={18} />}
           </button>
         </div>
-        
-        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto custom-scrollbar overflow-x-hidden">
-          <div className={cn(
-            "pt-2 text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] px-3 mb-4 transition-all duration-300 whitespace-nowrap overflow-hidden",
-            isExpanded ? "opacity-100" : "opacity-0"
-          )}>
-            Main
-          </div>
-          {menuItems.slice(0, 1).map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.name}
-                to={item.path}
-                className={cn(
-                  "flex items-center rounded-sm text-sm font-semibold transition-all group/item whitespace-nowrap overflow-hidden relative",
-                  isExpanded ? "px-3 py-2.5 gap-3" : "px-0 py-3 justify-center gap-0",
-                  isActive 
-                    ? "bg-ns-blue text-white shadow-lg shadow-ns-blue/20" 
-                    : "text-white/60 hover:text-white hover:bg-white/5"
-                )}
-                title={!isExpanded ? item.name : ""}
-              >
-                <item.icon size={18} className={cn("flex-shrink-0 transition-colors", isActive ? "text-white" : "text-white/40 group-hover/item:text-white")} />
-                <span className={cn(
-                  "transition-all duration-300 origin-left overflow-hidden",
-                  isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
-                )}>
-                  {item.name}
-                </span>
-              </Link>
-            );
-          })}
 
-          <div className={cn(
-            "pt-6 text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] px-3 mb-4 transition-all duration-300 whitespace-nowrap overflow-hidden",
-            isExpanded ? "opacity-100" : "opacity-0"
-          )}>
-            Transactions
-          </div>
-          {menuItems.slice(1, 7).map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.name}
-                to={item.path}
-                className={cn(
-                   "flex items-center rounded-sm text-sm font-semibold transition-all group/item whitespace-nowrap overflow-hidden relative",
-                   isExpanded ? "px-3 py-2.5 gap-3" : "px-0 py-3 justify-center gap-0",
-                  isActive 
-                    ? "bg-ns-blue text-white shadow-lg shadow-ns-blue/20" 
-                    : "text-white/60 hover:text-white hover:bg-white/5"
-                )}
-                title={!isExpanded ? item.name : ""}
-              >
-                <item.icon size={18} className={cn("flex-shrink-0 transition-colors", isActive ? "text-white" : "text-white/40 group-hover/item:text-white")} />
-                <span className={cn(
-                  "transition-all duration-300 origin-left overflow-hidden",
-                  isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
-                )}>
-                  {item.name}
-                </span>
-              </Link>
-            );
-          })}
-
-          <div className={cn(
-            "pt-6 text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] px-3 mb-4 transition-all duration-300 whitespace-nowrap overflow-hidden",
-            isExpanded ? "opacity-100" : "opacity-0"
-          )}>
-            Account
-          </div>
-          {menuItems.slice(7).map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.name}
-                to={item.path}
-                className={cn(
-                   "flex items-center rounded-sm text-sm font-semibold transition-all group/item whitespace-nowrap overflow-hidden relative",
-                   isExpanded ? "px-3 py-2.5 gap-3" : "px-0 py-3 justify-center gap-0",
-                  isActive 
-                    ? "bg-ns-blue text-white shadow-lg shadow-ns-blue/20" 
-                    : "text-white/60 hover:text-white hover:bg-white/5"
-                )}
-                title={!isExpanded ? item.name : ""}
-              >
-                <item.icon size={18} className={cn("flex-shrink-0 transition-colors", isActive ? "text-white" : "text-white/40 group-hover/item:text-white")} />
-                <span className={cn(
-                  "transition-all duration-300 origin-left overflow-hidden",
-                  isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
-                )}>
-                  {item.name}
-                </span>
-              </Link>
-            );
-          })}
+        <nav className="flex-1 px-3 py-3 overflow-y-auto custom-scrollbar">
+          {renderSection('My account', mainNav)}
+          {renderSection('Transactions', transactionNav)}
+          {renderSection('Help', accountNav)}
         </nav>
-        
-        <div className="p-4 bg-black/20 mt-auto border-t border-white/5 overflow-hidden">
-          <div className={cn("flex items-center mb-4 transition-all duration-300", isExpanded ? "gap-3 px-2" : "gap-0 px-0 justify-center")}>
-            <div className="w-9 h-9 flex-shrink-0 rounded-full bg-ns-blue/20 border border-ns-blue/30 flex items-center justify-center text-ns-blue font-bold text-xs">
-              {user?.name?.substring(0, 1)}
+
+        <div className="p-3 border-t border-ns-sidebar-border">
+          <div className={cn('flex items-center mb-3', isExpanded ? 'gap-2.5 px-1' : 'justify-center')}>
+            <div className="w-8 h-8 rounded-full bg-status-approved text-white flex items-center justify-center text-xs font-semibold">
+              {initials}
             </div>
-            <div className={cn(
-              "flex flex-col overflow-hidden transition-all duration-300 origin-left",
-              isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
-            )}>
-              <span className="text-xs font-bold text-white truncate">{user?.name}</span>
-              <span className="text-[10px] text-white/40 font-semibold uppercase tracking-wider truncate">
-                {user?.role === 'super_admin' ? 'System Overlord' : 
-                 user?.role === 'client_admin' ? 'Entity Admin' :
-                 user?.role === 'manager' ? 'Protocol Manager' : 'Operational User'}
-              </span>
-            </div>
+            {isExpanded && (
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-ns-text truncate">{user?.name}</p>
+                <p className="text-[10px] text-ns-text-muted truncate">{user?.companyName}</p>
+              </div>
+            )}
           </div>
           {(user?.role === 'super_admin' || user?.role === 'client_admin') && (
-            <button 
+            <button
               onClick={() => navigate('/dashboard')}
               className={cn(
-                "w-full flex items-center justify-center transition-all rounded-sm border border-ns-blue/30 bg-ns-blue/10 hover:bg-ns-blue/20 mb-2",
-                isExpanded ? "gap-2 py-2 px-4 shadow-inner" : "gap-0 py-3 px-0 border-none"
+                'w-full flex items-center text-ns-blue hover:bg-ns-blue-soft transition-all rounded-ns-md text-xs font-medium mb-2',
+                isExpanded ? 'gap-2 py-2 px-3' : 'justify-center py-2',
               )}
-              title={!isExpanded ? "Admin Dashboard" : ""}
             >
-              <Settings size={14} className="text-ns-blue" />
-              <span className={cn(
-                "text-[10px] font-bold text-ns-blue transition-all duration-300 overflow-hidden uppercase tracking-widest",
-                isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
-              )}>
-                Admin Control
-              </span>
+              <Settings size={14} />
+              {isExpanded && <span>Admin console</span>}
             </button>
           )}
-          <button 
+          <button
             onClick={handleLogout}
             className={cn(
-              "w-full flex items-center justify-center transition-all rounded-sm border border-white/5",
-              isExpanded ? "gap-2 py-2 px-4 shadow-inner bg-white/5" : "gap-0 py-3 px-0 bg-transparent border-none"
+              'w-full flex items-center text-ns-text-muted hover:text-ns-text hover:bg-ns-page-bg transition-all rounded-ns-md text-xs font-medium',
+              isExpanded ? 'gap-2 py-2 px-3' : 'justify-center py-2',
             )}
-            title={!isExpanded ? "Sign Out" : ""}
           >
-            <LogOut size={14} className="text-white/60" />
-            <span className={cn(
-              "text-xs font-bold text-white/60 transition-all duration-300 overflow-hidden",
-              isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
-            )}>
-              Sign Out
-            </span>
+            <LogOut size={14} />
+            {isExpanded && <span>Sign out</span>}
           </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Header */}
-        <header className="h-16 bg-white border-b border-ns-border flex items-center justify-between px-8 z-20">
-          <div className="flex items-center gap-4 flex-1">
+        <header className="h-14 bg-white border-b border-ns-border flex items-center justify-between px-6 z-20">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             {!isExpanded && (
               <button
                 type="button"
                 onClick={toggleSidebar}
-                className="p-2 rounded-sm text-ns-text-muted hover:text-ns-blue hover:bg-ns-blue/5 transition-colors"
-                title="Expand sidebar"
+                className="p-2 rounded-ns-md text-ns-text-muted hover:text-ns-blue hover:bg-ns-blue-soft transition-colors"
                 aria-label="Expand sidebar"
               >
                 <PanelLeft size={18} />
               </button>
             )}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-ns-gray-bg rounded-sm border border-ns-border">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-ns-page-bg rounded-ns-md border border-ns-border">
               <Building size={14} className="text-ns-blue" />
-              <span className="text-xs font-bold text-ns-navy">{user?.companyName || 'Authorized Entity'}</span>
-            </div>
-            <div className="relative max-w-xs w-full ml-4">
-              <Search className="absolute left-3 top-2.5 text-gray-400" size={14} />
-              <input 
-                type="text" 
-                placeholder="Search transactions..." 
-                className="w-full pl-9 pr-4 py-2 text-xs bg-ns-gray-bg border border-ns-border rounded-sm focus:outline-none focus:border-ns-blue transition-all"
-              />
+              <span className="text-xs font-medium text-ns-text">{company?.name || user?.companyName || 'My company'}</span>
             </div>
           </div>
-          
-          <div className="flex items-center gap-6">
-            <button className="text-ns-text-muted hover:text-ns-blue transition-colors p-1 relative">
+
+          <div className="flex items-center gap-3">
+            <button className="relative p-2 text-ns-text-muted hover:text-ns-text hover:bg-ns-page-bg rounded-ns-md transition-colors">
               <Bell size={18} />
-              <span className="absolute top-0 right-0 w-2 h-2 bg-ns-blue rounded-full border-2 border-white"></span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-status-pending rounded-full border-2 border-white" />
             </button>
-            <div className="h-4 w-[1px] bg-ns-border" />
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-ns-text-muted uppercase tracking-widest leading-none">Operational Protocol</span>
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            </div>
-            <Link to="/profile" className="text-ns-text-muted hover:text-ns-navy transition-colors">
-              <Settings size={18} />
+            <StatusBadge variant="synced" dot className="hidden sm:inline-flex">
+              NetSuite Live
+            </StatusBadge>
+            <Link
+              to="/profile"
+              className="w-8 h-8 rounded-full bg-status-approved text-white flex items-center justify-center text-xs font-semibold"
+            >
+              {initials}
             </Link>
           </div>
         </header>
 
-        {/* Viewport */}
-        <main className="flex-1 overflow-auto p-8 bg-ns-light-blue custom-scrollbar">
-          <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {children}
-          </div>
+        <main className="flex-1 overflow-auto bg-ns-page-bg custom-scrollbar">
+          <div className="max-w-[1400px] mx-auto p-6 lg:p-8 animate-in fade-in duration-300">{children}</div>
         </main>
       </div>
     </div>

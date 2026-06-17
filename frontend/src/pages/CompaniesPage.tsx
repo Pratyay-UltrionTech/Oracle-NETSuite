@@ -3,11 +3,12 @@ import { useStore } from '../store/useStore';
 import AdminLayout from '../components/layout/AdminLayout';
 import { Button, Input, Label } from '../components/ui/Base';
 import { Table, THead, TBody, TR, TH, TD, Modal, ConfirmModal } from '../components/ui/Complex';
-import { Building2, Plus, Users, Search, MoreHorizontal, ArrowRight, Trash2, GitBranch } from 'lucide-react';
+import { Building2, Plus, Users, Search, Trash2, GitBranch } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { PageHeader, KPICard, Card } from '../components/admin';
 
 export default function CompaniesPage() {
-  const { companies, users, addCompany, deleteCompany, fetchCompanies, fetchUsers, isLoading } = useStore();
+  const { companies, users, addCompany, deleteCompany, fetchCompanies, fetchUsers } = useStore();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -19,13 +20,12 @@ export default function CompaniesPage() {
     fetchUsers();
   }, [fetchCompanies, fetchUsers]);
 
-  const filteredCompanies = companies.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCompanies = companies.filter(c =>
+    c.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const getEmployeeCount = (companyId: string) => {
-    return users.filter(u => u.companyId === companyId).length;
-  };
+  const getEmployeeCount = (companyId: string) => users.filter(u => u.companyId === companyId).length;
+  const totalEmployees = companies.reduce((acc, c) => acc + getEmployeeCount(c.id), 0);
 
   const handleAddCompany = async () => {
     if (!newCompanyName.trim()) return;
@@ -36,36 +36,42 @@ export default function CompaniesPage() {
 
   return (
     <AdminLayout>
-      <div className="space-y-8">
-        <div className="flex justify-between items-end">
-          <div>
-            <div className="flex items-center gap-2 text-ns-blue mb-1">
-              <Building2 size={16} />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Organization Management</span>
-            </div>
-            <h1 className="text-3xl font-bold text-ns-text">Client Companies</h1>
-            <p className="text-sm text-ns-text-muted mt-1">Manage corporate entities and their authorized personnel.</p>
-          </div>
-          <Button onClick={() => setIsModalOpen(true)} className="gap-2 px-6 h-10">
-            <Plus size={18} />
-            Register Company
-          </Button>
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="Organization management"
+          title="Company management"
+          subtitle="Manage corporate entities and their authorized personnel."
+          actions={
+            <Button onClick={() => setIsModalOpen(true)} className="gap-2">
+              <Plus size={18} />
+              Register company
+            </Button>
+          }
+        />
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <KPICard label="Total companies" value={companies.length} subtext="Active partner entities" subtextVariant="info" />
+          <KPICard label="Total employees" value={totalEmployees} subtext="Across all entities" subtextVariant="neutral" />
+          <KPICard
+            label="Avg. staff per company"
+            value={companies.length ? Math.round(totalEmployees / companies.length) : 0}
+            subtext="Entity size metric"
+            subtextVariant="neutral"
+          />
         </div>
 
-        {/* Search Bar */}
-        <div className="bg-white p-6 rounded-sm border border-ns-border ns-panel-shadow">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={14} />
-            <Input 
-              placeholder="Search by company name..." 
-              className="pl-9 h-10"
+        <Card padding="md">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-2.5 text-ns-text-muted" size={14} />
+            <Input
+              placeholder="Search by company name…"
+              className="pl-9"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
-        </div>
+        </Card>
 
-        {/* Table */}
         <Table>
           <THead>
             <TR>
@@ -82,7 +88,7 @@ export default function CompaniesPage() {
                 <TD className="text-center text-gray-400 font-mono text-[11px]">{index + 1}</TD>
                 <TD className="py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-sm bg-ns-gray-bg border border-ns-border flex items-center justify-center text-ns-navy/40 font-bold text-xs uppercase">
+                    <div className="w-10 h-10 rounded-ns-md bg-ns-gray-bg border border-ns-border flex items-center justify-center text-ns-navy/40 font-bold text-xs uppercase">
                       {company.name.substring(0, 2)}
                     </div>
                     <div>
@@ -97,10 +103,10 @@ export default function CompaniesPage() {
                   </div>
                 </TD>
                 <TD className="text-center">
-                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-ns-blue/10 text-ns-blue text-[10px] font-bold border border-ns-blue/20">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-status-synced-bg text-status-synced text-xs font-semibold border border-status-synced/20">
                     <Users size={10} />
-                    {getEmployeeCount(company.id)} Employees
-                  </div>
+                    {getEmployeeCount(company.id)} employees
+                  </span>
                 </TD>
                 <TD className="text-[11px] text-ns-text-muted font-semibold">{company.createdAt}</TD>
                 <TD className="px-6">
@@ -125,7 +131,7 @@ export default function CompaniesPage() {
                       variant="ghost" 
                       size="icon" 
                       onClick={() => setDeleteId(company.id)}
-                      className="h-8 w-8 text-red-400 hover:bg-red-500 hover:text-white rounded-full transition-all"
+                      className="h-8 w-8 text-red-400 hover:bg-status-rejected-bg0 hover:text-white rounded-full transition-all"
                     >
                       <Trash2 size={13} />
                     </Button>

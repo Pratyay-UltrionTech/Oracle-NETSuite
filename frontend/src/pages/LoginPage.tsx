@@ -7,16 +7,12 @@ import { LogIn, ShieldCheck, Mail, ArrowLeft, Send, CheckCircle2 } from 'lucide-
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login, user, isLoading, error: storeError, forgotPassword } = useStore();
-  
-  // Login State
+
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
-  
-  // Forgot Password State
   const [isForgotMode, setIsForgotMode] = React.useState(false);
   const [forgotEmail, setForgotEmail] = React.useState('');
-  const [forgotStatus, setForgotStatus] = React.useState<{ type: 'success' | 'error', message: string } | null>(null);
-  
+  const [forgotStatus, setForgotStatus] = React.useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [errorSpace, setErrorSpace] = React.useState('');
 
   React.useEffect(() => {
@@ -52,134 +48,129 @@ export default function LoginPage() {
   const currentError = storeError || errorSpace;
 
   return (
-    <div className="min-h-screen bg-ns-light-blue flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-ns-blue/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-ns-blue/5 rounded-full blur-[120px]" />
-      </div>
-
-      <div className="w-full max-w-md bg-white rounded-sm shadow-2xl overflow-hidden border border-ns-border relative z-10 animate-in fade-in zoom-in-95 duration-500">
-        <div className="bg-ns-blue p-8 text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-ns-blue-dark" />
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-ns-blue-dark rounded-sm mb-4 shadow-xl transform transition-transform hover:scale-105 duration-300">
-            <ShieldCheck size={32} className="text-white" />
+    <div className="min-h-screen bg-ns-page-bg flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-ns-card ns-panel-shadow-lg overflow-hidden border border-ns-border">
+        <div className="p-8 text-center border-b border-ns-border">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-ns-blue rounded-ns-md mb-4">
+            <ShieldCheck size={28} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">NetSuite Form Bridge</h1>
-          <p className="text-white/60 text-xs font-bold uppercase tracking-[0.2em] mt-2">Enterprise Access Protocol</p>
+          <h1 className="text-xl font-bold text-ns-text">NS Portal</h1>
+          <p className="text-sm text-ns-text-muted mt-1">Sign in to your account</p>
         </div>
-        
+
         <div className="p-8">
           {!isForgotMode ? (
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
               {currentError && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-sm animate-in shake duration-300">
+                <div className="p-3 bg-status-rejected-bg border border-status-rejected/20 text-status-rejected text-sm rounded-ns-md">
                   {currentError}
                 </div>
               )}
-              
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-ns-blue">Personnel Email</Label>
+
+              <div className="space-y-1.5">
+                <Label>Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 text-gray-400" size={16} />
-                  <Input 
-                    type="email" 
-                    placeholder="Enter email address"
-                    value={email} 
-                    onChange={(e) => setEmail(e.target.value)} 
-                    required 
-                    className="h-11 pl-10 bg-ns-light-blue border-ns-border focus:bg-white transition-all"
+                  <Mail className="absolute left-3 top-2.5 text-ns-text-muted" size={16} />
+                  <Input
+                    type="email"
+                    placeholder="you@company.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                    className="pl-10"
                   />
                 </div>
               </div>
-              
-              <div className="space-y-2">
+
+              <div className="space-y-1.5">
                 <div className="flex justify-between items-center">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-ns-blue">Security Key</Label>
-                  <button 
-                    type="button" 
+                  <Label>Password</Label>
+                  <button
+                    type="button"
                     onClick={() => setIsForgotMode(true)}
-                    className="text-[10px] font-bold text-ns-blue hover:underline uppercase tracking-widest"
+                    className="text-xs font-medium text-ns-blue hover:underline"
                   >
-                    Forgot?
+                    Forgot password?
                   </button>
                 </div>
-                <Input 
-                  type="password" 
+                <Input
+                  type="password"
                   placeholder="Enter password"
-                  value={password} 
-                  onChange={(e) => setPassword(e.target.value)} 
-                  required 
-                  className="h-11 bg-ns-light-blue border-ns-border focus:bg-white transition-all"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
                 />
               </div>
-              
-              <Button type="submit" disabled={isLoading} className="w-full h-11 bg-ns-blue hover:bg-ns-blue-dark text-sm font-bold gap-2 shadow-lg shadow-ns-blue/20 uppercase tracking-widest">
+
+              <Button type="submit" disabled={isLoading} className="w-full gap-2">
                 {isLoading ? (
                   <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <>
                     <LogIn size={18} />
-                    Authenticate
+                    Sign in
                   </>
                 )}
               </Button>
             </form>
           ) : (
-            <form onSubmit={handleForgotSubmit} className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-              <button 
-                type="button" 
+            <form onSubmit={handleForgotSubmit} className="space-y-5">
+              <button
+                type="button"
                 onClick={() => setIsForgotMode(false)}
-                className="flex items-center gap-2 text-[10px] font-bold text-ns-text-muted hover:text-ns-blue uppercase tracking-widest mb-2 transition-colors"
+                className="flex items-center gap-2 text-xs font-medium text-ns-text-muted hover:text-ns-blue mb-2"
               >
                 <ArrowLeft size={14} />
-                Return to Access
+                Back to sign in
               </button>
-              
-              <div className="space-y-2 text-center pb-2">
-                <h2 className="text-lg font-bold text-ns-blue">Reset Protocol</h2>
-                <p className="text-xs text-ns-text-muted">Enter your email to receive an authorization link.</p>
+
+              <div className="text-center pb-2">
+                <h2 className="text-lg font-semibold text-ns-text">Reset password</h2>
+                <p className="text-sm text-ns-text-muted mt-1">Enter your email to receive a reset link.</p>
               </div>
 
               {forgotStatus && (
-                <div className={`p-4 rounded-sm flex items-start gap-3 border ${
-                  forgotStatus.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'
-                }`}>
+                <div
+                  className={`p-4 rounded-ns-md flex items-start gap-3 border ${
+                    forgotStatus.type === 'success'
+                      ? 'bg-status-approved-bg border-status-approved/20 text-status-approved'
+                      : 'bg-status-rejected-bg border-status-rejected/20 text-status-rejected'
+                  }`}
+                >
                   {forgotStatus.type === 'success' ? <CheckCircle2 size={18} /> : <LogIn size={18} />}
                   <p className="text-sm font-medium">{forgotStatus.message}</p>
                 </div>
               )}
-              
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-ns-blue">Personnel Email</Label>
-                <Input 
-                  type="email" 
-                  placeholder="Enter email address"
-                  value={forgotEmail} 
-                  onChange={(e) => setForgotEmail(e.target.value)} 
-                  required 
-                  className="h-11 bg-ns-light-blue border-ns-border focus:bg-white transition-all"
+
+              <div className="space-y-1.5">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  placeholder="you@company.com"
+                  value={forgotEmail}
+                  onChange={e => setForgotEmail(e.target.value)}
+                  required
                 />
               </div>
-              
-              <Button type="submit" disabled={isLoading} className="w-full h-11 bg-ns-blue hover:bg-ns-blue-dark text-sm font-bold gap-2 shadow-lg shadow-ns-blue/20 uppercase tracking-widest">
+
+              <Button type="submit" disabled={isLoading} className="w-full gap-2">
                 {isLoading ? (
                   <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <>
                     <Send size={18} />
-                    Send Link
+                    Send reset link
                   </>
                 )}
               </Button>
             </form>
           )}
         </div>
-        
-        <div className="bg-ns-gray-bg px-8 py-4 border-t border-ns-border flex justify-between items-center text-[9px] text-ns-text-muted font-bold uppercase tracking-widest">
-          <span>Secure Protocol v2.5</span>
-          <span className="flex items-center gap-1">
-            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+
+        <div className="bg-ns-page-bg px-8 py-3 border-t border-ns-border flex justify-between items-center text-xs text-ns-text-muted">
+          <span>Secure access</span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 bg-status-approved rounded-full" />
             Operational
           </span>
         </div>

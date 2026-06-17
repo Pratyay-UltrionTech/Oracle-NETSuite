@@ -3,7 +3,13 @@ import { useStore } from '../store/useStore';
 import AdminLayout from '../components/layout/AdminLayout';
 import { Table, THead, TBody, TR, TH, TD, Modal } from '../components/ui/Complex';
 import { Database, Search, FileJson, Calendar, Building2, User, FileText, CheckCircle2, XCircle, Clock } from 'lucide-react';
-import { Button, Input, Select, Label } from '../components/ui/Base';
+import {
+  PageHeader,
+  KPICard,
+  StatusBadge,
+  submissionStatusVariant,
+} from '../components/admin';
+import { Button, Input } from '../components/ui/Base';
 import { cn } from '../lib/utils';
 
 export default function AdminSubmissionsPage() {
@@ -31,10 +37,21 @@ export default function AdminSubmissionsPage() {
            userName.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
+  const isSuperAdmin = user?.role === 'super_admin';
+  const pendingCount = submissions.filter(s => s.status === 'pending').length;
+  const syncedCount = submissions.filter(s => s.status === 'SYNCED_TO_NETSUITE' || s.status === 'approved').length;
+  const failedCount = submissions.filter(s => s.status === 'NETSUITE_SYNC_FAILED' || s.status === 'rejected').length;
+
   return (
     <AdminLayout>
-      <div className="space-y-8">
-        <div className="flex justify-between items-end">
+      <div className="space-y-6">
+        {isSuperAdmin ? (
+          <PageHeader
+            eyebrow="Audit logs"
+            title="Transaction audit log"
+            subtitle="Review finalized submissions from customer environments across all entities."
+          />
+        ) : (
           <div>
             <div className="flex items-center gap-2 text-ns-blue mb-1">
               <Database size={16} />
@@ -42,27 +59,30 @@ export default function AdminSubmissionsPage() {
             </div>
             <h1 className="text-3xl font-bold text-ns-text">Incoming Data Entries</h1>
             <p className="text-sm text-ns-text-muted mt-1">
-              {user?.role === 'super_admin' 
-                ? 'Review finalized submissions from customer environments across all entities.' 
-                : 'Review finalized submissions from customer environments within your organizational scope.'}
+              Review finalized submissions from customer environments within your organizational scope.
             </p>
           </div>
-        </div>
+        )}
 
-        {/* Filters */}
-        <div className="bg-white p-6 rounded-sm border border-ns-border ns-panel-shadow">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={14} />
-            <Input 
-              placeholder="Search by form, company, or employee..." 
-              className="pl-9 h-11"
+        {isSuperAdmin && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <KPICard label="Total submissions" value={submissions.length} subtext="All time" subtextVariant="neutral" />
+            <KPICard label="Pending approval" value={pendingCount} subtext="Awaiting action" subtextVariant="warning" />
+            <KPICard label="Synced to NetSuite" value={syncedCount} subtext={`${failedCount} failures`} subtextVariant={failedCount > 0 ? 'danger' : 'success'} />
+          </div>
+        )}
+
+        <div className="bg-white p-4 rounded-ns-card border border-ns-border ns-panel-shadow">
+          <div className="relative max-w-lg">
+            <Search className="absolute left-3 top-2.5 text-ns-text-muted" size={14} />
+            <Input
+              placeholder="Search by form, company, or employee…"
+              className="pl-9"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
-
-        {/* Table */}
         <Table>
           <THead>
             <TR>
@@ -80,7 +100,7 @@ export default function AdminSubmissionsPage() {
               <TR key={sub.id} className="group hover:bg-ns-light-blue/5 transition-all">
                 <TD className="py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-ns-gray-bg border border-ns-border rounded-sm flex items-center justify-center text-ns-blue shadow-inner group-hover:bg-ns-navy group-hover:text-white transition-all">
+                    <div className="w-10 h-10 bg-ns-gray-bg border border-ns-border rounded-ns-md flex items-center justify-center text-ns-blue shadow-inner group-hover:bg-ns-navy group-hover:text-white transition-all">
                       <FileJson size={18} />
                     </div>
                     <div>
@@ -103,21 +123,17 @@ export default function AdminSubmissionsPage() {
                  </TD>
                  <TD>
                     <div className="flex flex-col gap-1">
-                      <span className={cn(
-                        "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider inline-block w-fit",
-                        sub.status === 'submitted' || sub.status === 'SYNCED_TO_NETSUITE' || sub.status === 'approved' ? "bg-green-100 text-green-700" : 
-                        sub.status === 'rejected' || sub.status === 'NETSUITE_SYNC_FAILED' ? "bg-red-100 text-red-700" :
-                        sub.status === 'pending' ? "bg-amber-100 text-amber-700" :
-                        "bg-gray-100 text-gray-700"
-                      )}>
+                      <StatusBadge variant={submissionStatusVariant(sub.status)}>
                         {sub.status === 'SYNCED_TO_NETSUITE'
-                          ? 'Synced to NetSuite'
+                          ? 'Synced'
                           : sub.status === 'submitted'
-                            ? 'Synchronized'
+                            ? 'Approved'
                             : sub.status === 'NETSUITE_SYNC_FAILED'
-                              ? 'Sync Failed'
-                              : sub.status}
-                      </span>
+                              ? 'Rejected'
+                              : sub.status === 'pending'
+                                ? 'Pending'
+                                : sub.status}
+                      </StatusBadge>
                       {(sub.netsuiteId || sub.poId || sub.billId) && (
                         <span className="text-[9px] font-mono text-ns-text-muted">
                           {sub.billId ? `Bill ID: ${sub.billId}` : `NS ID: ${sub.poId || sub.netsuiteId}`}
@@ -136,7 +152,7 @@ export default function AdminSubmissionsPage() {
                  <TD>
                     {sub.status === 'pending' ? (
                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-ns-navy bg-ns-navy/5 px-2 py-0.5 rounded-sm">L{sub.currentLevel}</span>
+                          <span className="text-xs font-bold text-ns-navy bg-ns-navy/5 px-2 py-0.5 rounded-ns-md">L{sub.currentLevel}</span>
                           <div className="flex -space-x-1.5">
                              {sub.approvals?.find((l: any) => l.level === sub.currentLevel)?.approvers.map((a: any) => (
                                 <div 
@@ -165,7 +181,7 @@ export default function AdminSubmissionsPage() {
                         <Button 
                           onClick={() => retrySubmission(sub.id)}
                           size="sm" 
-                          className="h-8 px-3 gap-1 text-[10px] font-bold uppercase tracking-widest bg-amber-500 hover:bg-amber-600 border-none"
+                          className="h-8 px-3 gap-1 text-[10px] font-bold uppercase tracking-widest bg-status-pending-bg0 hover:bg-amber-600 border-none"
                         >
                           Retry Sync <Database size={12} />
                         </Button>
@@ -207,7 +223,7 @@ export default function AdminSubmissionsPage() {
             
             return (
               <div className="space-y-6">
-                <div className="bg-ns-gray-bg p-4 rounded-sm border border-ns-border flex justify-between items-center">
+                <div className="bg-ns-gray-bg p-4 rounded-ns-md border border-ns-border flex justify-between items-center">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-ns-text-muted">Target Blueprint</p>
                     <p className="font-bold text-ns-navy">{activeSub.formName || 'Unknown'}</p>
@@ -227,26 +243,26 @@ export default function AdminSubmissionsPage() {
                            <div className={cn(
                               "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-sm ring-4 ring-white",
                               level.level < (activeSub.currentLevel || 99) || activeSub.status === 'approved' || activeSub.status === 'submitted' || activeSub.status === 'SYNCED_TO_NETSUITE'
-                                 ? "bg-green-100 text-green-700" 
+                                 ? "bg-status-approved-bg text-status-approved" 
                                  : level.level === activeSub.currentLevel && activeSub.status === 'pending'
                                     ? "bg-ns-blue text-white"
                                     : level.level === activeSub.currentLevel && activeSub.status === 'rejected'
-                                       ? "bg-red-100 text-red-700"
-                                       : "bg-gray-100 text-gray-400"
+                                       ? "bg-status-rejected-bg text-status-rejected"
+                                       : "bg-ns-page-bg text-gray-400"
                            )}>
                               {level.level < (activeSub.currentLevel || 99) || activeSub.status === 'approved' || activeSub.status === 'submitted' || activeSub.status === 'SYNCED_TO_NETSUITE' ? <CheckCircle2 size={16} /> : 
                                level.level === activeSub.currentLevel && activeSub.status === 'rejected' ? <XCircle size={16} /> :
                                level.level}
                            </div>
                            {level.level !== activeSub.approvals?.length && (
-                              <div className={cn("w-[2px] h-full my-1 rounded-full", level.level < (activeSub.currentLevel || 99) ? "bg-green-200" : "bg-gray-100")} />
+                              <div className={cn("w-[2px] h-full my-1 rounded-full", level.level < (activeSub.currentLevel || 99) ? "bg-green-200" : "bg-ns-page-bg")} />
                            )}
                         </div>
                         <div className="flex-1 pb-4">
                            <p className="text-xs font-bold text-ns-navy mb-2">Level {level.level} Approvers</p>
                            <div className="space-y-2">
                              {level.approvers.map((approver: any) => (
-                                <div key={approver.userId} className="bg-white border border-ns-border rounded-sm p-3 flex justify-between items-center shadow-sm">
+                                <div key={approver.userId} className="bg-white border border-ns-border rounded-ns-md p-3 flex justify-between items-center shadow-sm">
                                    <div className="flex items-center gap-2">
                                       <div className="w-6 h-6 rounded-full bg-ns-gray-bg flex items-center justify-center text-[10px] font-bold text-ns-navy">
                                          {approver.name[0]}
@@ -255,9 +271,9 @@ export default function AdminSubmissionsPage() {
                                    </div>
                                    <div className="flex items-center gap-2">
                                       {approver.status === 'approved' ? (
-                                        <span className="text-xs font-bold text-green-600 flex items-center gap-1"><CheckCircle2 size={14} /> Approved</span>
+                                        <span className="text-xs font-bold text-status-approved flex items-center gap-1"><CheckCircle2 size={14} /> Approved</span>
                                       ) : approver.status === 'rejected' ? (
-                                        <span className="text-xs font-bold text-red-600 flex items-center gap-1"><XCircle size={14} /> Rejected</span>
+                                        <span className="text-xs font-bold text-status-rejected flex items-center gap-1"><XCircle size={14} /> Rejected</span>
                                       ) : (
                                         <span className="text-xs font-bold text-ns-text-muted flex items-center gap-1"><Clock size={14} /> Pending</span>
                                       )}
@@ -272,7 +288,7 @@ export default function AdminSubmissionsPage() {
                       </div>
                     ))}
                     {(!activeSub.approvals || activeSub.approvals.length === 0) && (
-                      <div className="p-8 text-center text-ns-text-muted bg-ns-gray-bg rounded-sm">
+                      <div className="p-8 text-center text-ns-text-muted bg-ns-gray-bg rounded-ns-md">
                         <p className="text-xs uppercase font-bold tracking-widest">No approval workflow assigned</p>
                       </div>
                     )}

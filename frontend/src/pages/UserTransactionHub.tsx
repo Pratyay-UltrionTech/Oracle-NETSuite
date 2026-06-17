@@ -16,8 +16,8 @@ import {
   LayoutGrid,
   History
 } from 'lucide-react';
+import { PageHeader, KPICard } from '../components/admin';
 import { cn } from '../lib/utils';
-import { TransactionType } from '../types';
 import { slugToTransactionType, TRANSACTION_REGISTRY } from '../lib/transactionRegistry';
 
 export default function UserTransactionHub() {
@@ -51,13 +51,13 @@ export default function UserTransactionHub() {
       case 'completed':
       case 'approved':
         return (
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-wider border border-green-200">
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-status-approved-bg text-status-approved text-[10px] font-bold uppercase tracking-wider border border-green-200">
             <CheckCircle2 size={10} /> {status === 'submitted' || status.toLowerCase() === 'synced_to_netsuite' ? 'Completed' : 'Approved'}
           </div>
         );
       case 'pending':
         return (
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider border border-amber-200">
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-status-pending-bg text-status-pending text-[10px] font-bold uppercase tracking-wider border border-amber-200">
             <Clock size={10} /> Pending
           </div>
         );
@@ -65,13 +65,13 @@ export default function UserTransactionHub() {
       case 'failed':
       case 'netsuite_sync_failed':
         return (
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-bold uppercase tracking-wider border border-red-200">
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-status-rejected-bg text-status-rejected text-[10px] font-bold uppercase tracking-wider border border-red-200">
             <AlertCircle size={10} /> {status === 'rejected' ? 'Rejected' : status === 'netsuite_sync_failed' ? 'Sync Failed' : 'Failed'}
           </div>
         );
       default:
         return (
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-bold uppercase tracking-wider border border-gray-200">
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-ns-page-bg text-gray-500 text-[10px] font-bold uppercase tracking-wider border border-gray-200">
             <PlayCircle size={10} /> {status}
           </div>
         );
@@ -80,79 +80,23 @@ export default function UserTransactionHub() {
 
   return (
     <CustomerLayout>
-      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div className="flex justify-between items-end">
-          <div>
-            <h1 className="text-3xl font-bold text-ns-navy tracking-tight">{fullTitle} Hub</h1>
-            <p className="text-sm text-ns-text-muted mt-1">Manage and submit {fullTitle.toLowerCase()} transactions using authorized templates.</p>
-          </div>
-        </div>
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="Transactions"
+          title={`${fullTitle} hub`}
+          subtitle={`Manage and submit ${fullTitle.toLowerCase()} transactions using authorized templates.`}
+        />
 
-        {/* Stats Grid */}
-        <div className={cn(
-          'grid grid-cols-1 gap-6',
-          statLabels?.drafts ? 'md:grid-cols-5' : 'md:grid-cols-4',
-        )}>
-          <div className="bg-white p-6 rounded-sm border border-ns-border shadow-sm flex items-center justify-between">
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold text-ns-text-muted uppercase tracking-[0.2em]">
-                {statLabels?.total ?? 'Total Submissions'}
-              </p>
-              <p className="text-3xl font-bold text-ns-navy">{stats?.total || 0}</p>
-            </div>
-            <div className="w-12 h-12 bg-ns-blue/5 rounded-full flex items-center justify-center text-ns-blue">
-              <LayoutGrid size={22} />
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-sm border border-ns-border shadow-sm flex items-center justify-between">
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold text-ns-text-muted uppercase tracking-[0.2em]">
-                {statLabels?.pending ?? 'Pending'}
-              </p>
-              <p className="text-3xl font-bold text-ns-navy">{stats?.pending || 0}</p>
-            </div>
-            <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-600">
-              <Clock size={22} />
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-sm border border-ns-border shadow-sm flex items-center justify-between">
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold text-ns-text-muted uppercase tracking-[0.2em]">
-                {statLabels?.approved ?? 'Approved'}
-              </p>
-              <p className="text-3xl font-bold text-ns-navy">{stats?.approved || 0}</p>
-            </div>
-            <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-green-600">
-              <CheckCircle2 size={22} />
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-sm border border-ns-border shadow-sm flex items-center justify-between">
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold text-ns-text-muted uppercase tracking-[0.2em]">
-                {statLabels?.rejected ?? 'Rejected'}
-              </p>
-              <p className="text-3xl font-bold text-ns-navy">{stats?.rejected || 0}</p>
-            </div>
-            <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-red-600">
-              <AlertCircle size={22} />
-            </div>
-          </div>
+        <div className={cn('grid grid-cols-1 gap-4', statLabels?.drafts ? 'sm:grid-cols-2 lg:grid-cols-5' : 'sm:grid-cols-2 lg:grid-cols-4')}>
+          <KPICard label={statLabels?.total ?? 'Total submissions'} value={stats?.total || 0} subtextVariant="neutral" icon={LayoutGrid} />
+          <KPICard label={statLabels?.pending ?? 'Pending'} value={stats?.pending || 0} subtextVariant="warning" icon={Clock} />
+          <KPICard label={statLabels?.approved ?? 'Approved'} value={stats?.approved || 0} subtextVariant="success" icon={CheckCircle2} />
+          <KPICard label={statLabels?.rejected ?? 'Rejected'} value={stats?.rejected || 0} subtextVariant="danger" icon={AlertCircle} />
           {statLabels?.drafts && (
-            <div className="bg-white p-6 rounded-sm border border-ns-border shadow-sm flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold text-ns-text-muted uppercase tracking-[0.2em]">
-                  {statLabels.drafts}
-                </p>
-                <p className="text-3xl font-bold text-ns-navy">{stats?.drafts ?? 0}</p>
-              </div>
-              <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-600">
-                <FileText size={22} />
-              </div>
-            </div>
+            <KPICard label={statLabels.drafts} value={stats?.drafts || 0} subtextVariant="info" icon={FileSearch} />
           )}
         </div>
 
-        {/* Form Templates Section */}
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <LayoutGrid size={18} className="text-ns-blue" />
@@ -161,9 +105,9 @@ export default function UserTransactionHub() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {forms.map((form: any) => (
-              <div key={form.id} className="bg-white p-6 rounded-sm border border-ns-border shadow-sm hover:border-ns-blue transition-all group">
+              <div key={form.id} className="bg-white p-6 rounded-ns-md border border-ns-border shadow-sm hover:border-ns-blue transition-all group">
                 <div className="flex justify-between items-start mb-4">
-                  <div className="w-10 h-10 bg-ns-gray-bg rounded-sm flex items-center justify-center text-ns-navy group-hover:bg-ns-blue group-hover:text-white transition-all">
+                  <div className="w-10 h-10 bg-ns-gray-bg rounded-ns-md flex items-center justify-center text-ns-navy group-hover:bg-ns-blue group-hover:text-white transition-all">
                     <FileText size={20} />
                   </div>
                 </div>
@@ -178,7 +122,7 @@ export default function UserTransactionHub() {
               </div>
             ))}
             {forms.length === 0 && (
-              <div className="col-span-full py-12 bg-ns-gray-bg border border-dashed border-ns-border rounded-sm flex flex-col items-center justify-center text-ns-text-muted">
+              <div className="col-span-full py-12 bg-ns-gray-bg border border-dashed border-ns-border rounded-ns-md flex flex-col items-center justify-center text-ns-text-muted">
                 <LayoutGrid size={32} className="opacity-20 mb-2" />
                 <p className="text-sm font-medium">No templates assigned for {fullTitle.toLowerCase()}</p>
               </div>
@@ -193,7 +137,7 @@ export default function UserTransactionHub() {
             <h2 className="text-lg font-bold text-ns-navy uppercase tracking-wider">Submission History</h2>
           </div>
 
-          <div className="bg-white rounded-sm border border-ns-border shadow-md overflow-hidden">
+          <div className="bg-white rounded-ns-md border border-ns-border shadow-md overflow-hidden">
             <Table>
               <THead>
                 <TR>
@@ -219,7 +163,7 @@ export default function UserTransactionHub() {
                     </TD>
                     <TD className="text-center">
                       {sub.currentLevel ? (
-                        <span className="text-[11px] font-bold text-ns-blue bg-ns-blue/5 px-2 py-0.5 rounded-sm border border-ns-blue/10">
+                        <span className="text-[11px] font-bold text-ns-blue bg-ns-blue/5 px-2 py-0.5 rounded-ns-md border border-ns-blue/10">
                           Level {sub.currentLevel}
                         </span>
                       ) : (

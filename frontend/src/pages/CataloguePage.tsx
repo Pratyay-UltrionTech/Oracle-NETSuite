@@ -17,8 +17,13 @@ import {
 } from 'lucide-react';
 import { catalogueApi, CatalogueField, CatalogueFieldCreate } from '../api/catalogue';
 import { cn } from '../lib/utils';
+import { useStore } from '../store/useStore';
+import { PageHeader, KPICard, Card, StatusBadge } from '../components/admin';
+import { Button } from '../components/ui/Base';
 
 export default function CataloguePage() {
+  const { user } = useStore();
+  const isSuperAdmin = user?.role === 'super_admin';
   const { type } = useParams<{ type: string }>();
   const [fields, setFields] = React.useState<CatalogueField[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -99,7 +104,32 @@ export default function CataloguePage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {/* Header */}
+        {isSuperAdmin ? (
+          <>
+            <PageHeader
+              eyebrow="Master data management"
+              title={displayName}
+              subtitle={`Field catalogue for ${type?.replace('-', ' ')} transactions.`}
+              actions={
+                <Button
+                  onClick={() => {
+                    setEditingField(null);
+                    setIsModalOpen(true);
+                  }}
+                  className="gap-2"
+                >
+                  <Plus size={16} />
+                  Add field
+                </Button>
+              }
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <KPICard label="Total fields" value={fields.length} subtext="Catalogue entries" subtextVariant="neutral" />
+              <KPICard label="Required fields" value={fields.filter(f => f.required).length} subtext="Mandatory mapping" subtextVariant="warning" />
+              <KPICard label="Filtered results" value={filteredFields.length} subtext="Current view" subtextVariant="info" />
+            </div>
+          </>
+        ) : (
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-ns-text-muted uppercase tracking-widest mb-1">
@@ -110,7 +140,7 @@ export default function CataloguePage() {
             <h1 className="text-2xl font-bold text-ns-navy">{displayName}</h1>
           </div>
           <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 px-4 py-2 bg-white text-ns-navy border border-ns-border rounded-sm text-sm font-bold cursor-pointer hover:bg-ns-gray-bg transition-all">
+            <label className="flex items-center gap-2 px-4 py-2 bg-white text-ns-navy border border-ns-border rounded-ns-md text-sm font-bold cursor-pointer hover:bg-ns-gray-bg transition-all">
               <Plus size={16} className="rotate-45" />
               Bulk Import
               <input 
@@ -146,7 +176,7 @@ export default function CataloguePage() {
                 downloadAnchorNode.click();
                 downloadAnchorNode.remove();
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-white text-ns-navy border border-ns-border rounded-sm text-sm font-bold hover:bg-ns-gray-bg transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-white text-ns-navy border border-ns-border rounded-ns-md text-sm font-bold hover:bg-ns-gray-bg transition-all"
             >
               <Search size={16} className="rotate-90" />
               Export
@@ -156,16 +186,16 @@ export default function CataloguePage() {
                 setEditingField(null);
                 setIsModalOpen(true);
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-ns-blue text-white rounded-sm text-sm font-bold shadow-lg shadow-ns-blue/20 hover:bg-ns-navy transition-all transform hover:-translate-y-0.5"
+              className="flex items-center gap-2 px-4 py-2 bg-ns-blue text-white rounded-ns-md text-sm font-bold shadow-lg shadow-ns-blue/20 hover:bg-ns-navy transition-all transform hover:-translate-y-0.5"
             >
               <Plus size={16} />
               Add New Field
             </button>
           </div>
         </div>
+        )}
 
-        {/* Filters */}
-        <div className="bg-white p-4 rounded-sm border border-ns-border shadow-sm flex items-center gap-4">
+        <Card padding="md">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
             <input 
@@ -173,16 +203,15 @@ export default function CataloguePage() {
               placeholder="Search by label or internal ID..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-ns-gray-bg border border-ns-border rounded-sm text-sm focus:outline-none focus:border-ns-blue transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-ns-gray-bg border border-ns-border rounded-ns-md text-sm focus:outline-none focus:border-ns-blue transition-all"
             />
           </div>
           <div className="flex items-center gap-2 text-xs text-ns-text-muted">
-            <span className="font-bold">{filteredFields.length}</span> fields found
+            <StatusBadge variant="synced">{filteredFields.length} fields</StatusBadge>
           </div>
-        </div>
+        </Card>
 
-        {/* Table */}
-        <div className="bg-white rounded-sm border border-ns-border shadow-sm overflow-hidden">
+        <div className="bg-white rounded-ns-card border border-ns-border ns-panel-shadow overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-ns-gray-bg border-b border-ns-border">
@@ -221,19 +250,19 @@ export default function CataloguePage() {
                     <td className="px-6 py-4 text-sm font-medium text-ns-text">
                       <div className="flex items-center gap-2">
                         {field.label}
-                        {field.required && <span className="w-1.5 h-1.5 rounded-full bg-red-500" title="Required" />}
+                        {field.required && <span className="w-1.5 h-1.5 rounded-full bg-status-rejected-bg0" title="Required" />}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-[10px] font-bold text-ns-text-muted uppercase tracking-widest text-center">
                       <span className={cn(
-                        "px-2 py-1 rounded-sm border",
+                        "px-2 py-1 rounded-ns-md border",
                         field.section === 'body' ? "bg-ns-blue-soft text-ns-blue border-ns-blue/20" : "bg-purple-50 text-purple-600 border-purple-100"
                       )}>
                         {field.section === 'sublist' ? `${field.subSection}` : 'body'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className="text-[10px] font-bold text-ns-navy bg-ns-gray-bg px-2 py-1 rounded-sm border border-ns-border uppercase">
+                      <span className="text-[10px] font-bold text-ns-navy bg-ns-gray-bg px-2 py-1 rounded-ns-md border border-ns-border uppercase">
                         {field.tab}
                       </span>
                     </td>
@@ -261,13 +290,13 @@ export default function CataloguePage() {
                             setEditingField(field);
                             setIsModalOpen(true);
                           }}
-                          className="p-1.5 text-gray-400 hover:text-ns-blue hover:bg-ns-blue/5 rounded-sm transition-all"
+                          className="p-1.5 text-gray-400 hover:text-ns-blue hover:bg-ns-blue/5 rounded-ns-md transition-all"
                         >
                           <Edit2 size={14} />
                         </button>
                         <button 
                           onClick={() => setIsDeleting(field._id)}
-                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-sm transition-all"
+                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-status-rejected-bg rounded-ns-md transition-all"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -296,9 +325,9 @@ export default function CataloguePage() {
       {/* Delete Confirmation */}
       {isDeleting && (
         <div className="fixed inset-0 bg-ns-navy/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-          <div className="bg-white rounded-sm shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-ns-md shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
             <div className="p-6">
-               <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-red-500 mb-4">
+               <div className="w-12 h-12 bg-status-rejected-bg rounded-full flex items-center justify-center text-red-500 mb-4">
                  <Trash2 size={24} />
                </div>
                <h3 className="text-lg font-bold text-ns-navy mb-2">Delete Field?</h3>
@@ -308,13 +337,13 @@ export default function CataloguePage() {
                <div className="flex items-center gap-3">
                  <button 
                    onClick={() => setIsDeleting(null)}
-                   className="flex-1 px-4 py-2 text-sm font-bold text-ns-text-muted hover:bg-ns-gray-bg rounded-sm border border-ns-border transition-all"
+                   className="flex-1 px-4 py-2 text-sm font-bold text-ns-text-muted hover:bg-ns-gray-bg rounded-ns-md border border-ns-border transition-all"
                  >
                    Cancel
                  </button>
                  <button 
                    onClick={() => handleDelete(isDeleting)}
-                   className="flex-1 px-4 py-2 text-sm font-bold text-white bg-red-500 hover:bg-red-600 rounded-sm shadow-lg shadow-red-200 transition-all"
+                   className="flex-1 px-4 py-2 text-sm font-bold text-white bg-status-rejected-bg0 hover:bg-red-600 rounded-ns-md shadow-lg shadow-red-200 transition-all"
                  >
                    Delete Field
                  </button>
@@ -367,7 +396,7 @@ function FieldModal({ field, onClose, onSave }: FieldModalProps) {
 
   return (
     <div className="fixed inset-0 bg-ns-navy/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-      <div className="bg-white rounded-sm shadow-2xl w-full max-w-lg animate-in slide-in-from-bottom-4 duration-300">
+      <div className="bg-white rounded-ns-md shadow-2xl w-full max-w-lg animate-in slide-in-from-bottom-4 duration-300">
         <div className="p-6 border-b border-ns-border flex items-center justify-between">
           <h2 className="text-xl font-bold text-ns-navy">
             {field ? 'Edit Field' : 'Add New Field'}
@@ -388,7 +417,7 @@ function FieldModal({ field, onClose, onSave }: FieldModalProps) {
                 value={formData.internalId}
                 onChange={e => setFormData({ ...formData, internalId: e.target.value })}
                 placeholder="e.g. custbody_my_field"
-                className="w-full px-4 py-2 bg-ns-gray-bg border border-ns-border rounded-sm text-sm focus:outline-none focus:border-ns-blue transition-all"
+                className="w-full px-4 py-2 bg-ns-gray-bg border border-ns-border rounded-ns-md text-sm focus:outline-none focus:border-ns-blue transition-all"
                 required
               />
             </div>
@@ -402,7 +431,7 @@ function FieldModal({ field, onClose, onSave }: FieldModalProps) {
                 value={formData.label}
                 onChange={e => setFormData({ ...formData, label: e.target.value })}
                 placeholder="e.g. My Custom Field"
-                className="w-full px-4 py-2 bg-ns-gray-bg border border-ns-border rounded-sm text-sm focus:outline-none focus:border-ns-blue transition-all"
+                className="w-full px-4 py-2 bg-ns-gray-bg border border-ns-border rounded-ns-md text-sm focus:outline-none focus:border-ns-blue transition-all"
                 required
               />
             </div>
@@ -415,7 +444,7 @@ function FieldModal({ field, onClose, onSave }: FieldModalProps) {
             <select 
               value={formData.type}
               onChange={e => setFormData({ ...formData, type: e.target.value })}
-              className="w-full px-4 py-2 bg-ns-gray-bg border border-ns-border rounded-sm text-sm focus:outline-none focus:border-ns-blue transition-all"
+              className="w-full px-4 py-2 bg-ns-gray-bg border border-ns-border rounded-ns-md text-sm focus:outline-none focus:border-ns-blue transition-all"
             >
               {fieldTypes.sort().map(t => (
                 <option key={t} value={t}>{t}</option>
@@ -430,7 +459,7 @@ function FieldModal({ field, onClose, onSave }: FieldModalProps) {
             <select 
               value={formData.section}
               onChange={e => setFormData({ ...formData, section: e.target.value as any, subSection: e.target.value === 'body' ? null : 'item' })}
-              className="w-full px-4 py-2 bg-ns-gray-bg border border-ns-border rounded-sm text-sm focus:outline-none focus:border-ns-blue"
+              className="w-full px-4 py-2 bg-ns-gray-bg border border-ns-border rounded-ns-md text-sm focus:outline-none focus:border-ns-blue"
             >
               <option value="body">Body Field</option>
               <option value="sublist">Sublist Field</option>
@@ -445,7 +474,7 @@ function FieldModal({ field, onClose, onSave }: FieldModalProps) {
               <select 
                 value={formData.subSection || 'item'}
                 onChange={e => setFormData({ ...formData, subSection: e.target.value as any })}
-                className="w-full px-4 py-2 bg-ns-gray-bg border border-ns-border rounded-sm text-sm focus:outline-none focus:border-ns-blue"
+                className="w-full px-4 py-2 bg-ns-gray-bg border border-ns-border rounded-ns-md text-sm focus:outline-none focus:border-ns-blue"
               >
                 <option value="item">Line Item</option>
                 <option value="expense">Expense</option>
@@ -460,7 +489,7 @@ function FieldModal({ field, onClose, onSave }: FieldModalProps) {
             <select 
               value={formData.tab}
               onChange={e => setFormData({ ...formData, tab: e.target.value })}
-              className="w-full px-4 py-2 bg-ns-gray-bg border border-ns-border rounded-sm text-sm focus:outline-none focus:border-ns-blue"
+              className="w-full px-4 py-2 bg-ns-gray-bg border border-ns-border rounded-ns-md text-sm focus:outline-none focus:border-ns-blue"
             >
               <option value="Main">Main</option>
               <option value="Items">Items</option>
@@ -479,7 +508,7 @@ function FieldModal({ field, onClose, onSave }: FieldModalProps) {
               value={formData.group}
               onChange={e => setFormData({ ...formData, group: e.target.value })}
               placeholder="e.g. Primary Information"
-              className="w-full px-4 py-2 bg-ns-gray-bg border border-ns-border rounded-sm text-sm focus:outline-none focus:border-ns-blue"
+              className="w-full px-4 py-2 bg-ns-gray-bg border border-ns-border rounded-ns-md text-sm focus:outline-none focus:border-ns-blue"
             />
           </div>
 
@@ -517,13 +546,13 @@ function FieldModal({ field, onClose, onSave }: FieldModalProps) {
         <div className="p-6 bg-ns-gray-bg border-t border-ns-border flex items-center gap-3">
           <button 
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 text-sm font-bold text-ns-text-muted hover:bg-white rounded-sm border border-ns-border transition-all"
+            className="flex-1 px-4 py-2.5 text-sm font-bold text-ns-text-muted hover:bg-white rounded-ns-md border border-ns-border transition-all"
           >
             Cancel
           </button>
           <button 
             onClick={handleSubmit}
-            className="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-ns-blue hover:bg-ns-navy rounded-sm shadow-lg shadow-ns-blue/20 transition-all"
+            className="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-ns-blue hover:bg-ns-navy rounded-ns-md shadow-lg shadow-ns-blue/20 transition-all"
           >
             {field ? 'Update Field' : 'Save Field'}
           </button>

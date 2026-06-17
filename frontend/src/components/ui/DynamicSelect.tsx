@@ -94,7 +94,7 @@ export const DynamicSelect: React.FC<DynamicSelectProps> = ({ field, className, 
         {(field.dataSource?.type === 'api' ||
           field.dataSource?.type === 'netsuite_currency' ||
           field.dataSource?.type === 'netsuite_employees') && !loading && !error && (
-          <div className="bg-ns-blue text-white text-[8px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-tighter shadow-sm">
+          <div className="bg-ns-blue text-white text-[8px] font-bold px-1.5 py-0.5 rounded-ns-md uppercase tracking-tighter shadow-sm">
             API
           </div>
         )}

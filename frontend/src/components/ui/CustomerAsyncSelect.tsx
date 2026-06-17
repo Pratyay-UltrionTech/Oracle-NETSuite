@@ -208,7 +208,7 @@ export function CustomerAsyncSelect({
     return (
       <div
         className={cn(
-          'h-9 border border-ns-border rounded-sm px-3 flex items-center bg-white text-[12px] text-gray-400',
+          'h-9 border border-ns-border rounded-ns-md px-3 flex items-center bg-white text-[12px] text-gray-400',
           className,
         )}
       >
@@ -223,7 +223,7 @@ export function CustomerAsyncSelect({
           <ul
             ref={panelRef}
             role="listbox"
-            className="max-h-72 overflow-y-auto overflow-x-hidden rounded-sm border border-ns-border bg-white text-[12px] shadow-2xl ring-1 ring-black/5"
+            className="max-h-72 overflow-y-auto overflow-x-hidden rounded-ns-md border border-ns-border bg-white text-[12px] shadow-2xl ring-1 ring-black/5"
             style={{
               position: 'fixed',
               top: panelRect.top,
@@ -233,7 +233,7 @@ export function CustomerAsyncSelect({
             }}
           >
             {searchErr && (
-              <li className="px-3 py-2.5 text-amber-800 text-[11px] flex items-center justify-between gap-2 bg-amber-50/80">
+              <li className="px-3 py-2.5 text-amber-800 text-[11px] flex items-center justify-between gap-2 bg-status-pending-bg/80">
                 <span className="flex items-center gap-1.5">
                   <AlertCircle size={12} className="shrink-0" aria-hidden />
                   {searchErr}
@@ -302,10 +302,10 @@ export function CustomerAsyncSelect({
         <input
           type="text"
           className={cn(
-            'w-full max-w-full min-w-0 h-9 border border-ns-border rounded-sm pl-3 pr-9 text-[12px] text-ns-text bg-white truncate',
+            'w-full max-w-full min-w-0 h-9 border border-ns-border rounded-ns-md pl-3 pr-9 text-[12px] text-ns-text bg-white truncate',
             'focus:outline-none focus:border-ns-blue focus:ring-2 focus:ring-ns-blue/10',
             open && 'border-ns-blue ring-2 ring-ns-blue/10',
-            disabled && 'bg-gray-50 text-gray-400 cursor-not-allowed',
+            disabled && 'bg-ns-page-bg text-gray-400 cursor-not-allowed',
             searchErr && 'border-amber-300',
           )}
           value={input}
