@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 
+from .config import settings
 from .database import close_mongo_connection, connect_to_mongo
 from .routes import (
     auth,
@@ -34,20 +35,11 @@ app = FastAPI(title="NetSuite Form Builder API", version="1.0.0")
 
 _scheduler: Optional[AsyncIOScheduler] = None
 
-# CORS Configuration
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://net-suite-form-builder.vercel.app",
-]
-
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=[settings.FRONTEND_URL],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
