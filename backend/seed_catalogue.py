@@ -1,14 +1,8 @@
 import asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime, timezone
-import os
-from dotenv import load_dotenv
 from pathlib import Path
 import sys
-
-# Current directory is backend/, so .env is in parent
-root_dir = Path(__file__).parent.parent
-load_dotenv(root_dir / ".env")
 
 # Add the current directory to sys.path to allow importing from app
 sys.path.append(str(Path(__file__).parent))

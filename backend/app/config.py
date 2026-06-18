@@ -1,11 +1,20 @@
 from pydantic_settings import BaseSettings
 from pathlib import Path
 
+BACKEND_DIR = Path(__file__).parent.parent
+ENV_FILE = BACKEND_DIR / ".env"
+
+
 class Settings(BaseSettings):
     MONGO_URI: str = "mongodb://localhost:27017"
     DB_NAME: str = "netsuite_form_builder"
     JWT_SECRET: str = "supersecretkey"
     JWT_EXPIRE_MINUTES: int = 60
+
+    FRONTEND_URL: str = "http://localhost:3000"
+    BASE_URL: str = "http://localhost:8000"
+    SMTP_EMAIL: str = ""
+    SMTP_PASSWORD: str = ""
 
     NETSUITE_BASE_URL: str = "https://6738288-sb1.restlets.api.netsuite.com"
     NETSUITE_GET_SCRIPT: str = "customscript_rg_get_rest_pai"
@@ -56,7 +65,7 @@ class Settings(BaseSettings):
     NETSUITE_CUSTOMER_DEPLOY: str = "1"
 
     class Config:
-        env_file = str(Path(__file__).parent.parent.parent / ".env")
+        env_file = str(ENV_FILE)
         extra = "ignore"
 
 settings = Settings()

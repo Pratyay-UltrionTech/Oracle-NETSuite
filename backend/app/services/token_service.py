@@ -1,11 +1,9 @@
-import os
 from jose import jwt
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
 
-load_dotenv()
+from ..config import settings
 
-SECRET_KEY = os.getenv("JWT_SECRET", "default_secret")
+SECRET_KEY = settings.JWT_SECRET
 ALGORITHM = "HS256"
 
 def generate_action_token(submission_id, user_id, action):

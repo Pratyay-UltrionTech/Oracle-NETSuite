@@ -1,12 +1,10 @@
 import smtplib
-import os
 from email.mime.text import MIMEText
-from dotenv import load_dotenv
 
-load_dotenv()
+from ..config import settings
 
-SMTP_EMAIL = os.getenv("SMTP_EMAIL")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+SMTP_EMAIL = settings.SMTP_EMAIL
+SMTP_PASSWORD = settings.SMTP_PASSWORD
 
 async def send_email(to_email, subject, html_content):
     if not SMTP_EMAIL or not SMTP_PASSWORD:

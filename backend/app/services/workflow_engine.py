@@ -11,11 +11,9 @@ from .purchase_order_netsuite_service import (
     send_purchase_order_to_netsuite,
 )
 from .vendor_bill_netsuite_service import build_vendor_bill_sync_update
-import os
-from dotenv import load_dotenv
+from ..config import settings
 
-load_dotenv()
-BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
+BASE_URL = settings.BASE_URL
 
 
 async def _send_submission_to_netsuite(
