@@ -3,7 +3,7 @@ import { cn } from '../../lib/utils';
 import { Info } from 'lucide-react';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'iconDanger' | 'iconAccent' | 'iconMuted';
   size?: 'sm' | 'md' | 'lg' | 'icon';
 }
 
@@ -15,6 +15,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       outline: 'bg-transparent text-ns-blue border border-ns-blue hover:bg-ns-blue-soft',
       ghost: 'bg-transparent text-ns-text hover:bg-black/[0.03]',
       danger: 'bg-status-rejected text-white hover:opacity-90 border border-status-rejected shadow-sm',
+      iconDanger: 'bg-transparent text-status-rejected hover:bg-status-rejected-bg hover:text-status-rejected',
+      iconAccent: 'bg-transparent text-ns-text-muted hover:bg-ns-blue hover:text-white',
+      iconMuted: 'bg-transparent text-ns-text-muted hover:text-ns-blue hover:bg-ns-blue-soft',
     };
 
     const sizes = {

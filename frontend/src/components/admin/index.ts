@@ -4,3 +4,4 @@ export { KPICard } from './KPICard';
 export { PageHeader, InfoBanner } from './PageHeader';
 export { AlertPanel } from './AlertPanel';
 export { PermissionMatrix } from './PermissionMatrix';
+export { StatusToggle } from './StatusToggle';

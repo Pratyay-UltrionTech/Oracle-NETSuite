@@ -250,7 +250,7 @@ export default function CataloguePage() {
                     <td className="px-6 py-4 text-sm font-medium text-ns-text">
                       <div className="flex items-center gap-2">
                         {field.label}
-                        {field.required && <span className="w-1.5 h-1.5 rounded-full bg-status-rejected-bg0" title="Required" />}
+                        {field.required && <span className="w-1.5 h-1.5 rounded-full bg-status-rejected" title="Required" />}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-[10px] font-bold text-ns-text-muted uppercase tracking-widest text-center">
@@ -290,13 +290,13 @@ export default function CataloguePage() {
                             setEditingField(field);
                             setIsModalOpen(true);
                           }}
-                          className="p-1.5 text-ns-text-muted hover:text-ns-blue hover:bg-ns-blue/5 rounded-ns-md transition-all"
+                          className="p-1.5 ns-action-muted rounded-ns-md"
                         >
                           <Edit2 size={14} />
                         </button>
                         <button 
                           onClick={() => setIsDeleting(field._id)}
-                          className="p-1.5 text-ns-text-muted hover:text-red-500 hover:bg-status-rejected-bg rounded-ns-md transition-all"
+                          className="p-1.5 ns-action-danger rounded-ns-md"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -343,7 +343,7 @@ export default function CataloguePage() {
                  </button>
                  <button 
                    onClick={() => handleDelete(isDeleting)}
-                   className="flex-1 px-4 py-2 text-sm font-bold text-white bg-status-rejected-bg0 hover:bg-red-600 rounded-ns-md shadow-lg shadow-red-200 transition-all"
+                   className="flex-1 px-4 py-2 text-sm font-bold text-white bg-status-rejected hover:opacity-90 rounded-ns-md shadow-lg shadow-red-200 transition-all"
                  >
                    Delete Field
                  </button>

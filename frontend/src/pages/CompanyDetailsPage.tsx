@@ -147,11 +147,12 @@ export default function CompanyDetailsPage() {
                     <RoleBadge role={emp.role} />
                   </TD>
                   <TD className="px-6 text-right">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="iconDanger"
+                      size="icon"
                       onClick={() => setDeleteUserId(emp.id)}
-                      className="h-8 w-8 text-ns-text-muted hover:text-red-500 hover:bg-status-rejected-bg transition-all rounded-full"
+                      className="h-8 w-8 rounded-full"
+                      title="Remove employee"
                     >
                       <Trash2 size={13} />
                     </Button>

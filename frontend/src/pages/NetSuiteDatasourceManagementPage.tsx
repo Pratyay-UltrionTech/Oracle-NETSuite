@@ -242,16 +242,16 @@ export default function NetSuiteDatasourceManagementPage() {
                     </div>
                   </TD>
                   <TD className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(row)} title="Edit">
+                    <Button variant="iconMuted" size="icon" onClick={() => openEdit(row)} title="Edit">
                       <Pencil size={14} />
                     </Button>
                     <Button
-                      variant="ghost"
+                      variant="iconDanger"
                       size="icon"
                       onClick={() => setDeleteTarget(row)}
                       title="Delete"
                     >
-                      <Trash2 size={14} className="text-red-500" />
+                      <Trash2 size={14} />
                     </Button>
                   </TD>
                 </TR>

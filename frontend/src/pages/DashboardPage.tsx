@@ -225,13 +225,13 @@ export default function DashboardPage() {
                   <TD className="text-[11px] text-ns-text-muted">{form.updatedAt}</TD>
                   <TD className="px-6">
                     <div className="flex justify-end gap-1 transition-all">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(form)} title="Open in Designer" className="h-8 w-8 hover:bg-ns-blue hover:text-white rounded-full transition-all">
+                      <Button variant="iconAccent" size="icon" onClick={() => handleEdit(form)} title="Open in Designer" className="h-8 w-8 rounded-full">
                         <Edit2 size={13} />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => openAssignModal(form)} title="Assign users" className="h-8 w-8 hover:bg-ns-blue-dark hover:text-white rounded-full transition-all">
+                      <Button variant="iconAccent" size="icon" onClick={() => openAssignModal(form)} title="Assign users" className="h-8 w-8 rounded-full">
                         <Users size={13} />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => confirmDelete(form.id)} className="h-8 w-8 text-red-500 hover:bg-status-rejected-bg0 hover:text-white rounded-full transition-all" title="Delete">
+                      <Button variant="iconDanger" size="icon" onClick={() => confirmDelete(form.id)} className="h-8 w-8 rounded-full" title="Delete">
                         <Trash2 size={13} />
                       </Button>
                     </div>

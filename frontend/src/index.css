@@ -101,4 +101,17 @@
   .sidebar-transition {
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
+
+  /* Table / row action buttons — keep icon visible on hover */
+  .ns-action-danger {
+    @apply text-status-rejected hover:bg-status-rejected-bg hover:text-status-rejected;
+  }
+
+  .ns-action-muted {
+    @apply text-ns-text-muted hover:text-ns-blue hover:bg-ns-blue-soft;
+  }
+
+  .ns-action-accent {
+    @apply text-ns-text-muted hover:bg-ns-blue hover:text-white;
+  }
 }

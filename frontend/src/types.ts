@@ -600,6 +600,12 @@ export interface AppState {
   deleteCompany: (id: string) => Promise<void>;
   addUser: (user: Omit<User, 'id' | 'isActive' | 'createdAt'> & { password?: string }) => Promise<void>;
   updateUserStatus: (userId: string, isActive: boolean) => Promise<void>;
+  updateUser: (
+    id: string,
+    data: Partial<Pick<User, 'name' | 'email' | 'role' | 'jobTitle' | 'employeeId' | 'isActive'>> & {
+      companyId?: string;
+    },
+  ) => Promise<void>;
   deleteUser: (id: string) => Promise<void>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>;
   forgotPassword: (email: string) => Promise<boolean>;

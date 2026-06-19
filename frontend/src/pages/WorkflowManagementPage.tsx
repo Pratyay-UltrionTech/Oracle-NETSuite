@@ -290,11 +290,12 @@ export default function WorkflowManagementPage() {
                           <ChevronDown size={14} />
                         </Button>
                         <div className="w-px h-4 bg-ns-border mx-1" />
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-7 w-7 text-red-400 hover:bg-status-rejected-bg"
+                        <Button
+                          variant="iconDanger"
+                          size="icon"
+                          className="h-7 w-7"
                           onClick={() => handleRemoveLevel(idx)}
+                          title="Remove level"
                         >
                           <Trash2 size={14} />
                         </Button>
@@ -352,7 +353,7 @@ export default function WorkflowManagementPage() {
                                 </div>
                                 <button 
                                   onClick={() => handleRemoveApprover(idx, approver.userId)}
-                                  className="p-1 text-ns-text-muted hover:text-red-500 hover:bg-status-rejected-bg rounded-ns-md"
+                                  className="p-1 ns-action-danger rounded-ns-md"
                                 >
                                   <X size={12} />
                                 </button>

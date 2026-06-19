@@ -49,7 +49,7 @@ const SublistRenderer = ({ name, fields, onRemoveField, onSelectField, selectedF
                 <td className="px-4 py-3 text-right">
                   <button 
                     onClick={(e) => { e.stopPropagation(); onRemoveField(field.id); }}
-                    className="p-1.5 text-ns-text-muted hover:text-red-500 hover:bg-status-rejected-bg rounded-ns-md transition-all"
+                    className="p-1.5 ns-action-danger rounded-ns-md"
                   >
                     <Trash2 size={12} />
                   </button>
@@ -212,10 +212,10 @@ const DroppableGroup = ({ group, onRemoveField, onSelectField, selectedFieldId, 
               <ChevronDown size={14}/>
             </Button>
             <div className="w-[1px] h-4 bg-ns-border mx-1 my-auto" />
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-7 w-7 text-red-400 hover:bg-status-rejected-bg"
+            <Button
+              variant="iconDanger"
+              size="icon"
+              className="h-7 w-7"
               onClick={() => onDeleteGroup(group.id)}
               title="Delete Group"
             >
@@ -409,13 +409,13 @@ export default function BuilderCanvas({ activeTabId, setActiveTabId, selectedFie
           <Button variant="ghost" size="icon" onClick={handleAddTab} title="Add New Tab" className="h-8 w-8 hover:bg-ns-blue/10 hover:text-ns-blue">
             <Plus size={16} />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => handleDeleteTab(activeTabId)} 
+          <Button
+            variant="iconDanger"
+            size="icon"
+            onClick={() => handleDeleteTab(activeTabId)}
             disabled={currentForm.tabs.length <= 1}
             title="Delete Current Tab"
-            className="h-8 w-8 hover:bg-status-rejected-bg text-red-400 disabled:opacity-30"
+            className="h-8 w-8 disabled:opacity-30"
           >
             <Trash2 size={16} />
           </Button>

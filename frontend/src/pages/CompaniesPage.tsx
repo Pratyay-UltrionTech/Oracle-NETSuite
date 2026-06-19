@@ -127,11 +127,12 @@ export default function CompaniesPage() {
                     >
                       Workflow <GitBranch size={12} />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="iconDanger"
+                      size="icon"
                       onClick={() => setDeleteId(company.id)}
-                      className="h-8 w-8 text-red-400 hover:bg-status-rejected-bg0 hover:text-white rounded-full transition-all"
+                      className="h-8 w-8 rounded-full"
+                      title="Delete company"
                     >
                       <Trash2 size={13} />
                     </Button>
@@ -184,9 +185,10 @@ export default function CompaniesPage() {
       <ConfirmModal
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
-        onConfirm={() => { if(deleteId) deleteCompany(deleteId); }}
+        onConfirm={() => { if (deleteId) void deleteCompany(deleteId); }}
         title="Delete company?"
-        message="This will permanently delete the company and all its associated employee accounts. This action is irreversible."
+        message="This will permanently delete the company, all its employees, forms, submissions, workflows, and related data. This action is irreversible."
+        confirmText="Delete company"
       />
     </AdminLayout>
   );

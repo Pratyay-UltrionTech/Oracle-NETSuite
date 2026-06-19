@@ -30,7 +30,7 @@ const DraggableField = ({ field, isAdded, onToggle }: { field: any; isAdded: boo
       <div className="flex-1 flex flex-col min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-semibold truncate text-ns-navy">{field.label}</span>
-          {field.mandatory && <span className="w-1 h-1 rounded-full bg-status-rejected-bg0 flex-shrink-0" />}
+          {field.mandatory && <span className="w-1 h-1 rounded-full bg-status-rejected flex-shrink-0" />}
           {isAdded && <Check size={10} className="text-green-500 ml-auto shrink-0" strokeWidth={4} />}
         </div>
       </div>

@@ -166,7 +166,16 @@ async def update_user(
     if current_admin["role"] == "client_admin" and user.get("companyId") != current_admin["companyId"]:
         raise HTTPException(status_code=403, detail="Not authorized for this company")
 
+    if current_admin["role"] == "client_admin":
+        if user.get("role") == "super_admin":
+            raise HTTPException(status_code=403, detail="Not authorized to edit this user")
+        if user_update.role == "super_admin":
+            raise HTTPException(status_code=403, detail="Client Admin cannot assign Super Admin role")
+
     update_data = {k: v for k, v in user_update.dict().items() if v is not None}
+
+    if current_admin["role"] == "client_admin":
+        update_data.pop("companyId", None)
     
     if not update_data:
         raise HTTPException(status_code=400, detail="No data provided for update")
@@ -179,11 +188,33 @@ async def update_user(
     updated_user = await db.users.find_one({"_id": ObjectId(id)})
     updated_user["id"] = str(updated_user["_id"])
     
+    await log_activity(
+        str(current_admin["_id"]),
+        "UPDATE_USER",
+        role=current_admin["role"],
+        entity_id=id,
+        entity_type="USER",
+    )
+    
     return updated_user
 
 @router.delete("/{id}")
-async def delete_user(id: str, current_admin: dict = Depends(get_super_admin)):
+async def delete_user(id: str, current_admin: dict = Depends(get_client_admin)):
     db = get_database()
+
+    if str(current_admin["_id"]) == id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+
+    user = await db.users.find_one({"_id": ObjectId(id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if current_admin["role"] == "client_admin":
+        if user.get("companyId") != current_admin["companyId"]:
+            raise HTTPException(status_code=403, detail="Not authorized for this company")
+        if user.get("role") == "super_admin":
+            raise HTTPException(status_code=403, detail="Not authorized to delete this user")
+    
     result = await db.users.delete_one({"_id": ObjectId(id)})
     
     if result.deleted_count == 0:

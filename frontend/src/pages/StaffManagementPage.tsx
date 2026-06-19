@@ -10,11 +10,12 @@ import {
   XCircle,
   AlertCircle,
   Upload,
+  Edit2,
 } from 'lucide-react';
-import { UserRole } from '../types';
+import { User, UserRole } from '../types';
 import { cn } from '../lib/utils';
 import { Button } from '../components/ui/Base';
-import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Complex';
+import { Table, THead, TBody, TR, TH, TD, ConfirmModal } from '../components/ui/Complex';
 import {
   PageHeader,
   KPICard,
@@ -23,11 +24,15 @@ import {
   Card,
   CardHeader,
   PermissionMatrix,
+  StatusToggle,
 } from '../components/admin';
 
 export default function StaffManagementPage() {
-  const { user: currentUser, users, fetchUsers, companies, fetchCompanies, addUser, deleteUser, updateUserStatus } = useStore();
+  const { user: currentUser, users, fetchUsers, companies, fetchCompanies, addUser, deleteUser, updateUser, updateUserStatus } = useStore();
   const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
+  const [editingUser, setEditingUser] = React.useState<User | null>(null);
+  const [deleteUserId, setDeleteUserId] = React.useState<string | null>(null);
+  const [togglingUserId, setTogglingUserId] = React.useState<string | null>(null);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [roleFilter, setRoleFilter] = React.useState<string>('all');
   const [companyFilter, setCompanyFilter] = React.useState<string>('all');
@@ -41,6 +46,13 @@ export default function StaffManagementPage() {
   const [newUserJobTitle, setNewUserJobTitle] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+
+  const [editName, setEditName] = React.useState('');
+  const [editEmail, setEditEmail] = React.useState('');
+  const [editRole, setEditRole] = React.useState<UserRole>('user');
+  const [editEmpId, setEditEmpId] = React.useState('');
+  const [editJobTitle, setEditJobTitle] = React.useState('');
+  const [editCompanyId, setEditCompanyId] = React.useState('');
 
   const isSuperAdmin = currentUser?.role === 'super_admin';
 
@@ -106,6 +118,109 @@ export default function StaffManagementPage() {
     setNewUserEmpId('');
     setNewUserJobTitle('');
     setErrorMsg(null);
+  };
+
+  const openEditModal = (user: User) => {
+    setEditingUser(user);
+    setEditName(user.name);
+    setEditEmail(user.email);
+    setEditRole(user.role);
+    setEditEmpId(user.employeeId || '');
+    setEditJobTitle(user.jobTitle || '');
+    setEditCompanyId(user.companyId || '');
+    setErrorMsg(null);
+  };
+
+  const closeEditModal = () => {
+    setEditingUser(null);
+    setErrorMsg(null);
+  };
+
+  const handleEditUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    setIsSubmitting(true);
+    setErrorMsg(null);
+    try {
+      await updateUser(editingUser.id, {
+        name: editName,
+        email: editEmail,
+        role: editRole,
+        employeeId: editEmpId || undefined,
+        jobTitle: editJobTitle || undefined,
+        ...(isSuperAdmin && editRole !== 'super_admin' && editCompanyId
+          ? { companyId: editCompanyId }
+          : {}),
+      });
+      closeEditModal();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Could not update user.';
+      setErrorMsg(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleStatusToggle = async (userId: string, next: boolean) => {
+    setTogglingUserId(userId);
+    try {
+      await updateUserStatus(userId, next);
+    } catch {
+      // surfaced via store
+    } finally {
+      setTogglingUserId(null);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deleteUserId) return;
+    try {
+      await deleteUser(deleteUserId);
+      setDeleteUserId(null);
+    } catch {
+      // surfaced via store
+    }
+  };
+
+  const renderStatusCell = (u: User) => (
+    <div className="flex items-center gap-3">
+      <StatusToggle
+        checked={u.isActive}
+        disabled={u.id === currentUser?.id || togglingUserId === u.id}
+        onChange={next => void handleStatusToggle(u.id, next)}
+        label={u.isActive ? `Deactivate ${u.name}` : `Activate ${u.name}`}
+      />
+      <StatusBadge variant={u.isActive ? 'approved' : 'inactive'}>
+        {u.isActive ? 'Active' : 'Inactive'}
+      </StatusBadge>
+    </div>
+  );
+
+  const renderUserActions = (u: User) => {
+    if (u.id === currentUser?.id) return <span className="text-xs text-ns-text-muted">You</span>;
+
+    return (
+      <div className="flex items-center justify-end gap-1">
+        <Button
+          variant="iconMuted"
+          size="icon"
+          className="h-8 w-8 rounded-full"
+          title="Edit user"
+          onClick={() => openEditModal(u)}
+        >
+          <Edit2 size={14} />
+        </Button>
+        <Button
+          variant="iconDanger"
+          size="icon"
+          className="h-8 w-8 rounded-full"
+          title="Delete user"
+          onClick={() => setDeleteUserId(u.id)}
+        >
+          <Trash2 size={14} />
+        </Button>
+      </div>
+    );
   };
 
   const addUserModal = isAddModalOpen && (
@@ -259,6 +374,128 @@ export default function StaffManagementPage() {
     </div>
   );
 
+  const editUserModal = editingUser && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ns-navy/40 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-ns-card border border-ns-border shadow-2xl w-full max-w-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-ns-border flex items-center justify-between">
+          <h3 className="font-semibold text-ns-text flex items-center gap-2">
+            <Edit2 size={18} className="text-ns-blue" />
+            Edit user
+          </h3>
+          <button onClick={closeEditModal} className="text-ns-text-muted hover:text-ns-text">
+            <XCircle size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleEditUser} className="p-6 space-y-4">
+          {errorMsg && (
+            <div className="p-3 bg-status-rejected-bg border border-status-rejected/20 text-xs text-status-rejected rounded-ns-md font-medium flex items-center gap-2">
+              <AlertCircle size={14} />
+              {errorMsg}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-ns-text-muted mb-1">Full name</label>
+              <input
+                type="text"
+                required
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-ns-border rounded-ns-md text-sm focus:outline-none focus:border-ns-blue focus:ring-2 focus:ring-ns-blue/15"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-ns-text-muted mb-1">Email address</label>
+              <input
+                type="email"
+                required
+                value={editEmail}
+                onChange={e => setEditEmail(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-ns-border rounded-ns-md text-sm focus:outline-none focus:border-ns-blue focus:ring-2 focus:ring-ns-blue/15"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-ns-text-muted mb-1">Employee ID</label>
+              <input
+                type="text"
+                value={editEmpId}
+                onChange={e => setEditEmpId(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-ns-border rounded-ns-md text-sm focus:outline-none focus:border-ns-blue"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-ns-text-muted mb-1">Job title</label>
+              <input
+                type="text"
+                value={editJobTitle}
+                onChange={e => setEditJobTitle(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-ns-border rounded-ns-md text-sm focus:outline-none focus:border-ns-blue"
+              />
+            </div>
+
+            <div className={isSuperAdmin ? '' : 'md:col-span-2'}>
+              <label className="block text-xs font-medium text-ns-text-muted mb-1">Role</label>
+              <select
+                value={editRole}
+                onChange={e => setEditRole(e.target.value as UserRole)}
+                className="w-full px-3 py-2 bg-white border border-ns-border rounded-ns-md text-sm focus:outline-none focus:border-ns-blue"
+              >
+                <option value="user">User</option>
+                <option value="manager">Manager</option>
+                <option value="client_admin">Client Admin</option>
+                {isSuperAdmin && <option value="super_admin">Super Admin</option>}
+              </select>
+            </div>
+
+            {isSuperAdmin && editRole !== 'super_admin' && (
+              <div>
+                <label className="block text-xs font-medium text-ns-text-muted mb-1">Company</label>
+                <select
+                  required
+                  value={editCompanyId}
+                  onChange={e => setEditCompanyId(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-ns-border rounded-ns-md text-sm focus:outline-none focus:border-ns-blue"
+                >
+                  <option value="">Select company…</option>
+                  {companies.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-4 border-t border-ns-border flex justify-end gap-3">
+            <Button type="button" variant="secondary" onClick={closeEditModal}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Saving…' : 'Save changes'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+
+  const deleteConfirmModal = (
+    <ConfirmModal
+      isOpen={!!deleteUserId}
+      onClose={() => setDeleteUserId(null)}
+      onConfirm={() => void handleDeleteUser()}
+      title="Delete user?"
+      message="This will permanently remove the user account. They will lose access immediately."
+      confirmText="Delete user"
+    />
+  );
+
   if (isSuperAdmin) {
     return (
       <AdminLayout>
@@ -380,37 +617,12 @@ export default function StaffManagementPage() {
                       <TD>
                         <RoleBadge role={u.role} />
                       </TD>
-                      <TD>
-                        <div className="flex items-center gap-2">
-                          <StatusBadge variant={u.isActive ? 'approved' : 'inactive'}>
-                            {u.isActive ? 'Active' : 'Inactive'}
-                          </StatusBadge>
-                          {u.id !== currentUser?.id && (
-                            <button
-                              onClick={() => updateUserStatus(u.id, !u.isActive)}
-                              className="text-xs text-ns-blue hover:underline"
-                            >
-                              Toggle
-                            </button>
-                          )}
-                        </div>
-                      </TD>
+                      <TD>{renderStatusCell(u)}</TD>
                       <TD className="text-ns-text-muted text-sm">{u.companyName || 'Global'}</TD>
                       <TD className="text-ns-text-muted text-sm">
                         {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
                       </TD>
-                      <TD className="text-right">
-                        {u.id !== currentUser?.id && (
-                          <button
-                            onClick={() => {
-                              if (confirm(`Remove user ${u.name}?`)) deleteUser(u.id);
-                            }}
-                            className="p-2 text-ns-text-muted hover:text-status-rejected hover:bg-status-rejected-bg rounded-ns-md transition-colors"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        )}
-                      </TD>
+                      <TD className="text-right">{renderUserActions(u)}</TD>
                     </TR>
                   ))
                 )}
@@ -421,6 +633,8 @@ export default function StaffManagementPage() {
           <PermissionMatrix />
         </div>
         {addUserModal}
+        {editUserModal}
+        {deleteConfirmModal}
       </AdminLayout>
     );
   }
@@ -483,37 +697,34 @@ export default function StaffManagementPage() {
               </TR>
             </THead>
             <TBody>
-              {filteredUsers.map(u => (
-                <TR key={u.id}>
-                  <TD>
-                    <p className="text-sm font-semibold text-ns-text">{u.name}</p>
-                    <p className="text-xs text-ns-text-muted">{u.email}</p>
-                  </TD>
-                  <TD>
-                    <RoleBadge role={u.role} />
-                  </TD>
-                  <TD>
-                    <StatusBadge variant={u.isActive ? 'approved' : 'inactive'}>
-                      {u.isActive ? 'Active' : 'Inactive'}
-                    </StatusBadge>
-                  </TD>
-                  <TD className="text-right">
-                    {u.id !== currentUser?.id && (
-                      <button
-                        onClick={() => updateUserStatus(u.id, !u.isActive)}
-                        className="text-xs font-medium text-ns-blue hover:underline"
-                      >
-                        Toggle status
-                      </button>
-                    )}
+              {filteredUsers.length === 0 ? (
+                <TR>
+                  <TD colSpan={4} className="text-center py-12 text-ns-text-muted">
+                    No employees found matching current filters.
                   </TD>
                 </TR>
-              ))}
+              ) : (
+                filteredUsers.map(u => (
+                  <TR key={u.id} className={cn(!u.isActive && 'bg-status-pending-bg/20')}>
+                    <TD>
+                      <p className="text-sm font-semibold text-ns-text">{u.name}</p>
+                      <p className="text-xs text-ns-text-muted">{u.email}</p>
+                    </TD>
+                    <TD>
+                      <RoleBadge role={u.role} />
+                    </TD>
+                    <TD>{renderStatusCell(u)}</TD>
+                    <TD className="text-right">{renderUserActions(u)}</TD>
+                  </TR>
+                ))
+              )}
             </TBody>
           </Table>
         </Card>
       </div>
       {addUserModal}
+      {editUserModal}
+      {deleteConfirmModal}
     </AdminLayout>
   );
 }

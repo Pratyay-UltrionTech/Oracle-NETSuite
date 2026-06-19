@@ -9,7 +9,6 @@ import {
   Database,
   LogOut,
   Settings,
-  Bell,
   Search,
   ShoppingCart,
   Tag,
@@ -21,11 +20,12 @@ import {
   PanelLeftClose,
   PanelLeft,
   Shield,
-  Calendar,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useSidebarExpanded } from '../../lib/useSidebarExpanded';
 import { StatusBadge } from '../admin';
+import LiveDateButton from './LiveDateButton';
+import NotificationBell from './NotificationBell';
 
 type NavItem = { name: string; icon: React.ElementType; path: string };
 
@@ -354,19 +354,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center gap-3">
             {isSuperAdmin && (
               <>
-                <button
-                  type="button"
-                  className="hidden md:flex items-center gap-2 px-3 py-1.5 text-xs text-white/90 border border-white/25 rounded-ns-md hover:bg-white/10 transition-colors"
-                >
-                  <Calendar size={14} />
-                  {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                </button>
-                <button className="relative p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-ns-md transition-colors">
-                  <Bell size={18} />
-                  <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 bg-status-pending text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                    5
-                  </span>
-                </button>
+                <LiveDateButton />
+                <NotificationBell />
                 <StatusBadge variant="pending" dot className="hidden sm:inline-flex bg-white/15 text-white border-white/25">
                   Connected to NetSuite
                 </StatusBadge>
@@ -374,10 +363,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             )}
             {!isSuperAdmin && (
               <>
-                <button className="relative p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-ns-md transition-colors">
-                  <Bell size={18} />
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-status-pending rounded-full border-2 border-ns-blue" />
-                </button>
+                <NotificationBell />
                 <span className="text-xs font-medium text-white/80 hidden sm:inline">Client Admin</span>
               </>
             )}

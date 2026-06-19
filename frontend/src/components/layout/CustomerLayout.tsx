@@ -4,7 +4,6 @@ import { useStore } from '../../store/useStore';
 import {
   Home,
   LogOut,
-  Bell,
   Building,
   Settings,
   UserCircle,
@@ -15,6 +14,7 @@ import { cn } from '../../lib/utils';
 import { useSidebarExpanded } from '../../lib/useSidebarExpanded';
 import { StatusBadge } from '../admin';
 import { getAssignedTransactionNavItems } from '../../lib/transactionRegistry';
+import NotificationBell from './NotificationBell';
 
 type NavItem = { name: string; icon: React.ElementType; path: string };
 
@@ -192,10 +192,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
           </div>
 
           <div className="flex items-center gap-3">
-            <button className="relative p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-ns-md transition-colors">
-              <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-status-pending rounded-full border-2 border-ns-blue" />
-            </button>
+            <NotificationBell />
             <StatusBadge variant="synced" dot className="hidden sm:inline-flex bg-white/15 text-white border-white/25">
               Connected to NetSuite
             </StatusBadge>

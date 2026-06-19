@@ -180,10 +180,11 @@ export default function FormsPage() {
                             <Edit size={12} /> Edit
                           </Button>
                           <Button
-                            variant="ghost"
+                            variant="iconDanger"
                             size="icon"
                             onClick={() => setDeleteConfirmId(form.id)}
-                            className="h-8 w-8 text-ns-text-muted hover:text-red-500 hover:bg-status-rejected-bg transition-all rounded-full"
+                            className="h-8 w-8 rounded-full"
+                            title="Delete form"
                           >
                             <Trash2 size={13} />
                           </Button>

@@ -6,6 +6,7 @@ from ..schemas.company import CompanyCreate, CompanyUpdate, CompanyOut
 from ..database import get_database
 from ..utils.deps import get_super_admin, get_client_admin
 from ..services.activity import log_activity
+from ..services.company_service import delete_company_and_related_data
 
 router = APIRouter(prefix="/companies", tags=["Companies"])
 
@@ -84,18 +85,15 @@ async def update_company(
 
 @router.delete("/{id}")
 async def delete_company(id: str, current_admin: dict = Depends(get_super_admin)):
-    db = get_database()
-    result = await db.companies.delete_one({"_id": ObjectId(id)})
-    
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Company not found")
-        
+    result = await delete_company_and_related_data(id)
+
     await log_activity(
-        str(current_admin["_id"]), 
-        "DELETE_COMPANY", 
+        str(current_admin["_id"]),
+        "DELETE_COMPANY",
         role=current_admin["role"],
-        entity_id=id, 
-        entity_type="COMPANY"
+        entity_id=id,
+        entity_type="COMPANY",
+        metadata={"cascade": result.get("deleted", {})},
     )
-    
-    return {"message": "Company deleted successfully"}
+
+    return result

@@ -2086,11 +2086,25 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   deleteCompany: async (id) => {
+    set({ isLoading: true, error: null });
     try {
       await api.delete(`companies/${id}`);
-      get().fetchCompanies();
+      const state = get();
+      set({
+        companies: state.companies.filter(c => c.id !== id),
+        users: state.users.filter(u => u.companyId !== id),
+        forms: state.forms.filter(f => f.customerId !== id),
+        submissions: state.submissions.filter(s => s.companyId !== id),
+        isLoading: false,
+      });
+      void state.fetchCompanies();
+      void state.fetchUsers();
+      void state.fetchForms();
+      void state.fetchSubmissions();
     } catch (err: any) {
-      set({ error: err.message });
+      const msg = err.response?.data?.detail || err.message;
+      set({ error: msg, isLoading: false });
+      throw new Error(msg);
     }
   },
 
@@ -2111,6 +2125,26 @@ export const useStore = create<AppState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       await api.put(`users/${userId}/status`, { isActive });
+      set({
+        users: get().users.map(u => (u.id === userId ? { ...u, isActive } : u)),
+        isLoading: false,
+      });
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || err.message;
+      set({ error: msg, isLoading: false });
+      throw new Error(msg);
+    }
+  },
+
+  updateUser: async (id, data) => {
+    set({ isLoading: true, error: null });
+    try {
+      const payload: Record<string, unknown> = { ...data };
+      if (data.employeeId !== undefined) {
+        payload.empId = data.employeeId;
+        delete payload.employeeId;
+      }
+      await api.put(`users/${id}`, payload);
       get().fetchUsers();
       set({ isLoading: false });
     } catch (err: any) {
@@ -2124,10 +2158,14 @@ export const useStore = create<AppState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       await api.delete(`users/${id}`);
-      get().fetchUsers();
-      set({ isLoading: false });
+      set({
+        users: get().users.filter(u => u.id !== id),
+        isLoading: false,
+      });
     } catch (err: any) {
-      set({ error: err.message, isLoading: false });
+      const msg = err.response?.data?.detail || err.message;
+      set({ error: msg, isLoading: false });
+      throw new Error(msg);
     }
   },
 
