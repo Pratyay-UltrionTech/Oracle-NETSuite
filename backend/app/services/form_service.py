@@ -329,13 +329,21 @@ class FormService:
             {"formId": form_id, "userId": user_id, "status": {"$ne": "draft"}},
             sort=[("submittedAt", -1)],
         )
+        if draft:
+            draft_values = draft.get("values") or {}
+            if not draft_values:
+                draft_values = dict(draft.get("bodyFields") or {})
+                if draft.get("lineItems"):
+                    draft_values["lineItems"] = draft["lineItems"]
+                if draft.get("expenseLines"):
+                    draft_values["expenseLines"] = draft["expenseLines"]
+            form["draftValues"] = draft_values
+            form["draftUpdatedAt"] = draft.get("updatedAt")
         if submission:
             form["status"] = submission.get("status", "pending")
             form["currentLevel"] = submission.get("currentLevel")
         elif draft:
             form["status"] = "draft"
-            form["draftValues"] = draft.get("values", {})
-            form["draftUpdatedAt"] = draft.get("updatedAt")
         else:
             form["status"] = "Not Started"
 

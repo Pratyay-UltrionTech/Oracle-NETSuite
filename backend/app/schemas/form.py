@@ -92,6 +92,10 @@ class FormResponse(FormBase):
     createdBy: str
     createdAt: datetime
     updatedAt: datetime
+    status: Optional[str] = None
+    currentLevel: Optional[int] = None
+    draftValues: Optional[Dict[str, Any]] = None
+    draftUpdatedAt: Optional[datetime] = None
 
     class Config:
         from_attributes = True

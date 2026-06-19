@@ -66,11 +66,16 @@ export default function FormFillPage() {
   );
 
   React.useEffect(() => {
-    if (id) {
-      fetchMyFormDetails(id).then(data => {
-        if (data) setForm(data);
-      });
-    }
+    if (!id) return;
+    setForm(null);
+    setFormValues({});
+    setItemRows([0]);
+    setSubmissionResult(null);
+    setSubmitError(null);
+    setDraftMessage(null);
+    fetchMyFormDetails(id).then(data => {
+      if (data) setForm(data);
+    });
   }, [id, fetchMyFormDetails]);
 
   React.useEffect(() => {

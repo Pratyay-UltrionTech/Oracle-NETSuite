@@ -654,9 +654,8 @@ export default function StaffManagementPage() {
           }
         />
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <KPICard label="Total users" value={filteredUsers.length} subtext={`${activeCount} active`} subtextVariant="success" />
-          <KPICard label="Managers" value={filteredUsers.filter(u => u.role === 'manager').length} subtextVariant="info" />
           <KPICard label="Inactive" value={inactiveCount} subtextVariant={inactiveCount > 0 ? 'warning' : 'neutral'} />
         </div>
 
