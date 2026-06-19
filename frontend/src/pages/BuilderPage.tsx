@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragStartEvent, DragEndEvent, DragOverEvent } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragStartEvent, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import CataloguePanel from '../components/builder/CataloguePanel';
 import BuilderCanvas from '../components/builder/BuilderCanvas';
 import PropertiesPanel from '../components/builder/PropertiesPanel';
@@ -59,35 +59,93 @@ export default function BuilderPage() {
     const { active, over } = event;
     setActiveDragItem(null);
 
-    if (!over) return;
+    if (!over || !catalogue) return;
 
     const activeId = active.id as string;
     const overId = over.id as string;
+    const activeData = active.data.current as { source?: string; groupId?: string } | undefined;
 
-    // Logic for dropping from catalogue to group or reordering
-    // Simplified for prototype: 
-    // If dropped over a group, add to that group if not already there
+    const findFieldLocation = (fieldId: string) => {
+      for (const tab of currentForm.tabs) {
+        for (const group of tab.fieldGroups) {
+          const index = group.fields.findIndex((f) => f.id === fieldId);
+          if (index !== -1) return { groupId: group.id, index };
+        }
+      }
+      return null;
+    };
+
+    const isOnCanvas = Boolean(findFieldLocation(activeId));
+    const isCatalogueDrag = activeData?.source === 'catalogue' || (!isOnCanvas && catalogue.fields.some((f) => f.id === activeId));
+
+    let targetGroupId: string | null = null;
+    let targetIndex = -1;
+
     if (overId.startsWith('group-')) {
-      const groupId = overId.replace('group-', '');
-      const field = catalogue.fields.find(f => f.id === activeId);
-      
-      if (field) {
-        const newTabs = currentForm.tabs.map(tab => ({
-          ...tab,
-          fieldGroups: tab.fieldGroups.map(group => {
-            if (group.id === groupId) {
-              // Check if field already exists in any group
-              const exists = currentForm.tabs.some(t => t.fieldGroups.some(g => g.fields.some(f => f.id === field.id)));
-              if (!exists) {
-                return { ...group, fields: [...group.fields, field] };
-              }
-            }
-            return group;
-          })
-        }));
-        updateCurrentForm({ tabs: newTabs });
+      targetGroupId = overId.replace('group-', '');
+    } else {
+      const overLoc = findFieldLocation(overId);
+      if (overLoc) {
+        targetGroupId = overLoc.groupId;
+        targetIndex = overLoc.index;
       }
     }
+
+    if (!targetGroupId) return;
+
+    const newTabs = currentForm.tabs.map((tab) => ({
+      ...tab,
+      fieldGroups: tab.fieldGroups.map((group) => ({
+        ...group,
+        fields: [...group.fields],
+      })),
+    }));
+
+    const getGroup = (groupId: string) => {
+      for (const tab of newTabs) {
+        const group = tab.fieldGroups.find((g) => g.id === groupId);
+        if (group) return group;
+      }
+      return null;
+    };
+
+    if (isCatalogueDrag) {
+      const field = catalogue.fields.find((f) => f.id === activeId);
+      if (!field || isOnCanvas) return;
+
+      const targetGroup = getGroup(targetGroupId);
+      if (!targetGroup) return;
+
+      const insertAt = targetIndex >= 0 ? targetIndex : targetGroup.fields.length;
+      targetGroup.fields.splice(insertAt, 0, field);
+      updateCurrentForm({ tabs: newTabs });
+      return;
+    }
+
+    const sourceLoc = findFieldLocation(activeId);
+    if (!sourceLoc) return;
+
+    const sourceGroup = getGroup(sourceLoc.groupId);
+    const targetGroup = getGroup(targetGroupId);
+    if (!sourceGroup || !targetGroup) return;
+
+    if (sourceLoc.groupId === targetGroupId) {
+      if (targetIndex >= 0 && sourceLoc.index !== targetIndex) {
+        targetGroup.fields = arrayMove(targetGroup.fields, sourceLoc.index, targetIndex);
+        updateCurrentForm({ tabs: newTabs });
+      } else if (overId.startsWith('group-') && sourceLoc.index !== targetGroup.fields.length - 1) {
+        targetGroup.fields = arrayMove(targetGroup.fields, sourceLoc.index, targetGroup.fields.length - 1);
+        updateCurrentForm({ tabs: newTabs });
+      }
+      return;
+    }
+
+    const [movedField] = sourceGroup.fields.splice(sourceLoc.index, 1);
+    if (!movedField) return;
+
+    let insertAt = targetIndex >= 0 ? targetIndex : targetGroup.fields.length;
+    targetGroup.fields.splice(insertAt, 0, movedField);
+    updateCurrentForm({ tabs: newTabs });
   };
 
   const selectedField = currentForm.tabs

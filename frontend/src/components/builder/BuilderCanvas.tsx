@@ -4,6 +4,8 @@ import { Tabs, ConfirmModal } from '../ui/Complex';
 import { Button, Input } from '../ui/Base';
 import { Plus, Trash2, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, useSortable, rectSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { cn } from '../../lib/utils';
 import { FieldGroup, Tab } from '../../types';
 import { FieldControlPreview } from '../ui/FieldControl';
@@ -62,6 +64,83 @@ const SublistRenderer = ({ name, fields, onRemoveField, onSelectField, selectedF
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+const SortableFieldItem = ({
+  field,
+  groupId,
+  onRemoveField,
+  onSelectField,
+  selectedFieldId,
+}: {
+  field: any;
+  groupId: string;
+  onRemoveField: (id: string) => void;
+  onSelectField: (id: string) => void;
+  selectedFieldId: string | null;
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: field.id,
+    data: { source: 'canvas', groupId, field },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelectField(field.id);
+      }}
+      className={cn(
+        'p-3 border rounded-ns-md cursor-pointer transition-all relative select-none',
+        isDragging && 'opacity-40 z-50 shadow-lg ring-2 ring-ns-blue/30',
+        selectedFieldId === field.id
+          ? 'border-ns-blue bg-ns-blue/[0.03] ring-1 ring-ns-blue/30'
+          : 'border-transparent hover:border-ns-border hover:bg-ns-page-bg/50',
+      )}
+    >
+      <div className="flex items-center gap-2 mb-1.5">
+        <button
+          type="button"
+          {...listeners}
+          {...attributes}
+          onClick={(e) => e.stopPropagation()}
+          className="text-ns-blue/40 hover:text-ns-blue shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          title="Drag to reorder"
+        >
+          <GripVertical size={12} />
+        </button>
+        <label
+          className={cn(
+            'text-[10px] font-bold uppercase tracking-wider block transition-colors truncate flex-1',
+            selectedFieldId === field.id ? 'text-ns-blue' : 'text-ns-text-muted',
+          )}
+        >
+          {field.label}
+          {field.mandatory && <span className="text-red-500 ml-0.5">*</span>}
+        </label>
+      </div>
+      <div className={cn(field.displayType === 'hidden' && 'opacity-30')}>
+        <FieldControlPreview fieldType={field.type} checkBoxDefault={field.checkBoxDefault} />
+      </div>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemoveField(field.id);
+        }}
+        className="absolute -top-2 -right-2 bg-white border border-ns-border rounded-full p-1 text-ns-text-muted hover:text-red-500 shadow-sm transition-all z-10"
+        title="Remove Field"
+      >
+        <Trash2 size={12} />
+      </button>
     </div>
   );
 };
@@ -146,46 +225,26 @@ const DroppableGroup = ({ group, onRemoveField, onSelectField, selectedFieldId, 
         )}
       </div>
       
-      <div className="p-6 grid grid-cols-2 gap-x-12 gap-y-6 min-h-[120px]">
-        {group.fields.map((field: any) => (
-          <div 
-            key={field.id}
-            onClick={(e) => { e.stopPropagation(); onSelectField(field.id); }}
-            className={cn(
-              "p-3 border rounded-ns-md cursor-pointer transition-all relative select-none",
-              selectedFieldId === field.id 
-                ? "border-ns-blue bg-ns-blue/[0.03] ring-1 ring-ns-blue/30" 
-                : "border-transparent hover:border-ns-border hover:bg-ns-page-bg/50"
-            )}
-          >
-            <div className="flex items-center gap-2 mb-1.5">
-              <GripVertical size={12} className="text-ns-blue/30 shrink-0" />
-              <label className={cn(
-                "text-[10px] font-bold uppercase tracking-wider block transition-colors truncate flex-1",
-                selectedFieldId === field.id ? "text-ns-blue" : "text-ns-text-muted"
-              )}>
-                {field.label}{field.mandatory && <span className="text-red-500 ml-0.5">*</span>}
-              </label>
+      <SortableContext items={group.fields.map((f: any) => f.id)} strategy={rectSortingStrategy}>
+        <div className="p-6 grid grid-cols-2 gap-x-12 gap-y-6 min-h-[120px]">
+          {group.fields.map((field: any) => (
+            <SortableFieldItem
+              key={field.id}
+              field={field}
+              groupId={group.id}
+              onRemoveField={onRemoveField}
+              onSelectField={onSelectField}
+              selectedFieldId={selectedFieldId}
+            />
+          ))}
+          {group.fields.length === 0 && (
+            <div className="col-span-2 flex flex-col items-center justify-center border-2 border-dashed border-ns-border rounded-ns-md py-10 text-ns-text-muted bg-ns-page-bg/30">
+              <Plus size={24} className="mb-2 opacity-20" />
+              <span className="text-[11px] font-bold uppercase tracking-widest opacity-60">Drop fields here</span>
             </div>
-            <div className={cn(field.displayType === 'hidden' && "opacity-30")}>
-              <FieldControlPreview fieldType={field.type} checkBoxDefault={field.checkBoxDefault} />
-            </div>
-            <button 
-              onClick={(e) => { e.stopPropagation(); onRemoveField(field.id); }}
-              className="absolute -top-2 -right-2 bg-white border border-ns-border rounded-full p-1 text-ns-text-muted hover:text-red-500 shadow-sm transition-all z-10"
-              title="Remove Field"
-            >
-              <Trash2 size={12} />
-            </button>
-          </div>
-        ))}
-        {group.fields.length === 0 && (
-          <div className="col-span-2 flex flex-col items-center justify-center border-2 border-dashed border-ns-border rounded-ns-md py-10 text-ns-text-muted bg-ns-page-bg/30">
-            <Plus size={24} className="mb-2 opacity-20" />
-            <span className="text-[11px] font-bold uppercase tracking-widest opacity-60">Drop fields here</span>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </SortableContext>
     </div>
   );
 };

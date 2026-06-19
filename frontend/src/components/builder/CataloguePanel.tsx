@@ -8,7 +8,7 @@ import { cn } from '../../lib/utils';
 const DraggableField = ({ field, isAdded, onToggle }: { field: any; isAdded: boolean; onToggle: () => void }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: field.id,
-    data: field
+    data: { source: 'catalogue', field },
   });
 
   const style = transform ? {
