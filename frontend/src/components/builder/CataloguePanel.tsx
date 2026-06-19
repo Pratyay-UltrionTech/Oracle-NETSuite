@@ -6,27 +6,24 @@ import { useDraggable } from '@dnd-kit/core';
 import { cn } from '../../lib/utils';
 
 const DraggableField = ({ field, isAdded, onToggle }: { field: any; isAdded: boolean; onToggle: () => void }) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: field.id,
     data: { source: 'catalogue', field },
   });
 
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-  } : undefined;
-
   return (
     <div 
       ref={setNodeRef} 
-      style={style}
+      {...listeners}
+      {...attributes}
       onClick={onToggle}
       className={cn(
-        "flex items-center gap-2 px-3 py-1.5 hover:bg-ns-gray-bg group border border-transparent rounded-ns-md cursor-pointer select-none transition-all",
-        isDragging && "opacity-50 border-ns-blue bg-ns-blue/5 scale-95 shadow-lg z-[100]",
-        isAdded && "opacity-60 bg-ns-page-bg"
+        "flex items-center gap-2 px-3 py-1.5 hover:bg-ns-gray-bg group border border-transparent rounded-ns-md cursor-grab active:cursor-grabbing select-none touch-none",
+        isDragging && "opacity-30",
+        isAdded && !isDragging && "opacity-60 bg-ns-page-bg"
       )}
     >
-      <div {...listeners} {...attributes} className="cursor-grab active:cursor-grabbing text-ns-text-muted/50 hover:text-ns-blue transition-colors p-0.5">
+      <div className="text-ns-text-muted/50 group-hover:text-ns-blue transition-colors p-0.5 pointer-events-none">
         <MoreHorizontal size={14} className="rotate-90" />
       </div>
       

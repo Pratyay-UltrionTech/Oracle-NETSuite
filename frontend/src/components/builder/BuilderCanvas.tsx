@@ -86,38 +86,36 @@ const SortableFieldItem = ({
     data: { source: 'canvas', groupId, field },
   });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
     transition,
+    opacity: isDragging ? 0.35 : 1,
+    zIndex: isDragging ? 0 : undefined,
   };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
+      {...listeners}
+      {...attributes}
       onClick={(e) => {
+        if (isDragging) return;
         e.stopPropagation();
         onSelectField(field.id);
       }}
       className={cn(
-        'p-3 border rounded-ns-md cursor-pointer transition-all relative select-none',
-        isDragging && 'opacity-40 z-50 shadow-lg ring-2 ring-ns-blue/30',
-        selectedFieldId === field.id
+        'p-3 border rounded-ns-md transition-[box-shadow,background-color,border-color] relative select-none touch-none',
+        'cursor-grab active:cursor-grabbing',
+        selectedFieldId === field.id && !isDragging
           ? 'border-ns-blue bg-ns-blue/[0.03] ring-1 ring-ns-blue/30'
           : 'border-transparent hover:border-ns-border hover:bg-ns-page-bg/50',
       )}
     >
-      <div className="flex items-center gap-2 mb-1.5">
-        <button
-          type="button"
-          {...listeners}
-          {...attributes}
-          onClick={(e) => e.stopPropagation()}
-          className="text-ns-blue/40 hover:text-ns-blue shrink-0 cursor-grab active:cursor-grabbing touch-none"
-          title="Drag to reorder"
-        >
+      <div className="flex items-center gap-2 mb-1.5 pointer-events-none">
+        <div className="text-ns-blue/40 shrink-0" title="Drag to reorder">
           <GripVertical size={12} />
-        </button>
+        </div>
         <label
           className={cn(
             'text-[10px] font-bold uppercase tracking-wider block transition-colors truncate flex-1',
@@ -132,6 +130,8 @@ const SortableFieldItem = ({
         <FieldControlPreview fieldType={field.type} checkBoxDefault={field.checkBoxDefault} />
       </div>
       <button
+        type="button"
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           onRemoveField(field.id);
