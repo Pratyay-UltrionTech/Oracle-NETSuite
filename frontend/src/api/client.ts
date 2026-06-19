@@ -1,7 +1,24 @@
 import axios from 'axios';
 import { LOCAL_API_URL, PRODUCTION_API_URL } from '../config/urls';
 
-const API_URL = import.meta.env.DEV ? LOCAL_API_URL : PRODUCTION_API_URL;
+function resolveApiUrl(): string {
+  const fromEnv = import.meta.env.VITE_API_URL?.trim();
+  const url = fromEnv || (import.meta.env.DEV ? LOCAL_API_URL : PRODUCTION_API_URL);
+
+  // Prevent mixed-content blocks when Azure build env or stale config uses http://
+  if (
+    typeof window !== 'undefined' &&
+    window.location.protocol === 'https:' &&
+    url.startsWith('http://') &&
+    !url.includes('localhost')
+  ) {
+    return url.replace(/^http:\/\//, 'https://');
+  }
+
+  return url;
+}
+
+const API_URL = resolveApiUrl();
 
 const api = axios.create({
   baseURL: API_URL,
