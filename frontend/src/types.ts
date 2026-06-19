@@ -407,6 +407,7 @@ export interface Submission {
   formName?: string;
   companyId: string;
   status:
+    | 'draft'
     | 'pending'
     | 'approved'
     | 'rejected'
@@ -417,6 +418,7 @@ export interface Submission {
   currentLevel?: number;
   approvals?: WorkflowLevel[];
   submittedAt?: string;
+  updatedAt?: string;
   netsuiteAt?: string;
   netsuiteId?: string;
   poId?: string;
@@ -439,6 +441,7 @@ export interface CustomForm {
   source: FormSource;
   status?: string;    // e.g., 'Submitted', 'Draft', 'In Progress'
   currentLevel?: number;
+  draftValues?: Record<string, unknown>;
   templateId?: string;
   assignedTo?: string[]; // Array of employee user IDs
 }
@@ -530,7 +533,7 @@ export interface AppState {
   fetchMyFormDetails: (formId: string) => Promise<CustomForm | null>;
   fetchSubmissions: () => Promise<void>;
   fetchMySubmissions: (transactionType?: string) => Promise<void>;
-  fetchMyStats: (transactionType?: string) => Promise<{total: number, approved: number, pending: number, rejected: number} | null>;
+  fetchMyStats: (transactionType?: string) => Promise<{total: number, approved: number, pending: number, rejected: number, drafts?: number} | null>;
   fetchCatalogue: (type: TransactionType) => Promise<void>;
   fetchGroupedCatalogue: (type: TransactionType) => Promise<void>;
   fetchCurrencies: (opts?: { includeInactive?: boolean }) => Promise<void>;
@@ -581,6 +584,7 @@ export interface AppState {
   cloneForm: (id: string, targetCompanyId?: string, newName?: string) => Promise<void>;
   assignForm: (formId: string, userIds: string[]) => Promise<void>;
   submitForm: (formId: string, values: Record<string, any>) => Promise<void>;
+  saveFormDraft: (formId: string, values: Record<string, unknown>) => Promise<{ id: string; message: string }>;
   retrySubmission: (submissionId: string) => Promise<void>;
   fetchPendingApprovals: () => Promise<Submission[]>;
   approveSubmission: (submissionId: string) => Promise<void>;

@@ -887,6 +887,7 @@ const mapBackendForm = (form: any): CustomForm => {
   assignedTo: form.assignedTo || [],
   currentLevel: form.currentLevel,
   status: form.status,
+  draftValues: form.draftValues,
   tabs: normalizePoItemSublist(tabs, form.transactionType),
 };
 };
@@ -1286,7 +1287,20 @@ export const useStore = create<AppState>((set, get) => ({
   fetchMyAssignedForms: async () => {
     try {
       const response = await api.get('forms/my');
-      const assignedForms = response.data as CustomForm[];
+      const assignedForms = (response.data as any[]).map((f) => ({
+        id: f.id,
+        name: f.name,
+        transactionType: f.transactionType,
+        status: f.status,
+        currentLevel: f.currentLevel,
+        updatedAt: f.updatedAt,
+        lastUsed: f.lastUsed,
+        customerId: '',
+        tabs: [],
+        createdBy: '',
+        createdAt: '',
+        source: 'scratch' as const,
+      })) as CustomForm[];
       set({ myAssignedForms: assignedForms });
       return assignedForms;
     } catch (err: any) {
@@ -1447,10 +1461,24 @@ export const useStore = create<AppState>((set, get) => ({
       set({ isLoading: false });
       // Clear forms to trigger refetch of status
       get().fetchMyForms();
+      get().fetchMyAssignedForms();
       return response.data;
     } catch (err: any) {
       set({ error: err.response?.data?.detail || 'Submission failed', isLoading: false });
       throw err;
+    }
+  },
+
+  saveFormDraft: async (formId, values) => {
+    set({ error: null });
+    try {
+      const response = await api.put(`forms/${formId}/draft`, { values });
+      get().fetchMyAssignedForms();
+      return response.data;
+    } catch (err: any) {
+      const message = err.response?.data?.detail || 'Failed to save draft';
+      set({ error: message });
+      throw new Error(message);
     }
   },
 

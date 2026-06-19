@@ -84,3 +84,58 @@ export function findLineItemsMissingHsnWhenTaxSet(
 export function itemSublistRowKey(rowIndex: number, fieldId: string): string {
   return `item_${rowIndex}_${fieldId}`;
 }
+
+export function expenseSublistRowKey(rowIndex: number, fieldId: string): string {
+  return `exp_${rowIndex}_${fieldId}`;
+}
+
+/** Stored submission/draft payload → flat form field keys for the fill UI. */
+export function flattenSubmissionValuesToForm(
+  values: Record<string, unknown>,
+): Record<string, unknown> {
+  const flat: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(values)) {
+    if (key === 'lineItems' || key === 'expenseLines') continue;
+    flat[key] = val;
+  }
+  const lineItems = values.lineItems;
+  if (Array.isArray(lineItems)) {
+    lineItems.forEach((line, rowIndex) => {
+      if (!line || typeof line !== 'object') return;
+      for (const [fieldId, val] of Object.entries(line as Record<string, unknown>)) {
+        flat[itemSublistRowKey(rowIndex, fieldId)] = val;
+      }
+    });
+  }
+  const expenseLines = values.expenseLines;
+  if (Array.isArray(expenseLines)) {
+    expenseLines.forEach((line, rowIndex) => {
+      if (!line || typeof line !== 'object') return;
+      for (const [fieldId, val] of Object.entries(line as Record<string, unknown>)) {
+        flat[expenseSublistRowKey(rowIndex, fieldId)] = val;
+      }
+    });
+  }
+  return flat;
+}
+
+/** Row indices present in flat item_* keys (for restoring line-item row count). */
+export function deriveItemRowIndices(flatValues: Record<string, unknown>): number[] {
+  const indices = new Set<number>();
+  for (const key of Object.keys(flatValues)) {
+    const match = key.match(/^item_(\d+)_/);
+    if (match) indices.add(Number.parseInt(match[1], 10));
+  }
+  if (indices.size === 0) return [0];
+  return [...indices].sort((a, b) => a - b);
+}
+
+export function deriveExpenseRowIndices(flatValues: Record<string, unknown>): number[] {
+  const indices = new Set<number>();
+  for (const key of Object.keys(flatValues)) {
+    const match = key.match(/^exp_(\d+)_/);
+    if (match) indices.add(Number.parseInt(match[1], 10));
+  }
+  if (indices.size === 0) return [0];
+  return [...indices].sort((a, b) => a - b);
+}

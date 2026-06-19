@@ -25,7 +25,19 @@ import {
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Complex';
 
 export default function AdminDashboardPage() {
-  const { user, companies, users, forms, submissions, fetchCompanies, fetchUsers, fetchForms, fetchSubmissions } = useStore();
+  const {
+    user,
+    companies,
+    users,
+    forms,
+    submissions,
+    myAssignedForms,
+    fetchCompanies,
+    fetchUsers,
+    fetchForms,
+    fetchSubmissions,
+    fetchMyAssignedForms,
+  } = useStore();
   const navigate = useNavigate();
 
   const isSuperAdmin = user?.role === 'super_admin';
@@ -41,8 +53,23 @@ export default function AdminDashboardPage() {
       fetchUsers();
       fetchForms(user?.companyId);
       fetchSubmissions();
+      fetchMyAssignedForms();
     }
-  }, [isSuperAdmin, isClientAdmin, user?.companyId, fetchCompanies, fetchUsers, fetchForms, fetchSubmissions]);
+  }, [
+    isSuperAdmin,
+    isClientAdmin,
+    user?.companyId,
+    fetchCompanies,
+    fetchUsers,
+    fetchForms,
+    fetchSubmissions,
+    fetchMyAssignedForms,
+  ]);
+
+  const myAssigned = React.useMemo(
+    () => (myAssignedForms || []).filter(f => !!f),
+    [myAssignedForms],
+  );
 
   const pendingApprovals = submissions.filter(s => s.status === 'pending').length;
   const criticalPending = submissions.filter(
@@ -320,7 +347,53 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
+            {myAssigned.length > 0 && (
+              <Card padding="none">
+                <div className="p-5 border-b border-ns-border flex items-center justify-between gap-4">
+                  <CardHeader
+                    title="My assigned forms"
+                    subtitle="Forms you can fill and submit"
+                    className="mb-0"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => navigate('/my-forms')}
+                    className="text-xs font-medium text-ns-blue hover:underline whitespace-nowrap"
+                  >
+                    View all
+                  </button>
+                </div>
+                <div className="divide-y divide-ns-border/60">
+                  {myAssigned.slice(0, 4).map(form => (
+                    <div
+                      key={form.id}
+                      className="p-4 flex items-center justify-between gap-4 hover:bg-ns-blue-soft/40 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 bg-ns-blue-soft border border-ns-border rounded-ns-md flex items-center justify-center text-ns-blue font-bold text-[10px] flex-shrink-0">
+                          {form.transactionType.substring(0, 2).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-ns-text truncate">{form.name}</p>
+                          <p className="text-xs text-ns-text-muted capitalize">
+                            {form.transactionType.replace(/_/g, ' ')}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/fill/${form.id}`)}
+                        className="text-xs font-semibold text-ns-blue hover:underline whitespace-nowrap"
+                      >
+                        Fill form
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
             <Card padding="none">
               <div className="p-5 border-b border-ns-border">
                 <CardHeader

@@ -255,23 +255,42 @@ class FormService:
         forms = []
         async for form in db.forms.find(query):
             form_id = str(form["_id"])
-            
-            # Find the last submission for this form by this user
-            last_submission = await db.submissions.find_one(
-                {"formId": form_id, "userId": user_id},
-                sort=[("submittedAt", -1)]
+
+            draft = await db.submissions.find_one(
+                {"formId": form_id, "userId": user_id, "status": "draft"}
             )
-            
+            last_submission = await db.submissions.find_one(
+                {"formId": form_id, "userId": user_id, "status": {"$ne": "draft"}},
+                sort=[("submittedAt", -1)],
+            )
+
             last_used = "Never"
+            status = "Not Started"
+            current_level = None
+            updated_at = form.get("updatedAt", form.get("createdAt"))
+
             if last_submission:
-                last_used = last_submission.get("submittedAt").strftime("%Y-%m-%d %H:%M:%S") if isinstance(last_submission.get("submittedAt"), datetime) else "N/A"
-            
+                status = last_submission.get("status", "pending")
+                current_level = last_submission.get("currentLevel")
+                submitted = last_submission.get("submittedAt")
+                if isinstance(submitted, datetime):
+                    last_used = submitted.strftime("%Y-%m-%d %H:%M:%S")
+                updated_at = last_submission.get("updatedAt", submitted)
+            elif draft:
+                status = "draft"
+                draft_updated = draft.get("updatedAt")
+                if isinstance(draft_updated, datetime):
+                    last_used = draft_updated.strftime("%Y-%m-%d %H:%M:%S")
+                updated_at = draft_updated
+
             forms.append({
                 "id": form_id,
                 "name": form["name"],
                 "transactionType": form["transactionType"],
                 "lastUsed": last_used,
-                "updatedAt": form.get("updatedAt", form.get("createdAt")).strftime("%Y-%m-%d %H:%M:%S") if isinstance(form.get("updatedAt", form.get("createdAt")), datetime) else "N/A"
+                "updatedAt": updated_at.strftime("%Y-%m-%d %H:%M:%S") if isinstance(updated_at, datetime) else "N/A",
+                "status": status,
+                "currentLevel": current_level,
             })
             
         await log_activity(
@@ -302,12 +321,21 @@ class FormService:
             )
             
         form["id"] = str(form["_id"])
-        
-        # Inject submission status if exists
-        submission = await db.submissions.find_one({"formId": form_id, "userId": user_id})
+
+        draft = await db.submissions.find_one(
+            {"formId": form_id, "userId": user_id, "status": "draft"}
+        )
+        submission = await db.submissions.find_one(
+            {"formId": form_id, "userId": user_id, "status": {"$ne": "draft"}},
+            sort=[("submittedAt", -1)],
+        )
         if submission:
             form["status"] = submission.get("status", "pending")
             form["currentLevel"] = submission.get("currentLevel")
+        elif draft:
+            form["status"] = "draft"
+            form["draftValues"] = draft.get("values", {})
+            form["draftUpdatedAt"] = draft.get("updatedAt")
         else:
             form["status"] = "Not Started"
 
@@ -333,6 +361,65 @@ class FormService:
             "assignedTo": user_id
         })
         return form is not None
+
+    @staticmethod
+    async def save_form_draft(
+        form_id: str, user: Dict[str, Any], values: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        db = get_database()
+        user_id = user["id"]
+
+        form = await db.forms.find_one({"_id": ObjectId(form_id)})
+        if not form:
+            raise HTTPException(status_code=404, detail="Form not found")
+
+        if user.get("role") != "super_admin" and user_id not in form.get("assignedTo", []):
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied. You are not assigned to this form.",
+            )
+
+        split_values = FormService._split_submission_values(values or {})
+        now = datetime.utcnow()
+        draft_doc = {
+            "formId": form_id,
+            "formName": form["name"],
+            "userId": user["id"],
+            "userName": user.get("name", ""),
+            "companyId": form["companyId"],
+            "transactionType": form["transactionType"],
+            "status": "draft",
+            "values": values or {},
+            "bodyFields": split_values["bodyFields"],
+            "lineItems": split_values["lineItems"],
+            "expenseLines": split_values["expenseLines"],
+            "updatedAt": now,
+        }
+
+        existing = await db.submissions.find_one(
+            {"formId": form_id, "userId": user_id, "status": "draft"}
+        )
+        if existing:
+            await db.submissions.update_one({"_id": existing["_id"]}, {"$set": draft_doc})
+            draft_id = str(existing["_id"])
+        else:
+            draft_doc["createdAt"] = now
+            result = await db.submissions.insert_one(draft_doc)
+            draft_id = str(result.inserted_id)
+
+        await log_activity(
+            user_id,
+            "SAVE_FORM_DRAFT",
+            entity_id=form_id,
+            entity_type="FORM",
+            metadata={"formName": form["name"], "draftId": draft_id},
+        )
+
+        return {
+            "id": draft_id,
+            "message": "Draft saved",
+            "updatedAt": now.isoformat(),
+        }
 
     @staticmethod
     async def submit_form(form_id: str, user: Dict[str, Any], values: Dict[str, Any]) -> Dict[str, Any]:
@@ -361,6 +448,11 @@ class FormService:
         workflow_required = approvals is not None
 
         split_values = FormService._split_submission_values(values or {})
+
+        # Remove any saved draft before creating a real submission
+        await db.submissions.delete_many(
+            {"formId": form_id, "userId": user_id, "status": "draft"}
+        )
 
         # STEP 3: Create submission
         submission = {
@@ -489,7 +581,7 @@ class FormService:
             query["transactionType"] = transaction_type
             
         submissions = []
-        async for sub in db.submissions.find(query).sort("submittedAt", -1):
+        async for sub in db.submissions.find(query).sort([("updatedAt", -1), ("submittedAt", -1)]):
             sub["id"] = str(sub["_id"])
             del sub["_id"]
             submissions.append(sub)
@@ -503,7 +595,7 @@ class FormService:
         if transaction_type:
             query["transactionType"] = transaction_type
             
-        total = await db.submissions.count_documents(query)
+        total = await db.submissions.count_documents({**query, "status": {"$ne": "draft"}})
         approved = await db.submissions.count_documents({**query, "status": "approved"})
         pending = await db.submissions.count_documents({**query, "status": "pending"})
         rejected = await db.submissions.count_documents({**query, "status": "rejected"})
@@ -511,17 +603,7 @@ class FormService:
             **query,
             "status": {"$in": ["submitted", "SYNCED_TO_NETSUITE"]},
         })
-
-        drafts = 0
-        if transaction_type:
-            assigned_forms = await db.forms.find(
-                {"assignedTo": user_id, "transactionType": transaction_type}
-            ).to_list(length=500)
-            for f in assigned_forms:
-                fid = str(f["_id"])
-                has_sub = await db.submissions.find_one({"formId": fid, "userId": user_id})
-                if not has_sub:
-                    drafts += 1
+        drafts = await db.submissions.count_documents({**query, "status": "draft"})
 
         return {
             "total": total,

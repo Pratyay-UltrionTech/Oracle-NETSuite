@@ -81,6 +81,8 @@ class MyFormResponse(BaseModel):
     transactionType: str
     lastUsed: str = "Never"
     updatedAt: Optional[str] = None
+    status: Optional[str] = None
+    currentLevel: Optional[int] = None
 
 class FormSubmissionRequest(BaseModel):
     values: Dict[str, Any]

@@ -20,12 +20,14 @@ import {
   PanelLeftClose,
   PanelLeft,
   Shield,
+  Home,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useSidebarExpanded } from '../../lib/useSidebarExpanded';
 import { StatusBadge } from '../admin';
 import LiveDateButton from './LiveDateButton';
 import NotificationBell from './NotificationBell';
+import { getAssignedTransactionNavItems } from '../../lib/transactionRegistry';
 
 type NavItem = { name: string; icon: React.ElementType; path: string };
 
@@ -218,7 +220,18 @@ function ClientAdminSidebar({
   user: { name?: string } | null;
   onLogout: () => void;
 }) {
-  const menuItems: NavItem[] = [
+  const { myAssignedForms, fetchMyAssignedForms } = useStore();
+
+  React.useEffect(() => {
+    void fetchMyAssignedForms();
+  }, [fetchMyAssignedForms, pathname]);
+
+  const transactionNav: NavItem[] = React.useMemo(
+    () => getAssignedTransactionNavItems(myAssignedForms || []),
+    [myAssignedForms],
+  );
+
+  const adminMenuItems: NavItem[] = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { name: 'Employees', icon: Users, path: '/employees' },
     { name: 'Assign Forms', icon: FileText, path: '/assign-forms' },
@@ -226,6 +239,8 @@ function ClientAdminSidebar({
     { name: 'Submissions', icon: Database, path: '/submissions' },
     { name: 'Profile', icon: UserCircle, path: '/profile' },
   ];
+
+  const myWorkspaceNav: NavItem[] = [{ name: 'My forms', icon: Home, path: '/my-forms' }];
 
   return (
     <aside
@@ -262,7 +277,11 @@ function ClientAdminSidebar({
       </div>
 
       <nav className="flex-1 px-3 py-3 overflow-y-auto custom-scrollbar overflow-x-hidden">
-        <NavSection label="Company admin" items={menuItems} isExpanded={isExpanded} pathname={pathname} />
+        <NavSection label="Company admin" items={adminMenuItems} isExpanded={isExpanded} pathname={pathname} />
+        <NavSection label="My workspace" items={myWorkspaceNav} isExpanded={isExpanded} pathname={pathname} />
+        {transactionNav.length > 0 && (
+          <NavSection label="Transactions" items={transactionNav} isExpanded={isExpanded} pathname={pathname} />
+        )}
       </nav>
 
       <div className="p-3 border-t border-ns-sidebar-border">
@@ -363,6 +382,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             )}
             {!isSuperAdmin && (
               <>
+                <LiveDateButton />
                 <NotificationBell />
                 <span className="text-xs font-medium text-white/80 hidden sm:inline">Client Admin</span>
               </>

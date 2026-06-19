@@ -2,6 +2,8 @@ import * as React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import CustomerLayout from '../components/layout/CustomerLayout';
+import PortalLayout from '../components/layout/PortalLayout';
+import { getPortalHomePath } from '../lib/portalNavigation';
 import { Button } from '../components/ui/Base';
 import { Table, THead, TBody, TR, TH, TD } from '../components/ui/Complex';
 import {
@@ -20,7 +22,7 @@ import { TransactionType } from '../types';
 
 export default function UserTransactionHub() {
   const { type } = useParams<{ type: string }>();
-  const { forms, submissions, fetchMyForms, fetchMyAssignedForms, fetchMySubmissions, fetchMyStats } = useStore();
+  const { user, forms, submissions, fetchMyForms, fetchMyAssignedForms, fetchMySubmissions, fetchMyStats } = useStore();
   const navigate = useNavigate();
   const [accessChecked, setAccessChecked] = React.useState(false);
   const [stats, setStats] = React.useState<{
@@ -40,12 +42,12 @@ export default function UserTransactionHub() {
     fetchMyAssignedForms().then(assignedForms => {
       const hasAccess = assignedForms.some(form => form.transactionType === transactionType);
       if (!hasAccess) {
-        navigate('/customer-dashboard', { replace: true });
+        navigate(getPortalHomePath(user?.role), { replace: true });
         return;
       }
       setAccessChecked(true);
     });
-  }, [transactionType, fetchMyAssignedForms, navigate]);
+  }, [transactionType, fetchMyAssignedForms, navigate, user?.role]);
 
   React.useEffect(() => {
     if (!accessChecked) return;
@@ -68,6 +70,7 @@ export default function UserTransactionHub() {
 
   const getStatusLabel = (status: string) => {
     const s = status.toLowerCase();
+    if (s === 'draft') return 'Draft';
     if (s === 'submitted' || s === 'synced_to_netsuite') return 'Completed';
     if (s === 'pending') return 'Pending';
     if (s === 'rejected') return 'Rejected';
@@ -76,8 +79,17 @@ export default function UserTransactionHub() {
     return status;
   };
 
+  const Layout = user?.role === 'client_admin' ? PortalLayout : CustomerLayout;
+
+  const draftSubmissions = submissions.filter(sub => sub.status?.toLowerCase() === 'draft');
+  const historySubmissions = submissions.filter(sub => sub.status?.toLowerCase() !== 'draft');
+
+  const resumeDraft = (formId: string) => {
+    navigate(`/user/forms/${formId}/new`);
+  };
+
   return (
-    <CustomerLayout>
+    <Layout>
       <div className="space-y-6">
         <PageHeader
           eyebrow="Transactions"
@@ -85,14 +97,12 @@ export default function UserTransactionHub() {
           subtitle={`Create and track your ${fullTitle.toLowerCase()} submissions.`}
         />
 
-        <div className={cn('grid grid-cols-1 gap-4', statLabels?.drafts ? 'sm:grid-cols-2 lg:grid-cols-5' : 'sm:grid-cols-2 lg:grid-cols-4')}>
+        <div className={cn('grid grid-cols-1 gap-4', 'sm:grid-cols-2 lg:grid-cols-5')}>
           <KPICard label={statLabels?.total ?? 'Total submissions'} value={stats?.total || 0} subtextVariant="neutral" icon={LayoutGrid} />
           <KPICard label={statLabels?.pending ?? 'Pending'} value={stats?.pending || 0} subtextVariant="warning" icon={Clock} />
           <KPICard label={statLabels?.approved ?? 'Approved'} value={stats?.approved || 0} subtextVariant="success" icon={CheckCircle2} />
           <KPICard label={statLabels?.rejected ?? 'Rejected'} value={stats?.rejected || 0} subtextVariant="danger" icon={AlertCircle} />
-          {statLabels?.drafts && (
-            <KPICard label={statLabels.drafts} value={stats?.drafts || 0} subtextVariant="info" icon={FileSearch} />
-          )}
+          <KPICard label={statLabels?.drafts ?? 'Drafts'} value={stats?.drafts || 0} subtextVariant="info" icon={FileSearch} />
         </div>
 
         <section className="space-y-4">
@@ -124,6 +134,61 @@ export default function UserTransactionHub() {
 
         <Card padding="none">
           <div className="p-5 border-b border-ns-border">
+            <CardHeader title="Drafts" subtitle="Saved progress you can resume and complete" />
+          </div>
+          <Table className="border-0 shadow-none rounded-none">
+            <THead>
+              <TR>
+                <TH>Form name</TH>
+                <TH className="text-center">Status</TH>
+                <TH>Last saved</TH>
+                <TH className="text-right">Actions</TH>
+              </TR>
+            </THead>
+            <TBody>
+              {draftSubmissions.map(sub => (
+                <TR key={sub.id}>
+                  <TD>
+                    <p className="text-sm font-semibold text-ns-text">{sub.formName}</p>
+                    <p className="text-xs text-ns-text-muted">DRF-{sub.id.substring(0, 6).toUpperCase()}</p>
+                  </TD>
+                  <TD className="text-center">
+                    <StatusBadge variant="draft" dot>
+                      Draft
+                    </StatusBadge>
+                  </TD>
+                  <TD className="text-xs text-ns-text-muted">
+                    {sub.submittedAt
+                      ? new Date(sub.submittedAt).toLocaleString()
+                      : sub.updatedAt
+                        ? new Date(sub.updatedAt).toLocaleString()
+                        : '—'}
+                  </TD>
+                  <TD className="text-right">
+                    <Button
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => resumeDraft(sub.formId)}
+                    >
+                      <FileText size={14} />
+                      Resume
+                    </Button>
+                  </TD>
+                </TR>
+              ))}
+              {draftSubmissions.length === 0 && (
+                <TR>
+                  <TD colSpan={4} className="py-12 text-center text-ns-text-muted text-sm">
+                    No drafts yet. Use Save Progress while filling a form to save here.
+                  </TD>
+                </TR>
+              )}
+            </TBody>
+          </Table>
+        </Card>
+
+        <Card padding="none">
+          <div className="p-5 border-b border-ns-border">
             <CardHeader title="Submission history" subtitle="Your past submissions for this transaction type" />
           </div>
           <Table className="border-0 shadow-none rounded-none">
@@ -138,7 +203,7 @@ export default function UserTransactionHub() {
               </TR>
             </THead>
             <TBody>
-              {submissions.map(sub => (
+              {historySubmissions.map(sub => (
                 <TR key={sub.id}>
                   <TD>
                     <p className="text-sm font-semibold text-ns-text">{sub.formName}</p>
@@ -171,7 +236,7 @@ export default function UserTransactionHub() {
                   </TD>
                 </TR>
               ))}
-              {submissions.length === 0 && (
+              {historySubmissions.length === 0 && (
                 <TR>
                   <TD colSpan={6} className="py-12 text-center text-ns-text-muted text-sm">
                     No submissions found yet.
@@ -182,6 +247,6 @@ export default function UserTransactionHub() {
           </Table>
         </Card>
       </div>
-    </CustomerLayout>
+    </Layout>
   );
 }

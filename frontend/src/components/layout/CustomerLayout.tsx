@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import {
-  Home,
   LogOut,
   Building,
   Settings,
@@ -14,6 +13,7 @@ import { cn } from '../../lib/utils';
 import { useSidebarExpanded } from '../../lib/useSidebarExpanded';
 import { StatusBadge } from '../admin';
 import { getAssignedTransactionNavItems } from '../../lib/transactionRegistry';
+import LiveDateButton from './LiveDateButton';
 import NotificationBell from './NotificationBell';
 
 type NavItem = { name: string; icon: React.ElementType; path: string };
@@ -66,7 +66,6 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
     navigate('/');
   };
 
-  const mainNav: NavItem[] = [{ name: 'Overview', icon: Home, path: '/customer-dashboard' }];
   const transactionNav: NavItem[] = React.useMemo(
     () => getAssignedTransactionNavItems(myAssignedForms),
     [myAssignedForms],
@@ -140,9 +139,8 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
         </div>
 
         <nav className="flex-1 px-3 py-3 overflow-y-auto custom-scrollbar">
-          {renderSection('My account', mainNav)}
           {transactionNav.length > 0 && renderSection('Transactions', transactionNav)}
-          {renderSection('Help', accountNav)}
+          {renderSection('Account', accountNav)}
         </nav>
 
         <div className="p-3 border-t border-ns-sidebar-border">
@@ -192,6 +190,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
           </div>
 
           <div className="flex items-center gap-3">
+            <LiveDateButton />
             <NotificationBell />
             <StatusBadge variant="synced" dot className="hidden sm:inline-flex bg-white/15 text-white border-white/25">
               Connected to NetSuite

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import CustomerLayout from '../components/layout/CustomerLayout';
+import PortalLayout from '../components/layout/PortalLayout';
 import { Button, Label } from '../components/ui/Base';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/HorizontalTabs';
 import { FieldControl } from '../components/ui/FieldControl';
@@ -26,6 +26,8 @@ import {
   buildSubmissionValues,
   findLineItemsMissingHsnWhenTaxSet,
   itemSublistRowKey,
+  flattenSubmissionValuesToForm,
+  deriveItemRowIndices,
 } from '../lib/sublistSubmission';
 import {
   collectMissingRequiredFields,
@@ -41,12 +43,14 @@ import api from '../api/client';
 export default function FormFillPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, fetchMyFormDetails, submitForm, isLoading, currencies, fetchCurrencies } = useStore();
+  const { user, fetchMyFormDetails, submitForm, saveFormDraft, isLoading, currencies, fetchCurrencies } = useStore();
 
   const [form, setForm] = React.useState<CustomForm | null>(null);
   const [formValues, setFormValues] = React.useState<Record<string, any>>({});
   const [activeTab, setActiveTab] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isSavingDraft, setIsSavingDraft] = React.useState(false);
+  const [draftMessage, setDraftMessage] = React.useState<string | null>(null);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [missingFields, setMissingFields] = React.useState<MissingFieldRef[]>([]);
   const [highlightedFieldId, setHighlightedFieldId] = React.useState<string | null>(null);
@@ -73,7 +77,6 @@ export default function FormFillPage() {
     if (form && form.tabs.length > 0) {
       setActiveTab(form.tabs[0].id);
 
-      // Initialize default checkbox values
       const initialValues: Record<string, any> = {};
       form.tabs.forEach(tab => {
         tab.fieldGroups.forEach(group => {
@@ -82,15 +85,20 @@ export default function FormFillPage() {
           });
         });
       });
+
+      if (form.draftValues && Object.keys(form.draftValues).length > 0) {
+        const flat = flattenSubmissionValuesToForm(form.draftValues);
+        Object.assign(initialValues, flat);
+        if (form.transactionType === 'item_receipt' || form.transactionType === 'vendor_bill') {
+          setItemRows(deriveItemRowIndices(flat));
+        }
+      } else if (form.transactionType === 'item_receipt' || form.transactionType === 'vendor_bill') {
+        setItemRows([0]);
+      }
+
       setFormValues(initialValues);
     }
   }, [form]);
-
-  React.useEffect(() => {
-    if (form?.transactionType === 'item_receipt' || form?.transactionType === 'vendor_bill') {
-      setItemRows([0]);
-    }
-  }, [form?.transactionType]);
 
   React.useEffect(() => {
     if (form?.transactionType === 'vendor_bill') {
@@ -112,11 +120,11 @@ export default function FormFillPage() {
   }, []);
 
   if (!form && isLoading) return (
-    <CustomerLayout>
+    <PortalLayout>
       <div className="flex items-center justify-center py-20">
         <div className="h-8 w-8 border-4 border-ns-blue/30 border-t-ns-blue rounded-full animate-spin" />
       </div>
-    </CustomerLayout>
+    </PortalLayout>
   );
 
   if (!form) return <div>Form not found or access denied.</div>;
@@ -131,7 +139,7 @@ export default function FormFillPage() {
     const syncFailed = status === 'failed' || status === 'NETSUITE_SYNC_FAILED';
 
     return (
-      <CustomerLayout>
+      <PortalLayout>
         <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500">
           <div className={cn(
             "w-20 h-20 rounded-full flex items-center justify-center mb-8 border-4 border-white shadow-xl",
@@ -212,7 +220,7 @@ export default function FormFillPage() {
             </Button>
           </div>
         </div>
-      </CustomerLayout>
+      </PortalLayout>
     );
   }
 
@@ -357,6 +365,22 @@ export default function FormFillPage() {
     if (highlightedFieldId === `field-${key}`) setHighlightedFieldId(null);
   };
 
+  const handleSaveDraft = async () => {
+    if (!form || !id) return;
+    setIsSavingDraft(true);
+    setDraftMessage(null);
+    try {
+      const values = buildSubmissionValues(form, formValues);
+      await saveFormDraft(id, values);
+      setDraftMessage('Progress saved. You can resume from Drafts anytime.');
+      window.setTimeout(() => setDraftMessage(null), 4000);
+    } catch (err: any) {
+      setSubmitError(err.message || 'Failed to save draft');
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
   const handleSubmit = async () => {
     const missing = collectMissingRequiredFields(form, formValues, {
       itemRowIndexes: itemRows,
@@ -409,7 +433,7 @@ export default function FormFillPage() {
   };
 
   return (
-    <CustomerLayout>
+    <PortalLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex justify-between items-start">
@@ -435,9 +459,17 @@ export default function FormFillPage() {
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <Button variant="secondary" className="gap-2 h-10 px-6 font-bold text-xs uppercase tracking-widest">
-              <Save size={16} /> Save Progress
+          <div className="flex gap-3 items-center">
+            {draftMessage && (
+              <span className="text-xs font-semibold text-status-approved hidden sm:inline">{draftMessage}</span>
+            )}
+            <Button
+              variant="secondary"
+              className="gap-2 h-10 px-6 font-bold text-xs uppercase tracking-widest"
+              onClick={handleSaveDraft}
+              disabled={isSavingDraft || isSubmitting}
+            >
+              <Save size={16} /> {isSavingDraft ? 'Saving…' : 'Save Progress'}
             </Button>
             <Button
               onClick={handleSubmit}
@@ -470,6 +502,13 @@ export default function FormFillPage() {
                 ))}
               </ul>
             </div>
+          </div>
+        )}
+
+        {draftMessage && (
+          <div className="bg-status-approved-bg p-4 rounded-ns-md border border-green-200 flex gap-4 items-center sm:hidden">
+            <Save className="text-status-approved shrink-0" size={20} />
+            <p className="text-xs text-green-900 font-bold">{draftMessage}</p>
           </div>
         )}
 
@@ -824,6 +863,6 @@ export default function FormFillPage() {
           </p>
         </div>
       </div>
-    </CustomerLayout>
+    </PortalLayout>
   );
 }

@@ -130,6 +130,16 @@ async def get_assigned_users(
         
     return await FormService.get_assigned_users(formId)
 
+@router.put("/{formId}/draft")
+async def save_form_draft(
+    formId: str,
+    submission: FormSubmissionRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Save partial form progress as a draft for the current user."""
+    return await FormService.save_form_draft(formId, current_user, submission.values)
+
+
 @router.post("/{formId}/submit")
 async def submit_form(
     formId: str,

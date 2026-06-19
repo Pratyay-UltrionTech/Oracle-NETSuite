@@ -195,7 +195,15 @@ export default function App() {
           } 
         />
 
-        {/* User Specific */}
+        {/* Client Admin & employee portal */}
+        <Route 
+          path="/my-forms" 
+          element={
+            <ProtectedRoute roles={['client_admin']}>
+              <CustomerDashboardPage />
+            </ProtectedRoute>
+          } 
+        />
         <Route 
           path="/customer-dashboard" 
           element={
@@ -207,7 +215,7 @@ export default function App() {
         <Route 
           path="/user/:type" 
           element={
-            <ProtectedRoute roles={['user', 'manager']}>
+            <ProtectedRoute roles={['user', 'manager', 'client_admin']}>
               <UserTransactionHub />
             </ProtectedRoute>
           } 
@@ -215,7 +223,7 @@ export default function App() {
         <Route 
           path="/fill/:id" 
           element={
-            <ProtectedRoute roles={['user', 'manager']}>
+            <ProtectedRoute roles={['user', 'manager', 'client_admin']}>
               <FormFillPage />
             </ProtectedRoute>
           } 
@@ -223,7 +231,7 @@ export default function App() {
         <Route 
           path="/user/forms/:id/new" 
           element={
-            <ProtectedRoute roles={['user', 'manager']}>
+            <ProtectedRoute roles={['user', 'manager', 'client_admin']}>
               <FormFillPage />
             </ProtectedRoute>
           } 
