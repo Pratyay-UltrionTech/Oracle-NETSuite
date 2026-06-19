@@ -5,8 +5,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 
-from .config import settings
 from .database import close_mongo_connection, connect_to_mongo
+from .urls import DEPLOYED_FRONTEND_URL
 from .routes import (
     auth,
     catalogue,
@@ -39,7 +39,10 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],
+    allow_origins=[
+        DEPLOYED_FRONTEND_URL,
+        "http://localhost:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -49,7 +52,10 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     global _scheduler
-    await connect_to_mongo()
+    try:
+        await connect_to_mongo()
+    except Exception as exc:
+        print(f"MongoDB connection failed during startup: {exc}")
     _scheduler = AsyncIOScheduler()
     _scheduler.start()
 
@@ -90,3 +96,8 @@ app.include_router(netsuite_datasources.router, prefix="/api")
 @app.get("/")
 async def root():
     return {"message": "NetSuite Form Builder Backend API is running"}
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}

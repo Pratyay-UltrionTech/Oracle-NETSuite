@@ -11,6 +11,10 @@ from app.services.netsuite_restlet import restlet_post_sync_with_retry
 
 logger = logging.getLogger(__name__)
 
+
+def is_vendor_bill_restlet_configured() -> bool:
+    return bool(settings.NETSUITE_VB_SCRIPT.strip() and settings.NETSUITE_VB_DEPLOY.strip())
+
 _VENDOR_KEYS = ("entity", "vendor", "vendorId")
 _SUBSIDIARY_KEYS = ("subsidiary", "subsidiaryId")
 _VB_NUMBER_KEYS = ("tranid", "vendorbillnumber", "invoiceNumber")
@@ -296,6 +300,17 @@ def create_vendor_bill_in_netsuite(
     POST a Vendor Bill payload to the NetSuite RESTlet using OAuth 1.0 credentials.
     Retries transient and governance failures with exponential backoff.
     """
+    if not is_vendor_bill_restlet_configured():
+        logger.info(
+            "NetSuite VB create skipped: NETSUITE_VB_SCRIPT/DEPLOY not configured submissionId=%s",
+            payload.get("submissionId"),
+        )
+        return {
+            "status": "skipped",
+            "success": False,
+            "message": "Vendor Bill NetSuite integration is not configured",
+        }
+
     validation_errors = validate_vendor_bill_payload(payload)
     if validation_errors:
         message = "; ".join(validation_errors)
@@ -345,6 +360,8 @@ def is_netsuite_vb_success(response: Dict[str, Any]) -> bool:
     if not isinstance(response, dict):
         return False
     status = str(response.get("status") or "").lower()
+    if status == "skipped":
+        return False
     if status in {"success", "ok"}:
         return True
     if response.get("success") is True:
@@ -403,6 +420,14 @@ def build_vendor_bill_sync_update(
     """
     Build the MongoDB fields to persist after a Vendor Bill NetSuite sync attempt.
     """
+    if str(response.get("status") or "").lower() == "skipped":
+        return {
+            "submissionId": submission_id,
+            "netsuiteResponse": response,
+            "syncStatus": "NOT_CONFIGURED",
+            "updatedAt": datetime.utcnow(),
+        }
+
     is_success = is_netsuite_vb_success(response)
     update: Dict[str, Any] = {
         "submissionId": submission_id,
