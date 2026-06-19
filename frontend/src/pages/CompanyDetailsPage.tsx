@@ -239,12 +239,10 @@ export default function CompanyDetailsPage() {
                 onChange={(e) => setNewEmployee({...newEmployee, role: e.target.value as any})}
               >
                 <option value="user">Standard User</option>
-                <option value="manager">Company Manager</option>
                 <option value="client_admin">Client Administrator</option>
               </Select>
               <p className="text-[10px] text-ns-text-muted italic">
                 {newEmployee.role === 'client_admin' && "Company admins can manage forms, users, and approval workflows for this company."}
-                {newEmployee.role === 'manager' && "Managers can approve submissions within their assigned approval steps."}
                 {newEmployee.role === 'user' && "Standard users can submit forms and track their own submissions."}
               </p>
             </div>
