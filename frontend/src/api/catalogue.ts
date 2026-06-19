@@ -23,7 +23,7 @@ export type CatalogueFieldCreate = Omit<CatalogueField, '_id' | 'createdAt' | 'u
 
 export const catalogueApi = {
   getFields: (type?: string) => 
-    api.get<CatalogueField[]>(`/catalogue`, { params: { type } }),
+    api.get<CatalogueField[]>('catalogue/', { params: { type } }),
   
   createField: (data: CatalogueFieldCreate) => 
     api.post<CatalogueField>(`/catalogue`, data),

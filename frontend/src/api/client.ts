@@ -1,16 +1,8 @@
 import axios from 'axios';
 import { LOCAL_API_URL, PRODUCTION_API_URL } from '../config/urls';
 
-function secureApiUrl(url: string): string {
-  if (url.includes('localhost')) return url;
-  return url.replace(/^http:\/\//i, 'https://');
-}
-
-// Always use hardcoded urls.ts in production — ignore VITE_API_URL (Azure may set http://)
-const API_URL = secureApiUrl(import.meta.env.DEV ? LOCAL_API_URL : PRODUCTION_API_URL);
-
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: import.meta.env.DEV ? LOCAL_API_URL : PRODUCTION_API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -18,13 +10,6 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    if (config.baseURL) {
-      config.baseURL = secureApiUrl(config.baseURL);
-    }
-    if (typeof config.url === 'string' && config.url.startsWith('http://')) {
-      config.url = secureApiUrl(config.url);
-    }
-
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
