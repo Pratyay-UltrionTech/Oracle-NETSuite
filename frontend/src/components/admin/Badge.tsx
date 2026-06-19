@@ -28,7 +28,7 @@ export function StatusBadge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border',
+        'inline-flex w-fit items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap',
         statusStyles[variant],
         className,
       )}
@@ -113,4 +113,13 @@ export function submissionStatusVariant(status: string): StatusVariant {
   if (status === 'pending') return 'pending';
   if (status === 'draft') return 'draft';
   return 'draft';
+}
+
+export function submissionStatusLabel(status: string): string {
+  if (status === 'SYNCED_TO_NETSUITE') return 'Synced';
+  if (status === 'submitted' || status === 'approved') return 'Approved';
+  if (status === 'NETSUITE_SYNC_FAILED' || status === 'rejected') return 'Rejected';
+  if (status === 'pending') return 'Pending';
+  if (status === 'draft') return 'Draft';
+  return status.replace(/_/g, ' ');
 }

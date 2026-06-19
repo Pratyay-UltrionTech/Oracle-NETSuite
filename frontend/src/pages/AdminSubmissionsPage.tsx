@@ -8,13 +8,14 @@ import {
   KPICard,
   StatusBadge,
   submissionStatusVariant,
+  submissionStatusLabel,
   Card,
 } from '../components/admin';
 import { Button, Input } from '../components/ui/Base';
 import { cn } from '../lib/utils';
 
 export default function AdminSubmissionsPage() {
-  const { user, submissions, forms, companies, users, fetchSubmissions, fetchCompanies, fetchUsers, retrySubmission, isLoading } = useStore();
+  const { user, submissions, forms, companies, users, fetchSubmissions, fetchCompanies, fetchUsers, isLoading } = useStore();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [selectedSubmissionId, setSelectedSubmissionId] = React.useState<string | null>(null);
 
@@ -116,17 +117,9 @@ export default function AdminSubmissionsPage() {
                    </div>
                  </TD>
                  <TD>
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col items-start gap-1">
                       <StatusBadge variant={submissionStatusVariant(sub.status)}>
-                        {sub.status === 'SYNCED_TO_NETSUITE'
-                          ? 'Synced'
-                          : sub.status === 'submitted'
-                            ? 'Approved'
-                            : sub.status === 'NETSUITE_SYNC_FAILED'
-                              ? 'Rejected'
-                              : sub.status === 'pending'
-                                ? 'Pending'
-                                : sub.status}
+                        {submissionStatusLabel(sub.status)}
                       </StatusBadge>
                       {(sub.netsuiteId || sub.poId || sub.billId) && (
                         <span className="text-[9px] font-mono text-ns-text-muted">
@@ -170,26 +163,15 @@ export default function AdminSubmissionsPage() {
                    </div>
                  </TD>
                  <TD className="px-6 text-right">
-                    <div className="flex justify-end gap-2">
-                      {(sub.status === 'failed' || sub.status === 'NETSUITE_SYNC_FAILED') && (
-                        <Button 
-                          onClick={() => retrySubmission(sub.id)}
-                          size="sm" 
-                          className="h-8 px-3 gap-1 text-[10px] font-bold uppercase tracking-widest bg-status-pending-bg0 hover:bg-amber-600 border-none"
-                        >
-                          Retry Sync <Database size={12} />
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="sm" onClick={() => setSelectedSubmissionId(sub.id)} className="h-8 px-3 gap-2 text-[10px] font-bold uppercase tracking-widest text-ns-blue hover:bg-ns-blue hover:text-white transition-all">
-                        View Details <FileText size={12} />
-                      </Button>
-                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedSubmissionId(sub.id)} className="h-8 px-3 gap-2 text-[10px] font-bold uppercase tracking-widest text-ns-blue hover:bg-ns-blue hover:text-white transition-all">
+                      View Details <FileText size={12} />
+                    </Button>
                  </TD>
               </TR>
             ))}
             {filteredSubmissions.length === 0 && (
               <TR>
-                 <TD colSpan={6} className="py-24 text-center">
+                 <TD colSpan={7} className="py-24 text-center">
                     <div className="opacity-40 flex flex-col items-center">
                        <Database size={48} className="text-ns-navy mb-4" />
                        <h3 className="text-lg font-bold uppercase tracking-[0.2em]">No submissions yet</h3>
