@@ -8,5 +8,4 @@ export const DEPLOYED_BACKEND_URL =
 
 export const LOCAL_API_URL = 'http://localhost:8000/api';
 
-// Same-origin path — Azure Static Web Apps proxies /api/* to the linked App Service backend.
-export const PRODUCTION_API_URL = '/api';
+export const PRODUCTION_API_URL = `${DEPLOYED_BACKEND_URL}/api`;

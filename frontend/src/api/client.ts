@@ -1,8 +1,11 @@
 import axios from 'axios';
 import { LOCAL_API_URL, PRODUCTION_API_URL } from '../config/urls';
 
+// Hardcoded https backend — never use /api same-origin unless SWA backend is linked in Azure portal.
+const API_BASE = import.meta.env.DEV ? LOCAL_API_URL : PRODUCTION_API_URL;
+
 const api = axios.create({
-  baseURL: import.meta.env.DEV ? LOCAL_API_URL : PRODUCTION_API_URL,
+  baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -10,6 +13,11 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
+    // Belt-and-suspenders: never allow http:// to Azure backend (mixed-content block)
+    if (config.baseURL?.startsWith('http://') && !config.baseURL.includes('localhost')) {
+      config.baseURL = config.baseURL.replace(/^http:\/\//i, 'https://');
+    }
+
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
