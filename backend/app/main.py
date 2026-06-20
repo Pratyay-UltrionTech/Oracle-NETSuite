@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 
 from .database import close_mongo_connection, connect_to_mongo
-from .urls import DEPLOYED_FRONTEND_URL
+from .config import settings
 from .routes import (
     auth,
     catalogue,
@@ -40,7 +40,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        DEPLOYED_FRONTEND_URL,
+        settings.FRONTEND_URL,
         "http://localhost:3000",
     ],
     allow_credentials=True,
