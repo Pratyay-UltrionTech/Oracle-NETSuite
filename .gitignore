@@ -10,3 +10,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Environment (use backend/.env and frontend/.env instead)
+.env
+!.env.example

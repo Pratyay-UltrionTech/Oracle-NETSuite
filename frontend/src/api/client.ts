@@ -2,7 +2,8 @@ import axios from 'axios';
 import { LOCAL_API_URL, PRODUCTION_API_URL } from '../config/urls';
 
 // Hardcoded https backend — never use /api same-origin unless SWA backend is linked in Azure portal.
-const API_BASE = import.meta.env.DEV ? LOCAL_API_URL : PRODUCTION_API_URL;
+const devApiBase = import.meta.env.VITE_API_URL || LOCAL_API_URL;
+const API_BASE = import.meta.env.DEV ? devApiBase : PRODUCTION_API_URL;
 
 const api = axios.create({
   baseURL: API_BASE,
