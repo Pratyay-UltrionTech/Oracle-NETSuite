@@ -225,7 +225,7 @@ export default function StaffManagementPage() {
 
   const addUserModal = isAddModalOpen && (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ns-navy/40 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-ns-card border border-ns-border shadow-2xl w-full max-w-lg overflow-hidden">
+      <div className="bg-white rounded-ns-xl border border-ns-border shadow-2xl w-full max-w-lg overflow-hidden">
         <div className="px-6 py-4 border-b border-ns-border flex items-center justify-between">
           <h3 className="font-semibold text-ns-text flex items-center gap-2">
             <UserPlus size={18} className="text-ns-blue" />
@@ -376,7 +376,7 @@ export default function StaffManagementPage() {
 
   const editUserModal = editingUser && (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ns-navy/40 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-ns-card border border-ns-border shadow-2xl w-full max-w-lg overflow-hidden">
+      <div className="bg-white rounded-ns-xl border border-ns-border shadow-2xl w-full max-w-lg overflow-hidden">
         <div className="px-6 py-4 border-b border-ns-border flex items-center justify-between">
           <h3 className="font-semibold text-ns-text flex items-center gap-2">
             <Edit2 size={18} className="text-ns-blue" />

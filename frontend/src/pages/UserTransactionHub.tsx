@@ -14,17 +14,62 @@ import {
   FileSearch,
   PlusCircle,
   LayoutGrid,
+  Loader2,
 } from 'lucide-react';
 import { PageHeader, KPICard, StatusBadge, Card, CardHeader } from '../components/admin';
 import { cn } from '../lib/utils';
 import { slugToTransactionType, TRANSACTION_REGISTRY } from '../lib/transactionRegistry';
 import { TransactionType } from '../types';
 
+function TransactionHubSkeleton({ title }: { title: string }) {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div>
+        <div className="h-3 w-24 bg-ns-border rounded mb-3" />
+        <div className="h-7 w-48 bg-ns-border rounded mb-2" />
+        <div className="h-4 w-72 max-w-full bg-ns-border/70 rounded" />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-24 bg-white border border-ns-border rounded-ns-md" />
+        ))}
+      </div>
+
+      <div className="space-y-3">
+        <div className="h-5 w-16 bg-ns-border rounded" />
+        <div className="h-32 bg-white border border-ns-border rounded-ns-md" />
+      </div>
+
+      <div className="h-40 bg-white border border-ns-border rounded-ns-md" />
+
+      <div className="flex items-center justify-center gap-2 py-4 text-ns-text-muted text-sm">
+        <Loader2 size={16} className="animate-spin text-ns-blue" />
+        Loading {title.toLowerCase()}…
+      </div>
+    </div>
+  );
+}
+
 export default function UserTransactionHub() {
   const { type } = useParams<{ type: string }>();
-  const { user, forms, submissions, fetchMyForms, fetchMyAssignedForms, fetchMySubmissions, fetchMyStats } = useStore();
+  const {
+    user,
+    forms,
+    mySubmissions,
+    myAssignedForms,
+    fetchMyAssignedForms,
+    fetchMyForms,
+    fetchMySubmissions,
+    fetchMyStats,
+  } = useStore();
   const navigate = useNavigate();
-  const [accessChecked, setAccessChecked] = React.useState(false);
+
+  const transactionType = slugToTransactionType(type) as TransactionType;
+  const meta = TRANSACTION_REGISTRY[transactionType];
+  const fullTitle = meta.name;
+  const statLabels = meta.statLabels;
+
   const [stats, setStats] = React.useState<{
     total: number;
     approved: number;
@@ -32,33 +77,60 @@ export default function UserTransactionHub() {
     rejected: number;
     drafts?: number;
   } | null>(null);
-
-  const transactionType = slugToTransactionType(type) as TransactionType;
-  const meta = TRANSACTION_REGISTRY[transactionType];
-  const fullTitle = meta.name;
-  const statLabels = meta.statLabels;
+  const [dataReady, setDataReady] = React.useState(false);
 
   React.useEffect(() => {
-    fetchMyAssignedForms().then(assignedForms => {
-      const hasAccess = assignedForms.some(form => form.transactionType === transactionType);
-      if (!hasAccess) {
+    let cancelled = false;
+
+    const verifyAccess = async () => {
+      let assigned = myAssignedForms;
+      if (assigned.length === 0) {
+        assigned = await fetchMyAssignedForms();
+      }
+      if (cancelled) return;
+
+      const allowed = assigned.some(form => form.transactionType === transactionType);
+      if (!allowed) {
         navigate(getPortalHomePath(user?.role), { replace: true });
+      }
+    };
+
+    void verifyAccess();
+    return () => {
+      cancelled = true;
+    };
+  }, [transactionType, myAssignedForms, fetchMyAssignedForms, navigate, user?.role]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    setDataReady(false);
+
+    const loadPageData = async () => {
+      if (myAssignedForms.length > 0 && !myAssignedForms.some(f => f.transactionType === transactionType)) {
         return;
       }
-      setAccessChecked(true);
-    });
-  }, [transactionType, fetchMyAssignedForms, navigate, user?.role]);
 
-  React.useEffect(() => {
-    if (!accessChecked) return;
-    fetchMyForms(transactionType);
-    fetchMySubmissions(transactionType);
-    fetchMyStats(transactionType).then(setStats);
-  }, [transactionType, accessChecked, fetchMyForms, fetchMySubmissions, fetchMyStats]);
+      await Promise.all([
+        fetchMyForms(transactionType),
+        fetchMySubmissions(transactionType),
+      ]);
+      const nextStats = await fetchMyStats(transactionType);
 
-  if (!accessChecked) {
-    return null;
-  }
+      if (!cancelled) {
+        setStats(nextStats);
+        setDataReady(true);
+      }
+    };
+
+    void loadPageData();
+    return () => {
+      cancelled = true;
+    };
+  }, [transactionType, myAssignedForms, fetchMyForms, fetchMySubmissions, fetchMyStats]);
+
+  const Layout = user?.role === 'client_admin' ? PortalLayout : CustomerLayout;
+
+  const showSkeleton = !dataReady;
 
   const mapStatusVariant = (status: string) => {
     const s = status.toLowerCase();
@@ -79,174 +151,116 @@ export default function UserTransactionHub() {
     return status;
   };
 
-  const Layout = user?.role === 'client_admin' ? PortalLayout : CustomerLayout;
-
-  const draftSubmissions = submissions.filter(sub => sub.status?.toLowerCase() === 'draft');
-  const historySubmissions = submissions.filter(sub => sub.status?.toLowerCase() !== 'draft');
-
-  const resumeDraft = (formId: string) => {
-    navigate(`/user/forms/${formId}/new`);
-  };
+  const historySubmissions = mySubmissions.filter(sub => sub.status?.toLowerCase() !== 'draft');
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <PageHeader
-          eyebrow="Transactions"
-          title={fullTitle}
-          subtitle={`Create and track your ${fullTitle.toLowerCase()} submissions.`}
-        />
+      {showSkeleton ? (
+        <TransactionHubSkeleton title={fullTitle} />
+      ) : (
+        <div className="space-y-6">
+          <PageHeader
+            eyebrow="Transactions"
+            title={fullTitle}
+            subtitle={`Create and track your ${fullTitle.toLowerCase()} submissions.`}
+          />
 
-        <div className={cn('grid grid-cols-1 gap-4', 'sm:grid-cols-2 lg:grid-cols-5')}>
-          <KPICard label={statLabels?.total ?? 'Total submissions'} value={stats?.total || 0} subtextVariant="neutral" icon={LayoutGrid} />
-          <KPICard label={statLabels?.pending ?? 'Pending'} value={stats?.pending || 0} subtextVariant="warning" icon={Clock} />
-          <KPICard label={statLabels?.approved ?? 'Approved'} value={stats?.approved || 0} subtextVariant="success" icon={CheckCircle2} />
-          <KPICard label={statLabels?.rejected ?? 'Rejected'} value={stats?.rejected || 0} subtextVariant="danger" icon={AlertCircle} />
-          <KPICard label={statLabels?.drafts ?? 'Drafts'} value={stats?.drafts || 0} subtextVariant="info" icon={FileSearch} />
-        </div>
+          <div className={cn('grid grid-cols-1 gap-4', 'sm:grid-cols-2 lg:grid-cols-5')}>
+            <KPICard label={statLabels?.total ?? 'Total submissions'} value={stats?.total || 0} subtextVariant="neutral" icon={LayoutGrid} />
+            <KPICard label={statLabels?.pending ?? 'Pending'} value={stats?.pending || 0} subtextVariant="warning" icon={Clock} />
+            <KPICard label={statLabels?.approved ?? 'Approved'} value={stats?.approved || 0} subtextVariant="success" icon={CheckCircle2} />
+            <KPICard label={statLabels?.rejected ?? 'Rejected'} value={stats?.rejected || 0} subtextVariant="danger" icon={AlertCircle} />
+            <KPICard label={statLabels?.drafts ?? 'Drafts'} value={stats?.drafts || 0} subtextVariant="info" icon={FileSearch} />
+          </div>
 
-        <section className="space-y-4">
-          <CardHeader title="Forms" subtitle="Select a form to start a new submission" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {forms.map((form: { id: string; name: string; lastUsed?: string }) => (
-              <Card key={form.id} className="group hover:border-ns-blue/30 transition-colors">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="w-9 h-9 bg-ns-blue-soft rounded-ns-md flex items-center justify-center text-ns-blue group-hover:bg-ns-blue group-hover:text-white transition-colors">
-                    <FileText size={18} />
+          <section className="space-y-4">
+            <CardHeader title="Forms" subtitle="Select a form to start a new submission" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {forms.map((form: { id: string; name: string; lastUsed?: string }) => (
+                <Card key={form.id} className="group hover:border-ns-blue/30 transition-colors">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="w-9 h-9 bg-ns-blue-soft rounded-ns-md flex items-center justify-center text-ns-blue group-hover:bg-ns-blue group-hover:text-white transition-colors">
+                      <FileText size={18} />
+                    </div>
                   </div>
-                </div>
-                <h3 className="text-sm font-semibold text-ns-text mb-1">{form.name}</h3>
-                <p className="text-xs text-ns-text-muted mb-4">Last used: {form.lastUsed || 'Never'}</p>
-                <Button className="w-full gap-2" size="sm" onClick={() => navigate(`/user/forms/${form.id}/new`)}>
-                  <PlusCircle size={14} />
-                  New submission
-                </Button>
-              </Card>
-            ))}
-            {forms.length === 0 && (
-              <Card className="col-span-full py-12 flex flex-col items-center justify-center text-ns-text-muted border-dashed">
-                <LayoutGrid size={32} className="opacity-30 mb-2" />
-                <p className="text-sm">No forms assigned for {fullTitle.toLowerCase()}</p>
-              </Card>
-            )}
-          </div>
-        </section>
-
-        <Card padding="none">
-          <div className="p-5 border-b border-ns-border">
-            <CardHeader title="Drafts" subtitle="Saved progress you can resume and complete" />
-          </div>
-          <Table className="border-0 shadow-none rounded-none">
-            <THead>
-              <TR>
-                <TH>Form name</TH>
-                <TH className="text-center">Status</TH>
-                <TH>Last saved</TH>
-                <TH className="text-right">Actions</TH>
-              </TR>
-            </THead>
-            <TBody>
-              {draftSubmissions.map(sub => (
-                <TR key={sub.id}>
-                  <TD>
-                    <p className="text-sm font-semibold text-ns-text">{sub.formName}</p>
-                    <p className="text-xs text-ns-text-muted">DRF-{sub.id.substring(0, 6).toUpperCase()}</p>
-                  </TD>
-                  <TD className="text-center">
-                    <StatusBadge variant="draft" dot>
-                      Draft
-                    </StatusBadge>
-                  </TD>
-                  <TD className="text-xs text-ns-text-muted">
-                    {sub.submittedAt
-                      ? new Date(sub.submittedAt).toLocaleString()
-                      : sub.updatedAt
-                        ? new Date(sub.updatedAt).toLocaleString()
-                        : '—'}
-                  </TD>
-                  <TD className="text-right">
-                    <Button
-                      size="sm"
-                      className="gap-2"
-                      onClick={() => resumeDraft(sub.formId)}
-                    >
-                      <FileText size={14} />
-                      Resume
-                    </Button>
-                  </TD>
-                </TR>
+                  <h3 className="text-sm font-semibold text-ns-text mb-1">{form.name}</h3>
+                  <p className="text-xs text-ns-text-muted mb-4">Last used: {form.lastUsed || 'Never'}</p>
+                  <Button className="w-full gap-2" size="sm" onClick={() => navigate(`/user/forms/${form.id}/new`)}>
+                    <PlusCircle size={14} />
+                    New submission
+                  </Button>
+                </Card>
               ))}
-              {draftSubmissions.length === 0 && (
-                <TR>
-                  <TD colSpan={4} className="py-12 text-center text-ns-text-muted text-sm">
-                    No drafts yet. Use Save Progress while filling a form to save here.
-                  </TD>
-                </TR>
+              {forms.length === 0 && (
+                <Card className="col-span-full py-12 flex flex-col items-center justify-center text-ns-text-muted border-dashed">
+                  <LayoutGrid size={32} className="opacity-30 mb-2" />
+                  <p className="text-sm">No forms assigned for {fullTitle.toLowerCase()}</p>
+                </Card>
               )}
-            </TBody>
-          </Table>
-        </Card>
+            </div>
+          </section>
 
-        <Card padding="none">
-          <div className="p-5 border-b border-ns-border">
-            <CardHeader title="Submission history" subtitle="Your past submissions for this transaction type" />
-          </div>
-          <Table className="border-0 shadow-none rounded-none">
-            <THead>
-              <TR>
-                <TH>Form name</TH>
-                <TH className="text-center">Status</TH>
-                <TH className="text-center">Current level</TH>
-                <TH>Submitted at</TH>
-                <TH>NetSuite ID</TH>
-                <TH className="text-right">Actions</TH>
-              </TR>
-            </THead>
-            <TBody>
-              {historySubmissions.map(sub => (
-                <TR key={sub.id}>
-                  <TD>
-                    <p className="text-sm font-semibold text-ns-text">{sub.formName}</p>
-                    <p className="text-xs text-ns-text-muted">SUB-{sub.id.substring(0, 6).toUpperCase()}</p>
-                  </TD>
-                  <TD className="text-center">
-                    <StatusBadge variant={mapStatusVariant(sub.status)} dot>
-                      {getStatusLabel(sub.status)}
-                    </StatusBadge>
-                  </TD>
-                  <TD className="text-center">
-                    {sub.currentLevel ? (
-                      <span className="text-xs font-semibold text-ns-blue bg-ns-blue-soft px-2 py-0.5 rounded-ns-md border border-ns-border">
-                        Level {sub.currentLevel}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-ns-text-muted italic">N/A</span>
-                    )}
-                  </TD>
-                  <TD className="text-xs text-ns-text-muted">
-                    {sub.submittedAt ? new Date(sub.submittedAt).toLocaleString() : '—'}
-                  </TD>
-                  <TD className="text-xs font-mono text-ns-text">
-                    {sub.billId || sub.poId || sub.netsuiteId || (sub.status === 'pending' ? 'Processing…' : 'N/A')}
-                  </TD>
-                  <TD className="text-right">
-                    <Button variant="ghost" size="sm" className="h-8 px-2" title="View details">
-                      <FileSearch size={14} />
-                    </Button>
-                  </TD>
-                </TR>
-              ))}
-              {historySubmissions.length === 0 && (
+          <Card padding="none">
+            <div className="p-5 border-b border-ns-border">
+              <CardHeader title="Submission history" subtitle="Your past submissions for this transaction type" />
+            </div>
+            <Table className="border-0 shadow-none rounded-none">
+              <THead>
                 <TR>
-                  <TD colSpan={6} className="py-12 text-center text-ns-text-muted text-sm">
-                    No submissions found yet.
-                  </TD>
+                  <TH>Form name</TH>
+                  <TH className="text-center">Status</TH>
+                  <TH className="text-center">Current level</TH>
+                  <TH>Submitted at</TH>
+                  <TH>NetSuite ID</TH>
+                  <TH className="text-right">Actions</TH>
                 </TR>
-              )}
-            </TBody>
-          </Table>
-        </Card>
-      </div>
+              </THead>
+              <TBody>
+                {historySubmissions.map(sub => (
+                  <TR key={sub.id}>
+                    <TD>
+                      <p className="text-sm font-semibold text-ns-text">{sub.formName}</p>
+                      <p className="text-xs text-ns-text-muted">SUB-{sub.id.substring(0, 6).toUpperCase()}</p>
+                    </TD>
+                    <TD className="text-center">
+                      <StatusBadge variant={mapStatusVariant(sub.status)} dot>
+                        {getStatusLabel(sub.status)}
+                      </StatusBadge>
+                    </TD>
+                    <TD className="text-center">
+                      {sub.currentLevel ? (
+                        <span className="text-xs font-semibold text-ns-blue bg-ns-blue-soft px-2 py-0.5 rounded-ns-md border border-ns-border">
+                          Level {sub.currentLevel}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-ns-text-muted italic">N/A</span>
+                      )}
+                    </TD>
+                    <TD className="text-xs text-ns-text-muted">
+                      {sub.submittedAt ? new Date(sub.submittedAt).toLocaleString() : '—'}
+                    </TD>
+                    <TD className="text-xs font-mono text-ns-text">
+                      {sub.billId || sub.poId || sub.netsuiteId || (sub.status === 'pending' ? 'Processing…' : 'N/A')}
+                    </TD>
+                    <TD className="text-right">
+                      <Button variant="ghost" size="sm" className="h-8 px-2" title="View details">
+                        <FileSearch size={14} />
+                      </Button>
+                    </TD>
+                  </TR>
+                ))}
+                {historySubmissions.length === 0 && (
+                  <TR>
+                    <TD colSpan={6} className="py-12 text-center text-ns-text-muted text-sm">
+                      No submissions found yet.
+                    </TD>
+                  </TR>
+                )}
+              </TBody>
+            </Table>
+          </Card>
+        </div>
+      )}
     </Layout>
   );
 }

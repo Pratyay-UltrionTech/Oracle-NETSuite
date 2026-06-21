@@ -837,6 +837,8 @@ function normalizePoItemSublist(tabs: Tab[], transactionType: TransactionType): 
 }
 
 // Map backend form to frontend CustomForm
+const formDetailsInFlight = new Map<string, Promise<CustomForm | null>>();
+
 const mapBackendForm = (form: any): CustomForm => {
   const tabs =
     form.structure?.tabs?.map((t: any) => {
@@ -905,6 +907,16 @@ const mapBackendUser = (u: any): User => ({
   createdAt: u.createdAt
 });
 
+const normalizeSubmissionDate = (value: unknown): string | undefined => {
+  if (value === undefined || value === null || value === '') return undefined;
+  if (typeof value === 'string') return value;
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === 'object' && value !== null && '$date' in value) {
+    return String((value as { $date: string }).$date);
+  }
+  return String(value);
+};
+
 const mapBackendSubmission = (
   s: any,
   forms: CustomForm[],
@@ -921,10 +933,12 @@ const mapBackendSubmission = (
     formName: form?.name ?? s.formName,
     companyId: s.companyId,
     status: s.status,
+    transactionType: s.transactionType ?? form?.transactionType,
     currentLevel: s.currentLevel,
     approvals: s.approvals,
-    submittedAt: s.submittedAt,
-    netsuiteAt: s.netsuiteAt,
+    submittedAt: normalizeSubmissionDate(s.submittedAt),
+    updatedAt: normalizeSubmissionDate(s.updatedAt ?? s.createdAt),
+    netsuiteAt: normalizeSubmissionDate(s.netsuiteAt),
     netsuiteId: s.netsuiteId,
     errorMessage: s.errorMessage,
   };
@@ -1031,6 +1045,7 @@ export const useStore = create<AppState>((set, get) => ({
   companies: [],
   templates: DEFAULT_TEMPLATES,
   submissions: [],
+  mySubmissions: [],
   currentForm: null,
   transactionType: 'purchase_order',
   catalogues: CATALOGUES,
@@ -1080,6 +1095,7 @@ export const useStore = create<AppState>((set, get) => ({
   loadingCustomers: false,
   masterDataPrefetching: false,
   masterDataPrefetchDone: false,
+  formDetailsCache: {} as Record<string, CustomForm>,
   isLoading: false,
   error: null,
   activeTabId: '',
@@ -1121,6 +1137,8 @@ export const useStore = create<AppState>((set, get) => ({
       companies: [],
       users: [],
       submissions: [],
+      mySubmissions: [],
+      formDetailsCache: {},
       currencies: [],
       hsnCodes: [],
       hsnListCount: 0,
@@ -1313,9 +1331,13 @@ export const useStore = create<AppState>((set, get) => ({
   fetchMySubmissions: async (transactionType?: string) => {
     set({ isLoading: true, error: null });
     try {
+      const { forms, users } = get();
       const params = transactionType ? { transactionType } : {};
       const response = await api.get('submissions/my', { params });
-      set({ submissions: response.data, isLoading: false });
+      set({
+        mySubmissions: response.data.map((s: any) => mapBackendSubmission(s, forms, [], users)),
+        isLoading: false,
+      });
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
     }
@@ -1333,16 +1355,29 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   fetchMyFormDetails: async (formId: string) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await api.get(`forms/${formId}/my`);
-      const form = mapBackendForm(response.data);
-      set({ isLoading: false });
-      return form;
-    } catch (err: any) {
-      set({ error: err.message, isLoading: false });
-      return null;
-    }
+    const inFlight = formDetailsInFlight.get(formId);
+    if (inFlight) return inFlight;
+
+    const promise = (async () => {
+      try {
+        const response = await api.get(`forms/${formId}/my`);
+        const form = mapBackendForm(response.data);
+        set(state => ({
+          formDetailsCache: { ...state.formDetailsCache, [formId]: form },
+          error: null,
+        }));
+        return form;
+      } catch (err: any) {
+        const msg = err.response?.data?.detail || err.message;
+        set({ error: msg });
+        return null;
+      } finally {
+        formDetailsInFlight.delete(formId);
+      }
+    })();
+
+    formDetailsInFlight.set(formId, promise);
+    return promise;
   },
 
   fetchSubmissions: async () => {
@@ -1473,7 +1508,18 @@ export const useStore = create<AppState>((set, get) => ({
     set({ error: null });
     try {
       const response = await api.put(`forms/${formId}/draft`, { values });
+      set(state => {
+        const cached = state.formDetailsCache[formId];
+        if (!cached) return {};
+        return {
+          formDetailsCache: {
+            ...state.formDetailsCache,
+            [formId]: { ...cached, draftValues: values },
+          },
+        };
+      });
       get().fetchMyAssignedForms();
+      get().fetchMySubmissions();
       return response.data;
     } catch (err: any) {
       const message = err.response?.data?.detail || 'Failed to save draft';
@@ -2104,13 +2150,65 @@ export const useStore = create<AppState>((set, get) => ({
     set({ currentForm: { ...currentForm, tabs: newTabs } });
   },
 
-  addCompany: async (name) => {
+  addCompany: async (name, logoFile) => {
     try {
-      await api.post('companies', { name });
-      get().fetchCompanies();
+      const response = await api.post('companies', { name });
+      const companyId = response.data.id as string;
+      if (logoFile) {
+        await get().uploadCompanyLogo(companyId, logoFile);
+      } else {
+        get().fetchCompanies();
+      }
     } catch (err: any) {
-      set({ error: err.message });
+      const message = err.response?.data?.detail || err.message;
+      set({ error: message });
+      throw new Error(message);
     }
+  },
+
+  updateCompany: async (id, name) => {
+    try {
+      await api.put(`companies/${id}`, { name });
+      await get().fetchCompanies();
+    } catch (err: any) {
+      const message = err.response?.data?.detail || err.message;
+      set({ error: message });
+      throw new Error(message);
+    }
+  },
+
+  uploadCompanyLogo: async (companyId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post(`companies/${companyId}/logo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    const updated = response.data as Company;
+    const state = get();
+    set({
+      companies: state.companies.map(c => (c.id === companyId ? { ...c, logoUrl: updated.logoUrl } : c)),
+    });
+    if (state.user?.companyId === companyId) {
+      const nextUser = { ...state.user, companyLogoUrl: updated.logoUrl };
+      set({ user: nextUser });
+      localStorage.setItem('user', JSON.stringify(nextUser));
+    }
+    return updated;
+  },
+
+  removeCompanyLogo: async (companyId) => {
+    const response = await api.delete(`companies/${companyId}/logo`);
+    const updated = response.data as Company;
+    const state = get();
+    set({
+      companies: state.companies.map(c => (c.id === companyId ? { ...c, logoUrl: undefined } : c)),
+    });
+    if (state.user?.companyId === companyId) {
+      const nextUser = { ...state.user, companyLogoUrl: undefined };
+      set({ user: nextUser });
+      localStorage.setItem('user', JSON.stringify(nextUser));
+    }
+    return updated;
   },
 
   deleteCompany: async (id) => {

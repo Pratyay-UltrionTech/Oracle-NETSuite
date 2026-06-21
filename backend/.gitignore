@@ -44,3 +44,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Uploaded company logos (keep directory placeholder)
+uploads/company_logos/*
+!uploads/company_logos/.gitkeep

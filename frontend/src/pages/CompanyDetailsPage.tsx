@@ -5,12 +5,14 @@ import AdminLayout from '../components/layout/AdminLayout';
 import { Button, Input, Select, Label } from '../components/ui/Base';
 import { Table, THead, TBody, TR, TH, TD, Modal, ConfirmModal } from '../components/ui/Complex';
 import { PageHeader, KPICard, Card, RoleBadge } from '../components/admin';
-import { Users, Plus, Mail, IdCard, Briefcase, Trash2, ArrowLeft, AlertCircle } from 'lucide-react';
+import { CompanyLogoField } from '../components/admin/CompanyLogoField';
+import { CompanyLogo } from '../components/brand/CompanyLogo';
+import { Users, Plus, Mail, IdCard, Briefcase, Trash2, ArrowLeft, AlertCircle, Pencil } from 'lucide-react';
 
 export default function CompanyDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { companies, users, addUser, deleteUser, fetchCompanies, fetchUsers, isLoading } = useStore();
+  const { companies, users, addUser, deleteUser, fetchCompanies, fetchUsers, isLoading, updateCompany, uploadCompanyLogo, removeCompanyLogo } = useStore();
   
   React.useEffect(() => {
     fetchCompanies();
@@ -32,6 +34,12 @@ export default function CompanyDetailsPage() {
   const [deleteUserId, setDeleteUserId] = React.useState<string | null>(null);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   const [isAdding, setIsAdding] = React.useState(false);
+  const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [editName, setEditName] = React.useState('');
+  const [logoFile, setLogoFile] = React.useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = React.useState<string | null>(null);
+  const [removeLogo, setRemoveLogo] = React.useState(false);
+  const [savingCompany, setSavingCompany] = React.useState(false);
 
   if (!company) {
     return (
@@ -85,6 +93,29 @@ export default function CompanyDetailsPage() {
     }
   };
 
+  const openEditCompany = () => {
+    setEditName(company.name);
+    setLogoFile(null);
+    setLogoPreview(null);
+    setRemoveLogo(false);
+    setIsEditOpen(true);
+  };
+
+  const handleSaveCompany = async () => {
+    if (!editName.trim()) return;
+    setSavingCompany(true);
+    try {
+      if (editName.trim() !== company.name) {
+        await updateCompany(company.id, editName.trim());
+      }
+      if (removeLogo) await removeCompanyLogo(company.id);
+      if (logoFile) await uploadCompanyLogo(company.id, logoFile);
+      setIsEditOpen(false);
+    } finally {
+      setSavingCompany(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -100,12 +131,28 @@ export default function CompanyDetailsPage() {
           title={company.name}
           subtitle="Employees and access"
           actions={
-            <Button onClick={() => setIsModalOpen(true)} className="gap-2">
-              <Plus size={18} />
-              Add employee
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={openEditCompany} className="gap-2">
+                <Pencil size={16} />
+                Edit company
+              </Button>
+              <Button onClick={() => setIsModalOpen(true)} className="gap-2">
+                <Plus size={18} />
+                Add employee
+              </Button>
+            </div>
           }
         />
+
+        <Card padding="md">
+          <div className="flex items-center gap-4">
+            <CompanyLogo companyName={company.name} logoUrl={company.logoUrl} variant="table" />
+            <div>
+              <p className="text-sm font-semibold text-ns-text">{company.name}</p>
+              <p className="text-xs text-ns-text-muted">Company ID: {company.id}</p>
+            </div>
+          </div>
+        </Card>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <KPICard label="Total employees" value={companyEmployees.length} subtext="Active roster" subtextVariant="info" />
@@ -257,6 +304,41 @@ export default function CompanyDetailsPage() {
               <p className="text-[10px] text-ns-text-muted italic">For testing only.</p>
             </div>
           </form>
+        </Modal>
+
+        <Modal
+          isOpen={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          title="Edit company"
+          footer={
+            <>
+              <Button variant="secondary" size="sm" onClick={() => setIsEditOpen(false)}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleSaveCompany} disabled={!editName.trim() || savingCompany}>
+                {savingCompany ? 'Saving…' : 'Save changes'}
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <div>
+              <Label mandatory>Official company name</Label>
+              <Input value={editName} onChange={e => setEditName(e.target.value)} />
+            </div>
+            <CompanyLogoField
+              companyName={editName || company.name}
+              existingLogoUrl={company.logoUrl}
+              file={logoFile}
+              previewUrl={logoPreview}
+              onFileChange={(file, preview) => {
+                setLogoFile(file);
+                setLogoPreview(preview);
+              }}
+              removeExisting={removeLogo}
+              onRemoveExistingChange={setRemoveLogo}
+            />
+          </div>
         </Modal>
       </div>
       <ConfirmModal

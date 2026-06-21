@@ -13,6 +13,7 @@ from .workflow_engine import (
     try_build_workflow_approvals,
     complete_submission_netsuite_sync,
 )
+from .workflow_service import get_workflow_for_form
 from .purchase_order_netsuite_service import build_purchase_order_sync_update, is_netsuite_po_success
 from .vendor_bill_netsuite_service import build_vendor_bill_sync_update, is_netsuite_vb_success
 
@@ -330,15 +331,18 @@ class FormService:
             sort=[("submittedAt", -1)],
         )
         if draft:
-            draft_values = draft.get("values") or {}
-            if not draft_values:
-                draft_values = dict(draft.get("bodyFields") or {})
-                if draft.get("lineItems"):
-                    draft_values["lineItems"] = draft["lineItems"]
-                if draft.get("expenseLines"):
-                    draft_values["expenseLines"] = draft["expenseLines"]
-            form["draftValues"] = draft_values
-            form["draftUpdatedAt"] = draft.get("updatedAt")
+            draft_values = dict(draft.get("values") or {})
+            body_fields = draft.get("bodyFields") or {}
+            for key, val in body_fields.items():
+                if key not in draft_values:
+                    draft_values[key] = val
+            if draft.get("lineItems") and not draft_values.get("lineItems"):
+                draft_values["lineItems"] = draft["lineItems"]
+            if draft.get("expenseLines") and not draft_values.get("expenseLines"):
+                draft_values["expenseLines"] = draft["expenseLines"]
+            if draft_values:
+                form["draftValues"] = draft_values
+                form["draftUpdatedAt"] = draft.get("updatedAt")
         if submission:
             form["status"] = submission.get("status", "pending")
             form["currentLevel"] = submission.get("currentLevel")
@@ -450,8 +454,8 @@ class FormService:
         # Use form's companyId as context for Super Admins or missing companyId
         effective_company_id = form.get("companyId") if user.get("role") == "super_admin" or not company_id else company_id
 
-        # STEP 2: Fetch workflow (optional — skip approval when not configured)
-        workflow = await db.workflows.find_one({"companyId": effective_company_id})
+        # STEP 2: Fetch workflow assigned to this form (optional — skip approval when not configured)
+        workflow = await get_workflow_for_form(effective_company_id, form_id)
         approvals = try_build_workflow_approvals(workflow)
         workflow_required = approvals is not None
 
@@ -582,6 +586,23 @@ class FormService:
         }
 
     @staticmethod
+    def _serialize_submission_summary(sub: Dict[str, Any]) -> Dict[str, Any]:
+        out = dict(sub)
+        if "_id" in out:
+            out["id"] = str(out.pop("_id"))
+        elif "id" not in out:
+            out["id"] = str(out.get("_id", ""))
+        for field in ("submittedAt", "updatedAt", "createdAt", "netsuiteAt"):
+            val = out.get(field)
+            if isinstance(val, datetime):
+                out[field] = val.isoformat()
+        out.pop("values", None)
+        out.pop("bodyFields", None)
+        out.pop("lineItems", None)
+        out.pop("expenseLines", None)
+        return out
+
+    @staticmethod
     async def get_submissions_for_user(user_id: str, transaction_type: Optional[str] = None) -> List[Dict[str, Any]]:
         db = get_database()
         query = {"userId": user_id}
@@ -590,9 +611,7 @@ class FormService:
             
         submissions = []
         async for sub in db.submissions.find(query).sort([("updatedAt", -1), ("submittedAt", -1)]):
-            sub["id"] = str(sub["_id"])
-            del sub["_id"]
-            submissions.append(sub)
+            submissions.append(FormService._serialize_submission_summary(sub))
             
         return submissions
 

@@ -325,7 +325,7 @@ export default function CataloguePage() {
       {/* Delete Confirmation */}
       {isDeleting && (
         <div className="fixed inset-0 bg-ns-navy/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-          <div className="bg-white rounded-ns-md shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-ns-xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden">
             <div className="p-6">
                <div className="w-12 h-12 bg-status-rejected-bg rounded-full flex items-center justify-center text-red-500 mb-4">
                  <Trash2 size={24} />
@@ -396,7 +396,7 @@ function FieldModal({ field, onClose, onSave }: FieldModalProps) {
 
   return (
     <div className="fixed inset-0 bg-ns-navy/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-      <div className="bg-white rounded-ns-md shadow-2xl w-full max-w-lg animate-in slide-in-from-bottom-4 duration-300">
+      <div className="bg-white rounded-ns-xl shadow-2xl w-full max-w-lg animate-in slide-in-from-bottom-4 duration-300 overflow-hidden">
         <div className="p-6 border-b border-ns-border flex items-center justify-between">
           <h2 className="text-xl font-bold text-ns-navy">
             {field ? 'Edit Field' : 'Add New Field'}

@@ -13,6 +13,13 @@ import secrets
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
+
+def _company_fields(company):
+    if not company:
+        return None, None
+    return company.get("name"), company.get("logoUrl")
+
+
 @router.post("/login", response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     # 1. Check DB users
@@ -46,10 +53,10 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     
     company_id = user.get("companyId")
     company_name = None
+    company_logo_url = None
     if company_id:
         company = await db.companies.find_one({"_id": ObjectId(company_id)})
-        if company:
-            company_name = company.get("name")
+        company_name, company_logo_url = _company_fields(company)
 
     user_info = {
         "id": user_id_str,
@@ -58,6 +65,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         "role": user["role"],
         "companyId": company_id,
         "companyName": company_name,
+        "companyLogoUrl": company_logo_url,
         "jobTitle": user.get("jobTitle")
     }
     
@@ -128,11 +136,11 @@ async def get_me(current_user: dict = Depends(get_current_user)):
     db = get_database()
     company_id = current_user.get("companyId")
     company_name = None
+    company_logo_url = None
     
     if company_id:
         company = await db.companies.find_one({"_id": ObjectId(company_id)})
-        if company:
-            company_name = company.get("name")
+        company_name, company_logo_url = _company_fields(company)
 
     return {
         "id": str(current_user.get("_id", current_user.get("id"))),
@@ -141,5 +149,6 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         "role": current_user["role"],
         "companyId": company_id,
         "companyName": company_name,
+        "companyLogoUrl": company_logo_url,
         "jobTitle": current_user.get("jobTitle")
     }

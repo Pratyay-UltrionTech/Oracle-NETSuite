@@ -26,8 +26,10 @@ import {
   buildSubmissionValues,
   findLineItemsMissingHsnWhenTaxSet,
   itemSublistRowKey,
+  expenseSublistRowKey,
   flattenSubmissionValuesToForm,
   deriveItemRowIndices,
+  deriveExpenseRowIndices,
 } from '../lib/sublistSubmission';
 import {
   collectMissingRequiredFields,
@@ -43,10 +45,12 @@ import api from '../api/client';
 export default function FormFillPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, fetchMyFormDetails, submitForm, saveFormDraft, isLoading, currencies, fetchCurrencies } = useStore();
+  const { user, fetchMyFormDetails, submitForm, saveFormDraft, currencies, fetchCurrencies } = useStore();
 
   const [form, setForm] = React.useState<CustomForm | null>(null);
   const [formValues, setFormValues] = React.useState<Record<string, any>>({});
+  const [loadState, setLoadState] = React.useState<'loading' | 'ready' | 'error'>('loading');
+  const [loadError, setLoadError] = React.useState<string | null>(null);
   const [activeTab, setActiveTab] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isSavingDraft, setIsSavingDraft] = React.useState(false);
@@ -56,6 +60,15 @@ export default function FormFillPage() {
   const [highlightedFieldId, setHighlightedFieldId] = React.useState<string | null>(null);
   const [submissionResult, setSubmissionResult] = React.useState<any | null>(null);
   const [itemRows, setItemRows] = React.useState<number[]>([0]);
+  const [expenseRows, setExpenseRows] = React.useState<number[]>([0]);
+
+  const addItemRow = () => {
+    setItemRows(prev => [...prev, (prev[prev.length - 1] ?? -1) + 1]);
+  };
+
+  const addExpenseRow = () => {
+    setExpenseRows(prev => [...prev, (prev[prev.length - 1] ?? -1) + 1]);
+  };
 
   const sortLineFields = React.useCallback(
     (fields: CustomForm['tabs'][0]['itemSublist']) =>
@@ -65,45 +78,72 @@ export default function FormFillPage() {
     [form?.transactionType],
   );
 
+  const applyFormData = React.useCallback((data: CustomForm) => {
+    setForm(data);
+
+    const initialValues: Record<string, any> = {};
+    data.tabs.forEach(tab => {
+      tab.fieldGroups.forEach(group => {
+        group.fields.forEach(field => {
+          if (field.checkBoxDefault === 'checked') initialValues[field.id] = true;
+        });
+      });
+    });
+
+    if (data.draftValues && Object.keys(data.draftValues).length > 0) {
+      const flat = flattenSubmissionValuesToForm(data.draftValues);
+      Object.assign(initialValues, flat);
+      setItemRows(deriveItemRowIndices(flat));
+      setExpenseRows(deriveExpenseRowIndices(flat));
+    } else {
+      setItemRows([0]);
+      setExpenseRows([0]);
+    }
+
+    setFormValues(initialValues);
+    if (data.tabs[0]?.id) setActiveTab(data.tabs[0].id);
+    setLoadState('ready');
+    setLoadError(null);
+  }, []);
+
   React.useEffect(() => {
     if (!id) return;
-    setForm(null);
-    setFormValues({});
-    setItemRows([0]);
+    let cancelled = false;
+
     setSubmissionResult(null);
     setSubmitError(null);
     setDraftMessage(null);
-    fetchMyFormDetails(id).then(data => {
-      if (data) setForm(data);
-    });
-  }, [id, fetchMyFormDetails]);
+    setMissingFields([]);
+    setHighlightedFieldId(null);
 
-  React.useEffect(() => {
-    if (form && form.tabs.length > 0) {
-      setActiveTab(form.tabs[0].id);
-
-      const initialValues: Record<string, any> = {};
-      form.tabs.forEach(tab => {
-        tab.fieldGroups.forEach(group => {
-          group.fields.forEach(field => {
-            if (field.checkBoxDefault === 'checked') initialValues[field.id] = true;
-          });
-        });
-      });
-
-      if (form.draftValues && Object.keys(form.draftValues).length > 0) {
-        const flat = flattenSubmissionValuesToForm(form.draftValues);
-        Object.assign(initialValues, flat);
-        if (form.transactionType === 'item_receipt' || form.transactionType === 'vendor_bill') {
-          setItemRows(deriveItemRowIndices(flat));
-        }
-      } else if (form.transactionType === 'item_receipt' || form.transactionType === 'vendor_bill') {
-        setItemRows([0]);
-      }
-
-      setFormValues(initialValues);
+    const cached = useStore.getState().formDetailsCache[id];
+    if (cached) {
+      applyFormData(cached);
+    } else {
+      setLoadState('loading');
+      setForm(null);
+      setFormValues({});
+      setItemRows([0]);
+      setExpenseRows([0]);
     }
-  }, [form]);
+
+    void fetchMyFormDetails(id).then(data => {
+      if (cancelled) return;
+      if (data) {
+        applyFormData(data);
+        return;
+      }
+      if (!cached) {
+        setLoadState('error');
+        setLoadError('Form not found or access denied.');
+        setForm(null);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, fetchMyFormDetails, applyFormData]);
 
   React.useEffect(() => {
     if (form?.transactionType === 'vendor_bill') {
@@ -124,15 +164,33 @@ export default function FormFillPage() {
     }, 120);
   }, []);
 
-  if (!form && isLoading) return (
-    <PortalLayout>
-      <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 border-4 border-ns-blue/30 border-t-ns-blue rounded-full animate-spin" />
-      </div>
-    </PortalLayout>
-  );
+  if (loadState === 'loading') {
+    return (
+      <PortalLayout>
+        <div className="flex flex-col items-center justify-center py-20 gap-3">
+          <div className="h-8 w-8 border-4 border-ns-blue/30 border-t-ns-blue rounded-full animate-spin" />
+          <p className="text-sm text-ns-text-muted">Loading form…</p>
+        </div>
+      </PortalLayout>
+    );
+  }
 
-  if (!form) return <div>Form not found or access denied.</div>;
+  if (loadState === 'error' || !form) {
+    return (
+      <PortalLayout>
+        <div className="flex flex-col items-center justify-center py-20 gap-4 text-center px-6">
+          <AlertCircle size={40} className="text-status-rejected" />
+          <p className="text-sm font-semibold text-ns-navy">
+            {loadError ?? 'Form not found or access denied.'}
+          </p>
+          <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
+            <ArrowLeft size={16} />
+            Go back
+          </Button>
+        </div>
+      </PortalLayout>
+    );
+  }
 
   if (submissionResult) {
     const status = submissionResult.status;
@@ -377,6 +435,7 @@ export default function FormFillPage() {
     try {
       const values = buildSubmissionValues(form, formValues);
       await saveFormDraft(id, values);
+      setForm(prev => (prev ? { ...prev, draftValues: values } : prev));
       setDraftMessage('Progress saved. You can resume from Drafts anytime.');
       window.setTimeout(() => setDraftMessage(null), 4000);
     } catch (err: any) {
@@ -389,6 +448,7 @@ export default function FormFillPage() {
   const handleSubmit = async () => {
     const missing = collectMissingRequiredFields(form, formValues, {
       itemRowIndexes: itemRows,
+      expenseRowIndexes: expenseRows,
       sortLineFields,
     });
 
@@ -402,6 +462,7 @@ export default function FormFillPage() {
     if (form.transactionType === 'vendor_bill') {
       const syncIssues = collectVendorBillSyncIssues(form, formValues, {
         itemRowIndexes: itemRows,
+        expenseRowIndexes: expenseRows,
       });
       if (syncIssues.length > 0) {
         setMissingFields(syncIssues);
@@ -524,20 +585,6 @@ export default function FormFillPage() {
           </div>
         )}
 
-        {/* Security banner */}
-        <div className="bg-ns-blue-soft p-4 rounded-ns-card border border-ns-border flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <ShieldCheck size={20} className="text-ns-blue" />
-            <div>
-              <p className="text-xs font-semibold text-ns-text">Form entry</p>
-              <p className="text-xs text-ns-text-muted mt-0.5">Your entries are recorded for compliance. Ensure all data matches official records.</p>
-            </div>
-          </div>
-          <div className="px-3 py-1.5 bg-white border border-ns-border rounded-ns-md text-[10px] font-mono text-ns-text-muted">
-            SSL: AES-256
-          </div>
-        </div>
-
         {/* Form Content */}
         <div className="bg-white rounded-ns-md border border-ns-border ns-panel-shadow min-h-[500px] flex flex-col">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -651,140 +698,75 @@ export default function FormFillPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            <tr className="border-b border-ns-border">
-                              {(form.transactionType === 'item_receipt' || form.transactionType === 'vendor_bill') && (
-                                <td className="px-2 py-2 align-top min-w-[80px]">
-                                  <FieldControl
-                                    fieldId="receive"
-                                    fieldType="checkbox"
-                                    value={formValues[itemSublistRowKey(0, 'receive')]}
-                                    onChange={val =>
-                                      handleItemSublistChange(tab.itemSublist, 0, 'receive', val)
-                                    }
-                                    label="Receive"
-                                    preview={false}
-                                  />
-                                </td>
-                              )}
-                              {sortLineFields(tab.itemSublist).map(field => {
-                                const lineDomId = `field-${itemSublistRowKey(0, field.id)}`;
-                                return (
-                                <td
-                                  key={field.id}
-                                  id={lineDomId}
-                                  className={cn(
-                                    'px-2 py-2 align-top transition-shadow',
-                                    field.dataSource?.type === 'netsuite_hsn' ||
-                                    field.dataSource?.type === 'netsuite_item_live'
-                                      ? 'min-w-[280px]'
-                                      : 'min-w-[120px]',
-                                    missingFields.some(f => f.domId === lineDomId) && 'bg-status-rejected-bg ring-2 ring-inset ring-red-300',
-                                    highlightedFieldId === lineDomId && 'bg-status-rejected-bg ring-2 ring-inset ring-red-500',
-                                  )}
-                                >
-                                  <FieldControl
-                                    fieldId={field.id}
-                                    fieldType={field.type}
-                                    value={formValues[itemSublistRowKey(0, field.id)]}
-                                    onChange={val =>
-                                      handleItemSublistChange(
-                                        tab.itemSublist,
-                                        0,
-                                        field.id,
-                                        val,
-                                      )
-                                    }
-                                    onItemMasterSelect={
-                                      field.id.toLowerCase() === 'item'
-                                        ? item =>
-                                            handleItemSublistChange(
-                                              tab.itemSublist,
-                                              0,
-                                              field.id,
-                                              item.internalId,
-                                              item,
-                                            )
-                                        : undefined
-                                    }
-                                    label={field.label}
-                                    dataSource={field.dataSource}
-                                    preview={false}
-                                  />
-                                </td>
-                              );
-                              })}
-                            </tr>
-                            {(form.transactionType === 'item_receipt' ||
-                              form.transactionType === 'vendor_bill') &&
-                              itemRows.slice(1).map((rowIndex) => (
-                              <tr key={`row_${rowIndex}`} className="border-b border-ns-border">
-                                <td className="px-2 py-2 align-top min-w-[80px]">
-                                  <FieldControl
-                                    fieldId="receive"
-                                    fieldType="checkbox"
-                                    value={formValues[itemSublistRowKey(rowIndex, 'receive')]}
-                                    onChange={val =>
-                                      handleItemSublistChange(tab.itemSublist, rowIndex, 'receive', val)
-                                    }
-                                    label="Receive"
-                                    preview={false}
-                                  />
-                                </td>
-                                {sortLineFields(tab.itemSublist).map(field => {
-                                  const lineDomId = `field-${itemSublistRowKey(rowIndex, field.id)}`;
-                                  return (
-                                  <td
-                                    key={`${rowIndex}_${field.id}`}
-                                    id={lineDomId}
-                                    className={cn(
-                                      'px-2 py-2 align-top min-w-[120px] transition-shadow',
-                                      missingFields.some(f => f.domId === lineDomId) && 'bg-status-rejected-bg ring-2 ring-inset ring-red-300',
-                                      highlightedFieldId === lineDomId && 'bg-status-rejected-bg ring-2 ring-inset ring-red-500',
-                                    )}
-                                  >
+                            {itemRows.map(rowIndex => (
+                              <tr key={`item_row_${rowIndex}`} className="border-b border-ns-border">
+                                {(form.transactionType === 'item_receipt' || form.transactionType === 'vendor_bill') && (
+                                  <td className="px-2 py-2 align-top min-w-[80px]">
                                     <FieldControl
-                                      fieldId={field.id}
-                                      fieldType={field.type}
-                                      value={formValues[itemSublistRowKey(rowIndex, field.id)]}
-                                      onChange={val => handleItemSublistChange(tab.itemSublist, rowIndex, field.id, val)}
-                                      onItemMasterSelect={
-                                        field.id.toLowerCase() === 'item'
-                                          ? item =>
-                                              handleItemSublistChange(
-                                                tab.itemSublist,
-                                                rowIndex,
-                                                field.id,
-                                                item.internalId,
-                                                item,
-                                              )
-                                          : undefined
+                                      fieldId="receive"
+                                      fieldType="checkbox"
+                                      value={formValues[itemSublistRowKey(rowIndex, 'receive')]}
+                                      onChange={val =>
+                                        handleItemSublistChange(tab.itemSublist, rowIndex, 'receive', val)
                                       }
-                                      label={field.label}
-                                      dataSource={field.dataSource}
+                                      label="Receive"
                                       preview={false}
                                     />
                                   </td>
-                                );
+                                )}
+                                {sortLineFields(tab.itemSublist).map(field => {
+                                  const lineDomId = `field-${itemSublistRowKey(rowIndex, field.id)}`;
+                                  return (
+                                    <td
+                                      key={`${rowIndex}_${field.id}`}
+                                      id={lineDomId}
+                                      className={cn(
+                                        'px-2 py-2 align-top transition-shadow',
+                                        field.dataSource?.type === 'netsuite_hsn' ||
+                                        field.dataSource?.type === 'netsuite_item_live'
+                                          ? 'min-w-[280px]'
+                                          : 'min-w-[120px]',
+                                        missingFields.some(f => f.domId === lineDomId) && 'bg-status-rejected-bg ring-2 ring-inset ring-red-300',
+                                        highlightedFieldId === lineDomId && 'bg-status-rejected-bg ring-2 ring-inset ring-red-500',
+                                      )}
+                                    >
+                                      <FieldControl
+                                        fieldId={field.id}
+                                        fieldType={field.type}
+                                        value={formValues[itemSublistRowKey(rowIndex, field.id)]}
+                                        onChange={val =>
+                                          handleItemSublistChange(tab.itemSublist, rowIndex, field.id, val)
+                                        }
+                                        onItemMasterSelect={
+                                          field.id.toLowerCase() === 'item'
+                                            ? item =>
+                                                handleItemSublistChange(
+                                                  tab.itemSublist,
+                                                  rowIndex,
+                                                  field.id,
+                                                  item.internalId,
+                                                  item,
+                                                )
+                                            : undefined
+                                        }
+                                        label={field.label}
+                                        dataSource={field.dataSource}
+                                        preview={false}
+                                      />
+                                    </td>
+                                  );
                                 })}
                               </tr>
                             ))}
                           </tbody>
                         </table>
                       </div>
-                      {(form.transactionType === 'item_receipt' ||
-                        form.transactionType === 'vendor_bill') && (
-                        <div className="flex justify-end">
-                          <Button
-                            variant="secondary"
-                            className="mt-3"
-                            onClick={() =>
-                              setItemRows(prev => [...prev, (prev[prev.length - 1] ?? -1) + 1])
-                            }
-                          >
-                            Add Line
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex justify-end">
+                        <Button variant="secondary" className="mt-3 gap-2" onClick={addItemRow}>
+                          <PlusCircle size={14} />
+                          Add line
+                        </Button>
+                      </div>
                     </div>
                   )}
 
@@ -807,49 +789,54 @@ export default function FormFillPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            <tr className="border-b border-ns-border">
-                              {tab.expenseSublist.map(field => {
-                                const expenseDomId = `field-exp_0_${field.id}`;
-                                return (
-                                <td
-                                  key={field.id}
-                                  id={expenseDomId}
-                                  className={cn(
-                                    'px-2 py-2 align-top transition-shadow',
-                                    field.id.toLowerCase() === 'customer_expense' ||
-                                    field.dataSource?.type === 'netsuite_customer_live'
-                                      ? 'min-w-[280px]'
-                                      : 'min-w-[120px]',
-                                    missingFields.some(f => f.domId === expenseDomId) && 'bg-status-rejected-bg ring-2 ring-inset ring-red-300',
-                                    highlightedFieldId === expenseDomId && 'bg-status-rejected-bg ring-2 ring-inset ring-red-500',
-                                  )}
-                                >
-                                  <FieldControl
-                                    fieldId={field.id}
-                                    fieldType={field.type}
-                                    value={formValues[`exp_0_${field.id}`]}
-                                    onChange={val => handleInputChange(`exp_0_${field.id}`, val)}
-                                    onCustomerMasterSelect={
-                                      field.id.toLowerCase() === 'customer_expense' ||
-                                      field.dataSource?.type === 'netsuite_customer_live'
-                                        ? customer =>
-                                            handleInputChange(
-                                              `exp_0_${field.id}`,
-                                              customer.internalId,
-                                              customer,
-                                            )
-                                        : undefined
-                                    }
-                                    label={field.label}
-                                    dataSource={field.dataSource}
-                                    preview={false}
-                                  />
-                                </td>
-                              );
-                              })}
-                            </tr>
+                            {expenseRows.map(rowIndex => (
+                              <tr key={`exp_row_${rowIndex}`} className="border-b border-ns-border">
+                                {tab.expenseSublist.map(field => {
+                                  const expenseKey = expenseSublistRowKey(rowIndex, field.id);
+                                  const expenseDomId = `field-${expenseKey}`;
+                                  return (
+                                    <td
+                                      key={`${rowIndex}_${field.id}`}
+                                      id={expenseDomId}
+                                      className={cn(
+                                        'px-2 py-2 align-top transition-shadow',
+                                        field.id.toLowerCase() === 'customer_expense' ||
+                                        field.dataSource?.type === 'netsuite_customer_live'
+                                          ? 'min-w-[280px]'
+                                          : 'min-w-[120px]',
+                                        missingFields.some(f => f.domId === expenseDomId) && 'bg-status-rejected-bg ring-2 ring-inset ring-red-300',
+                                        highlightedFieldId === expenseDomId && 'bg-status-rejected-bg ring-2 ring-inset ring-red-500',
+                                      )}
+                                    >
+                                      <FieldControl
+                                        fieldId={field.id}
+                                        fieldType={field.type}
+                                        value={formValues[expenseKey]}
+                                        onChange={val => handleInputChange(expenseKey, val)}
+                                        onCustomerMasterSelect={
+                                          field.id.toLowerCase() === 'customer_expense' ||
+                                          field.dataSource?.type === 'netsuite_customer_live'
+                                            ? customer =>
+                                                handleInputChange(expenseKey, customer.internalId, customer)
+                                            : undefined
+                                        }
+                                        label={field.label}
+                                        dataSource={field.dataSource}
+                                        preview={false}
+                                      />
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
+                      </div>
+                      <div className="flex justify-end">
+                        <Button variant="secondary" className="mt-3 gap-2" onClick={addExpenseRow}>
+                          <PlusCircle size={14} />
+                          Add expense line
+                        </Button>
                       </div>
                     </div>
                   )}

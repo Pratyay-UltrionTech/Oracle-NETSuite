@@ -1,8 +1,17 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { Button, Input, Label } from '../components/ui/Base';
-import { LogIn, ShieldCheck, Mail, ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
+import {
+  AuthLayout,
+  AuthFieldLabel,
+  AuthInput,
+  AuthButton,
+  AuthLink,
+  AuthBackLink,
+  AuthLockButton,
+} from '../components/layout/AuthLayout';
+import { ArrowLeft, Send, CheckCircle2, AlertCircle } from 'lucide-react';
+import { AUTH_PRIMARY } from '../config/authTheme';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -10,6 +19,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
+  const [rememberMe, setRememberMe] = React.useState(false);
   const [isForgotMode, setIsForgotMode] = React.useState(false);
   const [forgotEmail, setForgotEmail] = React.useState('');
   const [forgotStatus, setForgotStatus] = React.useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -48,135 +58,118 @@ export default function LoginPage() {
   const currentError = storeError || errorSpace;
 
   return (
-    <div className="min-h-screen bg-ns-page-bg flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-ns-card ns-panel-shadow-lg overflow-hidden border border-ns-border">
-        <div className="ns-header-bar px-8 py-6 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-white/20 border border-white/25 rounded-ns-md mb-3">
-            <ShieldCheck size={24} className="text-white" />
+    <AuthLayout title={isForgotMode ? 'Forgot Password' : 'Log In'}>
+      {!isForgotMode ? (
+        <form onSubmit={handleSubmit} className="auth-form-shell">
+          <div className="auth-form-fields">
+            {currentError && (
+              <div className="p-3.5 bg-red-50 border border-red-100 text-red-700 text-sm rounded-xl flex items-start gap-2">
+                <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                <span>{currentError}</span>
+              </div>
+            )}
+
+            <div>
+              <AuthFieldLabel htmlFor="email">Email address</AuthFieldLabel>
+              <AuthInput
+                id="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div>
+              <AuthFieldLabel htmlFor="password">Password</AuthFieldLabel>
+              <AuthInput
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="flex items-center gap-2.5 pt-0.5">
+              <input
+                id="remember"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={e => setRememberMe(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 cursor-pointer"
+                style={{ accentColor: AUTH_PRIMARY }}
+              />
+              <label htmlFor="remember" className="text-sm font-medium text-slate-700 cursor-pointer select-none">
+                Remember me
+              </label>
+            </div>
           </div>
-          <h1 className="text-xl font-bold text-white">NetSuite Forms</h1>
-          <p className="text-sm text-white/70 mt-1">
-            {isForgotMode ? 'Password recovery' : 'Sign in to your account'}
-          </p>
-        </div>
 
-        <div className="p-8">
-          {!isForgotMode ? (
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {currentError && (
-                <div className="p-3 bg-status-rejected-bg border border-status-rejected/20 text-status-rejected text-sm rounded-ns-md">
-                  {currentError}
-                </div>
-              )}
+          <div className="auth-form-footer">
+            <AuthButton type="submit" loading={isLoading}>
+              <AuthLockButton label="Log In" />
+            </AuthButton>
+            <div className="text-center pt-6">
+              <AuthLink onClick={() => setIsForgotMode(true)}>Forgot password?</AuthLink>
+            </div>
+          </div>
+        </form>
+      ) : (
+        <form onSubmit={handleForgotSubmit} className="auth-form-shell">
+          <div className="auth-form-fields auth-forgot-fields">
+            <AuthBackLink
+              onClick={() => { setIsForgotMode(false); setForgotStatus(null); }}
+              className="self-start"
+            >
+              <ArrowLeft size={14} />
+              Back to sign in
+            </AuthBackLink>
 
-              <div className="space-y-1.5">
-                <Label>Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-2.5 text-ns-text-muted" size={16} />
-                  <Input
-                    type="email"
-                    placeholder="you@company.com"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    required
-                    className="pl-10"
-                  />
-                </div>
-              </div>
+            <p className="text-sm text-slate-500 leading-relaxed">
+              Enter your email address and we will send you a link to reset your password.
+            </p>
 
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <Label>Password</Label>
-                  <button
-                    type="button"
-                    onClick={() => setIsForgotMode(true)}
-                    className="text-xs font-medium text-ns-blue hover:text-ns-blue-dark hover:underline"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-                <Input
-                  type="password"
-                  placeholder="Enter password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-
-              <Button type="submit" disabled={isLoading} className="w-full gap-2">
-                {isLoading ? (
-                  <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <LogIn size={18} />
-                    Sign in
-                  </>
-                )}
-              </Button>
-            </form>
-          ) : (
-            <form onSubmit={handleForgotSubmit} className="space-y-5">
-              <button
-                type="button"
-                onClick={() => setIsForgotMode(false)}
-                className="flex items-center gap-2 text-xs font-medium text-ns-text-muted hover:text-ns-blue mb-2"
+            {forgotStatus && (
+              <div
+                className={`p-3.5 rounded-xl flex items-start gap-2 text-sm border ${
+                  forgotStatus.type === 'success'
+                    ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
+                    : 'bg-red-50 border-red-100 text-red-700'
+                }`}
               >
-                <ArrowLeft size={14} />
-                Back to sign in
-              </button>
-
-              <div className="pb-2">
-                <h2 className="text-base font-semibold text-ns-text">Reset password</h2>
-                <p className="text-sm text-ns-text-muted mt-1">Enter your email to receive a reset link.</p>
-              </div>
-
-              {forgotStatus && (
-                <div
-                  className={`p-4 rounded-ns-md flex items-start gap-3 border ${
-                    forgotStatus.type === 'success'
-                      ? 'bg-status-approved-bg border-status-approved/20 text-status-approved'
-                      : 'bg-status-rejected-bg border-status-rejected/20 text-status-rejected'
-                  }`}
-                >
-                  {forgotStatus.type === 'success' ? <CheckCircle2 size={18} /> : <LogIn size={18} />}
-                  <p className="text-sm font-medium">{forgotStatus.message}</p>
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  placeholder="you@company.com"
-                  value={forgotEmail}
-                  onChange={e => setForgotEmail(e.target.value)}
-                  required
-                />
-              </div>
-
-              <Button type="submit" disabled={isLoading} className="w-full gap-2">
-                {isLoading ? (
-                  <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                {forgotStatus.type === 'success' ? (
+                  <CheckCircle2 size={15} className="shrink-0 mt-0.5" />
                 ) : (
-                  <>
-                    <Send size={18} />
-                    Send reset link
-                  </>
+                  <AlertCircle size={15} className="shrink-0 mt-0.5" />
                 )}
-              </Button>
-            </form>
-          )}
-        </div>
+                <span>{forgotStatus.message}</span>
+              </div>
+            )}
 
-        <div className="bg-ns-page-bg px-8 py-3 border-t border-ns-border flex justify-between items-center text-xs text-ns-text-muted">
-          <span>Protected sign-in</span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 bg-status-approved rounded-full" />
-            All systems available
-          </span>
-        </div>
-      </div>
-    </div>
+            <div>
+              <AuthFieldLabel htmlFor="forgot-email">Email address</AuthFieldLabel>
+              <AuthInput
+                id="forgot-email"
+                type="email"
+                autoComplete="email"
+                value={forgotEmail}
+                onChange={e => setForgotEmail(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="auth-form-footer">
+            <AuthButton type="submit" loading={isLoading}>
+              <Send size={14} />
+              Send reset link
+            </AuthButton>
+          </div>
+        </form>
+      )}
+    </AuthLayout>
   );
 }

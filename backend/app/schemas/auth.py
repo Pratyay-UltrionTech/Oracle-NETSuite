@@ -12,6 +12,7 @@ class UserInfo(BaseModel):
     role: str
     companyId: Optional[str] = None
     companyName: Optional[str] = None
+    companyLogoUrl: Optional[str] = None
     jobTitle: Optional[str] = None
 
 class Token(BaseModel):

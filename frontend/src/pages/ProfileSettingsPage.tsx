@@ -3,19 +3,73 @@ import { useStore } from '../store/useStore';
 import AdminLayout from '../components/layout/AdminLayout';
 import CustomerLayout from '../components/layout/CustomerLayout';
 import { PageHeader, Card, CardHeader } from '../components/admin';
+import { CompanyLogoField } from '../components/admin/CompanyLogoField';
 import { Button, Input, Label } from '../components/ui/Base';
 import { cn } from '../lib/utils';
-import { Lock, User, Mail, Building, Briefcase, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Lock, User, Mail, Building, Briefcase, CheckCircle2, AlertCircle, ImagePlus } from 'lucide-react';
 
 export default function ProfileSettingsPage() {
-  const { user, changePassword } = useStore();
+  const {
+    user,
+    changePassword,
+    companies,
+    fetchCompanies,
+    uploadCompanyLogo,
+    removeCompanyLogo,
+  } = useStore();
   const [oldPassword, setOldPassword] = React.useState('');
   const [newPassword, setNewPassword] = React.useState('');
   const [confirmPassword, setConfirmPassword] = React.useState('');
   const [status, setStatus] = React.useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
+  const isClientAdmin = user?.role === 'client_admin';
+  const company = isClientAdmin && user?.companyId
+    ? companies.find(c => c.id === user.companyId)
+    : null;
+
+  const [logoFile, setLogoFile] = React.useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = React.useState<string | null>(null);
+  const [removeLogo, setRemoveLogo] = React.useState(false);
+  const [logoStatus, setLogoStatus] = React.useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [savingLogo, setSavingLogo] = React.useState(false);
+
+  React.useEffect(() => {
+    if (isClientAdmin) {
+      void fetchCompanies();
+    }
+  }, [isClientAdmin, fetchCompanies]);
+
+  React.useEffect(() => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    setRemoveLogo(false);
+    setLogoStatus(null);
+  }, [company?.logoUrl, company?.id]);
+
   const Layout = user?.role === 'super_admin' || user?.role === 'client_admin' ? AdminLayout : CustomerLayout;
+
+  const handleSaveLogo = async () => {
+    if (!user?.companyId) return;
+    if (!logoFile && !removeLogo) return;
+
+    setSavingLogo(true);
+    setLogoStatus(null);
+    try {
+      if (removeLogo) await removeCompanyLogo(user.companyId);
+      if (logoFile) await uploadCompanyLogo(user.companyId, logoFile);
+      setLogoFile(null);
+      setLogoPreview(null);
+      setRemoveLogo(false);
+      setLogoStatus({ type: 'success', message: 'Company logo updated successfully.' });
+    } catch {
+      setLogoStatus({ type: 'error', message: 'Failed to update company logo. Please try again.' });
+    } finally {
+      setSavingLogo(false);
+    }
+  };
+
+  const hasLogoChanges = Boolean(logoFile || removeLogo);
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,7 +145,73 @@ export default function ProfileSettingsPage() {
             </Card>
           </div>
 
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
+            {isClientAdmin && user?.companyId && (
+              <Card padding="none">
+                <div className="p-5 border-b border-ns-border">
+                  <CardHeader
+                    title="Company logo"
+                    subtitle="Upload or update your company logo. It appears in the sidebar for your admins and users."
+                  />
+                </div>
+
+                <div className="p-6 space-y-5">
+                  {logoStatus && (
+                    <div
+                      className={cn(
+                        'p-4 rounded-ns-md flex items-start gap-3 border text-sm',
+                        logoStatus.type === 'success'
+                          ? 'bg-status-approved-bg border-status-approved/20 text-status-approved'
+                          : 'bg-status-rejected-bg border-status-rejected/20 text-status-rejected',
+                      )}
+                    >
+                      {logoStatus.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                      <p className="font-medium">{logoStatus.message}</p>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-ns-text-muted leading-relaxed italic border-l-2 border-ns-blue pl-3 py-1 bg-ns-blue/5">
+                    {company?.logoUrl
+                      ? 'You can replace or remove the current logo at any time.'
+                      : 'No logo has been set yet. Upload one for your company workspace.'}
+                  </p>
+
+                  <CompanyLogoField
+                    companyName={company?.name || user.companyName || 'Company'}
+                    existingLogoUrl={company?.logoUrl}
+                    file={logoFile}
+                    previewUrl={logoPreview}
+                    onFileChange={(file, preview) => {
+                      setLogoFile(file);
+                      setLogoPreview(preview);
+                      setLogoStatus(null);
+                    }}
+                    removeExisting={removeLogo}
+                    onRemoveExistingChange={next => {
+                      setRemoveLogo(next);
+                      setLogoStatus(null);
+                    }}
+                  />
+
+                  <div className="pt-4 border-t border-ns-border flex justify-end">
+                    <Button
+                      type="button"
+                      disabled={!hasLogoChanges || savingLogo}
+                      onClick={() => void handleSaveLogo()}
+                      className="gap-2"
+                    >
+                      {savingLogo ? (
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <ImagePlus size={16} />
+                      )}
+                      {savingLogo ? 'Saving…' : 'Save logo'}
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )}
+
             <Card padding="none">
               <div className="p-5 border-b border-ns-border">
                 <CardHeader title="Change password" subtitle="Update your account password" />

@@ -52,39 +52,57 @@ export const Tabs = ({ tabs, activeTab, onChange }: { tabs: { id: string; label:
 export const Modal = ({ isOpen, onClose, title, children, footer, className }: { isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode; footer?: React.ReactNode; className?: string }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ns-navy/40 backdrop-blur-sm">
-      <div className={cn("bg-white rounded-ns-card shadow-2xl w-full mx-4 overflow-hidden border border-ns-border", className || "max-w-md")}>
-        <div className="px-5 py-4 border-b border-ns-border flex justify-between items-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ns-navy/40 backdrop-blur-sm p-4">
+      <div
+        className={cn(
+          'bg-white rounded-ns-xl shadow-2xl w-full mx-4 overflow-hidden border border-ns-border/80',
+          className || 'max-w-md',
+        )}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="px-5 py-4 border-b border-ns-border flex justify-between items-center bg-white">
           <h3 className="font-semibold text-ns-text text-sm">{title}</h3>
-          <button onClick={onClose} className="text-ns-text-muted hover:text-ns-text transition-colors text-lg leading-none">×</button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-ns-md text-ns-text-muted hover:text-ns-text hover:bg-ns-page-bg transition-colors text-lg leading-none"
+            aria-label="Close"
+          >
+            ×
+          </button>
         </div>
         <div className="p-6">{children}</div>
-        {footer && <div className="px-5 py-4 border-t border-ns-border bg-ns-page-bg flex justify-end gap-2">{footer}</div>}
+        {footer && (
+          <div className="px-5 py-4 border-t border-ns-border bg-ns-page-bg/80 flex justify-end gap-2">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 // Confirm Modal
-export const ConfirmModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  title = "Confirm Action", 
-  message = "Are you sure you want to proceed? This action cannot be undone.",
-  confirmText = "Delete",
-  type = "danger"
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  onConfirm: () => void; 
-  title?: string; 
+export const ConfirmModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title = 'Confirm Action',
+  message = 'Are you sure you want to proceed? This action cannot be undone.',
+  confirmText = 'Delete',
+  type = 'danger',
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title?: string;
   message?: string;
   confirmText?: string;
-  type?: "danger" | "warning" | "info"
+  type?: 'danger' | 'warning' | 'info';
 }) => {
   if (!isOpen) return null;
-  const isDanger = type === "danger";
+  const isDanger = type === 'danger';
 
   return (
     <Modal
@@ -94,17 +112,22 @@ export const ConfirmModal = ({
       className="max-w-sm"
       footer={
         <>
-          <button 
+          <button
+            type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-bold text-ns-text-muted hover:text-ns-text transition-colors"
+            className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-ns-text-muted hover:text-ns-text bg-white border border-ns-border rounded-ns-md hover:bg-ns-page-bg transition-colors"
           >
             Cancel
           </button>
-          <button 
-            onClick={() => { onConfirm(); onClose(); }}
+          <button
+            type="button"
+            onClick={() => {
+              onConfirm();
+              onClose();
+            }}
             className={cn(
-              "px-6 py-2 text-xs font-extrabold uppercase tracking-widest text-white rounded-none shadow-sm",
-              isDanger ? "bg-status-rejected hover:opacity-90" : "bg-ns-blue hover:bg-ns-blue-dark"
+              'inline-flex items-center justify-center px-6 py-2 text-xs font-bold uppercase tracking-wide text-white rounded-ns-md shadow-sm transition-colors',
+              isDanger ? 'bg-status-rejected hover:opacity-90' : 'bg-ns-blue hover:bg-ns-blue-dark',
             )}
           >
             {confirmText}
@@ -118,9 +141,7 @@ export const ConfirmModal = ({
             <span className="text-xl">⚠</span>
           </div>
         )}
-        <p className="text-sm text-ns-text leading-relaxed">
-          {message}
-        </p>
+        <p className="text-sm text-ns-text leading-relaxed">{message}</p>
       </div>
     </Modal>
   );

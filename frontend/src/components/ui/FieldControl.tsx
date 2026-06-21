@@ -59,6 +59,20 @@ function normalizeApiPath(raw: string): string {
   return p;
 }
 
+/** NetSuite often returns "18.0%" or "$1,234.00" — HTML number inputs need plain numbers. */
+function normalizeNumericInputValue(value: unknown, fieldType: string): string {
+  if (value === undefined || value === null || value === '') return '';
+  let raw = String(value).trim();
+  if (fieldType === 'percent') raw = raw.replace(/%/g, '').trim();
+  if (fieldType === 'currency' || fieldType === 'currency2') {
+    raw = raw.replace(/^\$/, '').replace(/,/g, '').trim();
+  }
+  const num = Number.parseFloat(raw);
+  if (Number.isFinite(num)) return String(num);
+  if (['percent', 'currency', 'currency2', 'float', 'double'].includes(fieldType)) return '';
+  return raw;
+}
+
 function remoteOptionsCacheKey(ds: any): string | null {
   if (!ds) return null;
   if (ds.type === 'netsuite_subsidiary') return SELECT_CACHE_KEYS.subsidiary;
@@ -658,7 +672,7 @@ export function FieldControl({
             baseInput,
             (type === 'currency' || type === 'currency2') && 'pl-7'
           )}
-          value={value ?? ''}
+          value={normalizeNumericInputValue(value, type)}
           onChange={e => onChange?.(e.target.value)}
           disabled={disabled || preview}
           placeholder="0.00"

@@ -141,6 +141,7 @@ function buildUserNotifications(submissions: Submission[]): NotificationItem[] {
 export function useNotifications() {
   const user = useStore(state => state.user);
   const submissions = useStore(state => state.submissions);
+  const mySubmissions = useStore(state => state.mySubmissions);
   const fetchSubmissions = useStore(state => state.fetchSubmissions);
   const fetchMySubmissions = useStore(state => state.fetchMySubmissions);
   const fetchPendingApprovals = useStore(state => state.fetchPendingApprovals);
@@ -156,6 +157,7 @@ export function useNotifications() {
     try {
       if (user.role === 'super_admin' || user.role === 'client_admin') {
         await fetchSubmissions();
+        await fetchMySubmissions();
       } else {
         await fetchMySubmissions();
       }
@@ -180,7 +182,7 @@ export function useNotifications() {
     const roleNotifications =
       user.role === 'super_admin' || user.role === 'client_admin'
         ? buildAdminNotifications(submissions)
-        : buildUserNotifications(submissions);
+        : buildUserNotifications(mySubmissions);
 
     const approvalNotifications = buildApprovalNotifications(approvalItems);
     const seen = new Set<string>();
@@ -192,7 +194,7 @@ export function useNotifications() {
         return true;
       })
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [user, submissions, approvalItems]);
+  }, [user, submissions, mySubmissions, approvalItems]);
 
   const unreadCount = notifications.filter(item => !readIds.has(item.id)).length;
 

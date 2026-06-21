@@ -1,6 +1,5 @@
 import type { CustomForm, Field } from '../types';
-import { itemSublistRowKey } from './sublistSubmission';
-import { itemSublistRowKey } from './sublistSubmission';
+import { itemSublistRowKey, expenseSublistRowKey } from './sublistSubmission';
 
 export interface MissingFieldRef {
   fieldId: string;
@@ -26,7 +25,7 @@ function isValueEmpty(value: unknown, fieldType: string): boolean {
 }
 
 function expenseRowKey(rowIndex: number, fieldId: string): string {
-  return `exp_${rowIndex}_${fieldId}`;
+  return expenseSublistRowKey(rowIndex, fieldId);
 }
 
 export function collectMissingRequiredFields(
@@ -34,11 +33,13 @@ export function collectMissingRequiredFields(
   formValues: Record<string, unknown>,
   options?: {
     itemRowIndexes?: number[];
+    expenseRowIndexes?: number[];
     sortLineFields?: (fields: Field[]) => Field[];
   },
 ): MissingFieldRef[] {
   const missing: MissingFieldRef[] = [];
   const itemRows = options?.itemRowIndexes ?? [0];
+  const expenseRows = options?.expenseRowIndexes ?? [0];
   const sortLineFields = options?.sortLineFields ?? (fields => fields);
 
   for (const tab of form.tabs) {
@@ -79,20 +80,22 @@ export function collectMissingRequiredFields(
       }
     }
 
-    for (const field of tab.expenseSublist ?? []) {
-      if (!shouldValidateField(field)) continue;
-      const key = expenseRowKey(0, field.id);
-      if (isValueEmpty(formValues[key], field.type)) {
-        missing.push({
-          fieldId: field.id,
-          label: field.label,
-          tabId: tab.id,
-          tabName: tab.name,
-          groupName: 'Expenses',
-          section: 'expense',
-          rowIndex: 0,
-          domId: `field-${key}`,
-        });
+    for (const rowIndex of expenseRows) {
+      for (const field of tab.expenseSublist ?? []) {
+        if (!shouldValidateField(field)) continue;
+        const key = expenseRowKey(rowIndex, field.id);
+        if (isValueEmpty(formValues[key], field.type)) {
+          missing.push({
+            fieldId: field.id,
+            label: field.label,
+            tabId: tab.id,
+            tabName: tab.name,
+            groupName: 'Expenses',
+            section: 'expense',
+            rowIndex,
+            domId: `field-${key}`,
+          });
+        }
       }
     }
   }
@@ -105,7 +108,10 @@ export function formatMissingFieldLabel(ref: MissingFieldRef): string {
   if (ref.section === 'line' && ref.rowIndex !== undefined && ref.rowIndex > 0) {
     return `${ref.label} (Line ${ref.rowIndex + 1} · ${location})`;
   }
-  if (ref.section === 'line') {
+  if (ref.section === 'expense' && ref.rowIndex !== undefined && ref.rowIndex > 0) {
+    return `${ref.label} (Expense line ${ref.rowIndex + 1} · ${location})`;
+  }
+  if (ref.section === 'expense') {
     return `${ref.label} (${location})`;
   }
   return `${ref.label} (${location})`;

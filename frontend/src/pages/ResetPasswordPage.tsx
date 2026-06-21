@@ -1,8 +1,15 @@
 import * as React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { Button, Input, Label } from '../components/ui/Base';
-import { ShieldCheck, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
+import {
+  AuthLayout,
+  AuthFieldLabel,
+  AuthInput,
+  AuthButton,
+  AuthLink,
+  AuthLockButton,
+} from '../components/layout/AuthLayout';
+import { CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -43,80 +50,61 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-ns-page-bg flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-ns-card ns-panel-shadow-lg overflow-hidden border border-ns-border">
-        <div className="ns-header-bar px-8 py-6 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-white/20 border border-white/25 rounded-ns-md mb-3">
-            <ShieldCheck size={24} className="text-white" />
-          </div>
-          <h1 className="text-xl font-bold text-white">Reset password</h1>
-          <p className="text-sm text-white/70 mt-1">Choose a new password for your account</p>
-        </div>
+    <AuthLayout title="Reset Password">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <p className="text-[13px] text-[#555] leading-relaxed">
+          Choose a new password for your account.
+        </p>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-5">
-          {status && (
-            <div
-              className={`p-4 rounded-ns-md flex items-start gap-3 border ${
-                status.type === 'success'
-                  ? 'bg-status-approved-bg border-status-approved/20 text-status-approved'
-                  : 'bg-status-rejected-bg border-status-rejected/20 text-status-rejected'
-              }`}
-            >
-              {status.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
-              <p className="text-sm font-medium">{status.message}</p>
-            </div>
-          )}
-
-          <div className="space-y-1.5">
-            <Label>New password</Label>
-            <Input
-              type="password"
-              required
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-              placeholder="Min. 8 characters"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Confirm password</Label>
-            <Input
-              type="password"
-              required
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              placeholder="Repeat new password"
-            />
-          </div>
-
-          <Button type="submit" disabled={isLoading} className="w-full gap-2">
-            {isLoading ? (
-              <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <>
-                <Lock size={18} />
-                Update password
-              </>
-            )}
-          </Button>
-
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="w-full text-center text-xs font-medium text-ns-text-muted hover:text-ns-blue transition-colors"
+        {status && (
+          <div
+            className={`p-3 rounded-[3px] flex items-start gap-2 text-[13px] border ${
+              status.type === 'success'
+                ? 'bg-[#f0fdf4] border-[#bbf7d0] text-[#16a34a]'
+                : 'bg-[#fef2f2] border-[#fecaca] text-[#dc2626]'
+            }`}
           >
-            Back to sign in
-          </button>
-        </form>
+            {status.type === 'success' ? (
+              <CheckCircle2 size={15} className="shrink-0 mt-0.5" />
+            ) : (
+              <AlertCircle size={15} className="shrink-0 mt-0.5" />
+            )}
+            <span>{status.message}</span>
+          </div>
+        )}
 
-        <div className="bg-ns-page-bg px-8 py-3 border-t border-ns-border flex justify-between items-center text-xs text-ns-text-muted">
-          <span>Protected sign-in</span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 bg-status-approved rounded-full" />
-            All systems available
-          </span>
+        <div>
+          <AuthFieldLabel htmlFor="new-password">New password</AuthFieldLabel>
+          <AuthInput
+            id="new-password"
+            type="password"
+            required
+            value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+          />
         </div>
-      </div>
-    </div>
+
+        <div>
+          <AuthFieldLabel htmlFor="confirm-password">Confirm password</AuthFieldLabel>
+          <AuthInput
+            id="confirm-password"
+            type="password"
+            required
+            value={confirmPassword}
+            onChange={e => setConfirmPassword(e.target.value)}
+          />
+        </div>
+
+        <div className="pt-2">
+          <AuthButton type="submit" loading={isLoading}>
+            <AuthLockButton label="Update Password" />
+          </AuthButton>
+        </div>
+
+        <div className="text-center pt-1">
+          <AuthLink onClick={() => navigate('/')}>Back to sign in</AuthLink>
+        </div>
+      </form>
+    </AuthLayout>
   );
 }

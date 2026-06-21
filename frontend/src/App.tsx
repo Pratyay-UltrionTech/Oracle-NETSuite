@@ -14,10 +14,16 @@ import FormFillPage from './pages/FormFillPage';
 import AdminSubmissionsPage from './pages/AdminSubmissionsPage';
 import CataloguePage from './pages/CataloguePage';
 import UserTransactionHub from './pages/UserTransactionHub';
+import UserDraftsPage from './pages/UserDraftsPage';
 import StaffManagementPage from './pages/StaffManagementPage';
 import ProfileSettingsPage from './pages/ProfileSettingsPage';
 import NetSuiteDatasourceManagementPage from './pages/NetSuiteDatasourceManagementPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import TermsPage from './pages/legal/TermsPage';
+import PrivacyPage from './pages/legal/PrivacyPage';
+import SystemStatusPage from './pages/legal/SystemStatusPage';
+import ExplorePage from './pages/legal/ExplorePage';
+import SecurityPage from './pages/legal/SecurityPage';
 import { useStore } from './store/useStore';
 import { UserRole } from './types';
 
@@ -59,6 +65,11 @@ export default function App() {
         <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/status" element={<SystemStatusPage />} />
+        <Route path="/explore" element={<ExplorePage />} />
+        <Route path="/security" element={<SecurityPage />} />
         
         {/* Shared Dashboard for Admins */}
         <Route 
@@ -211,6 +222,14 @@ export default function App() {
               <CustomerDashboardPage />
             </ProtectedRoute>
           } 
+        />
+        <Route
+          path="/drafts"
+          element={
+            <ProtectedRoute roles={['user', 'manager', 'client_admin']}>
+              <UserDraftsPage />
+            </ProtectedRoute>
+          }
         />
         <Route 
           path="/user/:type" 

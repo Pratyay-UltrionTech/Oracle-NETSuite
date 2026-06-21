@@ -1,11 +1,15 @@
 from typing import Optional
 
+from datetime import datetime
+from pathlib import Path
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.gzip import GZipMiddleware
 
-from .database import close_mongo_connection, connect_to_mongo
+from .database import close_mongo_connection, connect_to_mongo, db_instance
 from .config import settings
 from .routes import (
     auth,
@@ -47,6 +51,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+_uploads_root = Path(__file__).resolve().parent.parent / "uploads"
+_uploads_root.mkdir(parents=True, exist_ok=True)
+(_uploads_root / "company_logos").mkdir(parents=True, exist_ok=True)
+app.mount("/api/uploads", StaticFiles(directory=str(_uploads_root)), name="uploads")
 
 
 @app.on_event("startup")
@@ -100,4 +109,20 @@ async def root():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    mongo_status = "unavailable"
+    try:
+        if db_instance.client is not None:
+            await db_instance.client.admin.command("ping")
+            mongo_status = "operational"
+    except Exception:
+        mongo_status = "unavailable"
+
+    overall = "ok" if mongo_status == "operational" else "degraded"
+    return {
+        "status": overall,
+        "services": {
+            "api": "operational",
+            "mongodb": mongo_status,
+        },
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+    }

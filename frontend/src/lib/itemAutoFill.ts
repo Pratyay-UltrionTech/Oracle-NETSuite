@@ -6,6 +6,22 @@ function fieldMatches(id: string, patterns: string[]): boolean {
   return patterns.some(p => lower === p || lower.endsWith(`_${p}`) || lower.includes(p));
 }
 
+function formatAutoFillValue(field: Field, raw: string): string {
+  const v = raw.trim();
+  if (!v) return v;
+  if (field.type === 'percent') {
+    const cleaned = v.replace(/%/g, '').trim();
+    const num = Number.parseFloat(cleaned);
+    return Number.isFinite(num) ? String(num) : cleaned;
+  }
+  if (field.type === 'currency' || field.type === 'currency2' || field.type === 'float' || field.type === 'double') {
+    const cleaned = v.replace(/^\$/, '').replace(/,/g, '').trim();
+    const num = Number.parseFloat(cleaned);
+    return Number.isFinite(num) ? String(num) : cleaned;
+  }
+  return v;
+}
+
 /** When a NetSuite item is picked, fill related columns on the same line row. */
 export function buildItemRowAutoFill(
   item: ItemOption,
@@ -28,7 +44,7 @@ export function buildItemRowAutoFill(
       const v = rule.value?.trim();
       if (!v) continue;
       if (fieldMatches(field.id, rule.patterns)) {
-        updates[itemSublistRowKey(rowIndex, field.id)] = v;
+        updates[itemSublistRowKey(rowIndex, field.id)] = formatAutoFillValue(field, v);
         break;
       }
     }

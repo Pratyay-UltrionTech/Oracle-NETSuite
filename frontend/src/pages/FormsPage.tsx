@@ -233,7 +233,7 @@ export default function FormsPage() {
             }
           >
             <div className="space-y-6">
-              <div className="p-4 bg-ns-navy rounded-ns-md text-white">
+              <div className="p-4 bg-ns-navy rounded-ns-lg text-white">
                 <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">Form</p>
                 <h3 className="text-lg font-bold">{activeForm.name}</h3>
                 <p className="text-xs opacity-80 mt-1 italic">Assign team members from {companies.find(c => c.id === (activeForm.customerId || user?.companyId))?.name || 'your company'}.</p>
@@ -245,7 +245,7 @@ export default function FormsPage() {
                     key={user.id}
                     onClick={() => toggleUserSelection(user.id)}
                     className={cn(
-                      "p-4 rounded-ns-md border cursor-pointer transition-all flex items-center justify-between group",
+                      "p-4 rounded-ns-lg border cursor-pointer transition-all flex items-center justify-between group",
                       selectedUserIds.includes(user.id)
                         ? "bg-ns-blue/5 border-ns-blue shadow-inner"
                         : "bg-white border-ns-border hover:border-ns-blue/40"

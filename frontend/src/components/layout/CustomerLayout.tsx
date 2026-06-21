@@ -3,11 +3,11 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import {
   LogOut,
-  Building,
   Settings,
   UserCircle,
   PanelLeftClose,
   PanelLeft,
+  FilePenLine,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useSidebarExpanded } from '../../lib/useSidebarExpanded';
@@ -15,6 +15,7 @@ import { StatusBadge } from '../admin';
 import { getAssignedTransactionNavItems } from '../../lib/transactionRegistry';
 import LiveDateButton from './LiveDateButton';
 import NotificationBell from './NotificationBell';
+import { CompanyLogo } from '../brand/CompanyLogo';
 
 type NavItem = { name: string; icon: React.ElementType; path: string };
 
@@ -52,6 +53,8 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
   const { isExpanded, toggle: toggleSidebar } = useSidebarExpanded('customer-sidebar-expanded');
 
   const company = user?.companyId ? companies.find(c => c.id === user.companyId) : null;
+  const companyName = company?.name || user?.companyName || 'My company';
+  const companyLogoUrl = company?.logoUrl || user?.companyLogoUrl;
 
   const isEmployeeUser = user?.role === 'user' || user?.role === 'manager';
 
@@ -70,6 +73,8 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
     () => getAssignedTransactionNavItems(myAssignedForms),
     [myAssignedForms],
   );
+  const draftsNav: NavItem[] =
+    transactionNav.length > 0 ? [{ name: 'Drafts', icon: FilePenLine, path: '/drafts' }] : [];
   const accountNav: NavItem[] = [{ name: 'Profile', icon: UserCircle, path: '/profile' }];
 
   const initials =
@@ -117,16 +122,10 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
             isExpanded ? 'justify-between gap-2' : 'justify-center',
           )}
         >
-          {isExpanded && (
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 bg-white/20 border border-white/25 rounded-ns-md flex items-center justify-center text-xs font-bold text-white">
-                VP
-              </div>
-              <div className="min-w-0">
-                <p className="font-semibold text-sm text-white truncate">Supplier portal</p>
-                <p className="text-[10px] text-white/70 truncate">Powered by NetSuite Forms</p>
-              </div>
-            </div>
+          {isExpanded ? (
+            <CompanyLogo companyName={companyName} logoUrl={companyLogoUrl} variant="sidebar" />
+          ) : (
+            <CompanyLogo companyName={companyName} logoUrl={companyLogoUrl} variant="sidebar-collapsed" />
           )}
           <button
             type="button"
@@ -140,6 +139,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
 
         <nav className="flex-1 px-3 py-3 overflow-y-auto custom-scrollbar">
           {transactionNav.length > 0 && renderSection('Transactions', transactionNav)}
+          {draftsNav.length > 0 && renderSection('Drafts', draftsNav)}
           {renderSection('Account', accountNav)}
         </nav>
 
@@ -184,8 +184,8 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
         <header className="h-14 ns-header-bar flex items-center justify-between px-6 z-20">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-white/15 rounded-ns-md border border-white/25">
-              <Building size={14} className="text-white" />
-              <span className="text-xs font-medium text-white">{company?.name || user?.companyName || 'My company'}</span>
+              <CompanyLogo companyName={companyName} logoUrl={companyLogoUrl} variant="sidebar-collapsed" />
+              <span className="text-xs font-medium text-white">{companyName}</span>
             </div>
           </div>
 

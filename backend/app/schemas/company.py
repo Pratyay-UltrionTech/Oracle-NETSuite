@@ -14,7 +14,8 @@ class CompanyUpdate(BaseModel):
 class CompanyOut(CompanyBase):
     id: str
     createdAt: datetime
-    createdBy: str
+    createdBy: Optional[str] = None
+    logoUrl: Optional[str] = None
 
     class Config:
         from_attributes = True

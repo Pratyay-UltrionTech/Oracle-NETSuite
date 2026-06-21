@@ -3,17 +3,46 @@ import { useStore } from '../store/useStore';
 import AdminLayout from '../components/layout/AdminLayout';
 import { Button, Input, Label } from '../components/ui/Base';
 import { Table, THead, TBody, TR, TH, TD, Modal, ConfirmModal } from '../components/ui/Complex';
-import { Building2, Plus, Users, Search, Trash2, GitBranch } from 'lucide-react';
+import { Building2, Plus, Users, Search, Trash2, GitBranch, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader, KPICard, Card } from '../components/admin';
+import { CompanyLogoField } from '../components/admin/CompanyLogoField';
+import { CompanyLogo } from '../components/brand/CompanyLogo';
+import type { Company } from '../types';
+
+type CompanyFormState = {
+  name: string;
+  logoFile: File | null;
+  logoPreview: string | null;
+  removeLogo: boolean;
+};
+
+const emptyForm = (): CompanyFormState => ({
+  name: '',
+  logoFile: null,
+  logoPreview: null,
+  removeLogo: false,
+});
 
 export default function CompaniesPage() {
-  const { companies, users, addCompany, deleteCompany, fetchCompanies, fetchUsers } = useStore();
+  const {
+    companies,
+    users,
+    addCompany,
+    updateCompany,
+    uploadCompanyLogo,
+    removeCompanyLogo,
+    deleteCompany,
+    fetchCompanies,
+    fetchUsers,
+  } = useStore();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [newCompanyName, setNewCompanyName] = React.useState('');
+  const [isCreateOpen, setIsCreateOpen] = React.useState(false);
+  const [editCompany, setEditCompany] = React.useState<Company | null>(null);
+  const [form, setForm] = React.useState<CompanyFormState>(emptyForm);
   const [deleteId, setDeleteId] = React.useState<string | null>(null);
+  const [saving, setSaving] = React.useState(false);
 
   React.useEffect(() => {
     fetchCompanies();
@@ -27,12 +56,88 @@ export default function CompaniesPage() {
   const getEmployeeCount = (companyId: string) => users.filter(u => u.companyId === companyId).length;
   const totalEmployees = companies.reduce((acc, c) => acc + getEmployeeCount(c.id), 0);
 
-  const handleAddCompany = async () => {
-    if (!newCompanyName.trim()) return;
-    await addCompany(newCompanyName);
-    setNewCompanyName('');
-    setIsModalOpen(false);
+  const openCreate = () => {
+    setForm(emptyForm());
+    setIsCreateOpen(true);
   };
+
+  const openEdit = (company: Company) => {
+    setForm({
+      name: company.name,
+      logoFile: null,
+      logoPreview: null,
+      removeLogo: false,
+    });
+    setEditCompany(company);
+  };
+
+  const closeModals = () => {
+    setIsCreateOpen(false);
+    setEditCompany(null);
+    setForm(emptyForm());
+  };
+
+  const applyLogoChanges = async (companyId: string) => {
+    if (form.removeLogo) {
+      await removeCompanyLogo(companyId);
+    }
+    if (form.logoFile) {
+      await uploadCompanyLogo(companyId, form.logoFile);
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!form.name.trim()) return;
+    setSaving(true);
+    try {
+      await addCompany(form.name.trim(), form.logoFile);
+      closeModals();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!editCompany || !form.name.trim()) return;
+    setSaving(true);
+    try {
+      if (form.name.trim() !== editCompany.name) {
+        await updateCompany(editCompany.id, form.name.trim());
+      }
+      await applyLogoChanges(editCompany.id);
+      closeModals();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const renderCompanyForm = (isEdit: boolean) => (
+    <div className="space-y-4">
+      <p className="text-xs text-ns-text-muted leading-relaxed italic border-l-2 border-ns-blue pl-3 py-1 bg-ns-blue/5">
+        {isEdit
+          ? 'Update the company name or replace its logo. The logo appears in the sidebar for that company’s admins and users.'
+          : 'Each company has separate data and its own user roles and form assignments.'}
+      </p>
+      <div>
+        <Label mandatory>Official company name</Label>
+        <Input
+          autoFocus
+          placeholder="e.g. Acme Corp India Pvt Ltd"
+          value={form.name}
+          onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))}
+        />
+      </div>
+      <CompanyLogoField
+        companyName={form.name || 'Company'}
+        existingLogoUrl={isEdit ? editCompany?.logoUrl : undefined}
+        file={form.logoFile}
+        previewUrl={form.logoPreview}
+        onFileChange={(logoFile, logoPreview) => setForm(prev => ({ ...prev, logoFile, logoPreview }))}
+        removeExisting={form.removeLogo}
+        onRemoveExistingChange={removeLogo => setForm(prev => ({ ...prev, removeLogo }))}
+      />
+    </div>
+  );
 
   return (
     <AdminLayout>
@@ -42,7 +147,7 @@ export default function CompaniesPage() {
           title="Company management"
           subtitle="Manage companies and their users."
           actions={
-            <Button onClick={() => setIsModalOpen(true)} className="gap-2">
+            <Button onClick={openCreate} className="gap-2">
               <Plus size={18} />
               Register company
             </Button>
@@ -88,11 +193,9 @@ export default function CompaniesPage() {
                 <TD className="text-center text-ns-text-muted font-mono text-[11px]">{index + 1}</TD>
                 <TD className="py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-ns-md bg-ns-gray-bg border border-ns-border flex items-center justify-center text-ns-navy/40 font-bold text-xs uppercase">
-                      {company.name.substring(0, 2)}
-                    </div>
+                    <CompanyLogo companyName={company.name} logoUrl={company.logoUrl} variant="table" />
                     <div>
-                      <button 
+                      <button
                         onClick={() => navigate(`/companies/${company.id}`)}
                         className="text-sm font-bold text-ns-text group-hover:text-ns-blue transition-colors text-left block"
                       >
@@ -108,20 +211,30 @@ export default function CompaniesPage() {
                     {getEmployeeCount(company.id)} employees
                   </span>
                 </TD>
-                <TD className="text-[11px] text-ns-text-muted font-semibold">{company.createdAt}</TD>
+                <TD className="text-[11px] text-ns-text-muted font-semibold">
+                  {company.createdAt ? new Date(company.createdAt).toLocaleDateString() : '—'}
+                </TD>
                 <TD className="px-6">
                   <div className="flex justify-end gap-2">
-                    <Button 
-                      variant="secondary" 
-                      size="sm" 
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => openEdit(company)}
+                      className="h-8 px-3 gap-1.5 text-[10px] font-bold uppercase tracking-widest"
+                    >
+                      Edit <Pencil size={12} />
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => navigate(`/companies/${company.id}`)}
                       className="h-8 px-3 gap-1.5 text-[10px] font-bold uppercase tracking-widest"
                     >
                       Staff <Users size={12} />
                     </Button>
-                    <Button 
-                      variant="secondary" 
-                      size="sm" 
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => navigate(`/companies/${company.id}/workflow`)}
                       className="h-8 px-3 gap-1.5 text-[10px] font-bold uppercase tracking-widest border-ns-blue text-ns-blue hover:bg-ns-blue hover:text-white"
                     >
@@ -154,38 +267,48 @@ export default function CompaniesPage() {
           </TBody>
         </Table>
 
-        {/* Modal */}
         <Modal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          title="Add company"
+          isOpen={isCreateOpen}
+          onClose={closeModals}
+          title="Register company"
           footer={
             <>
-              <Button variant="secondary" size="sm" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-              <Button size="sm" onClick={handleAddCompany} disabled={!newCompanyName}>Add company</Button>
+              <Button variant="secondary" size="sm" onClick={closeModals}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleCreate} disabled={!form.name.trim() || saving}>
+                {saving ? 'Saving…' : 'Register company'}
+              </Button>
             </>
           }
         >
-          <div className="space-y-4">
-            <p className="text-xs text-ns-text-muted leading-relaxed italic border-l-2 border-ns-blue pl-3 py-1 bg-ns-blue/5">
-              Each company has separate data and its own user roles and form assignments.
-            </p>
-            <div>
-              <Label mandatory>Official Company Name</Label>
-              <Input 
-                autoFocus
-                placeholder="e.g. Acme Corp India Pvt Ltd" 
-                value={newCompanyName}
-                onChange={(e) => setNewCompanyName(e.target.value)}
-              />
-            </div>
-          </div>
+          {renderCompanyForm(false)}
+        </Modal>
+
+        <Modal
+          isOpen={!!editCompany}
+          onClose={closeModals}
+          title="Edit company"
+          footer={
+            <>
+              <Button variant="secondary" size="sm" onClick={closeModals}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleUpdate} disabled={!form.name.trim() || saving}>
+                {saving ? 'Saving…' : 'Save changes'}
+              </Button>
+            </>
+          }
+        >
+          {renderCompanyForm(true)}
         </Modal>
       </div>
       <ConfirmModal
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
-        onConfirm={() => { if (deleteId) void deleteCompany(deleteId); }}
+        onConfirm={() => {
+          if (deleteId) void deleteCompany(deleteId);
+        }}
         title="Delete company?"
         message="This will permanently delete the company, all its employees, forms, submissions, workflows, and related data. This action is irreversible."
         confirmText="Delete company"

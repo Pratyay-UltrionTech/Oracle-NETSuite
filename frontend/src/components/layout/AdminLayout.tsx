@@ -19,8 +19,8 @@ import {
   UserCircle,
   PanelLeftClose,
   PanelLeft,
-  Shield,
   Home,
+  FilePenLine,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useSidebarExpanded } from '../../lib/useSidebarExpanded';
@@ -28,6 +28,8 @@ import { StatusBadge } from '../admin';
 import LiveDateButton from './LiveDateButton';
 import NotificationBell from './NotificationBell';
 import { getAssignedTransactionNavItems } from '../../lib/transactionRegistry';
+import { BrandLogo } from '../brand/BrandLogo';
+import { CompanyLogo } from '../brand/CompanyLogo';
 
 type NavItem = { name: string; icon: React.ElementType; path: string };
 
@@ -144,20 +146,10 @@ function SuperAdminSidebar({
       <div
         className={cn(
           'ns-sidebar-header transition-all',
-          isExpanded ? 'justify-between gap-2' : 'justify-center',
+          isExpanded ? 'justify-between gap-2' : 'flex-col justify-center gap-2 py-3',
         )}
       >
-        {isExpanded && (
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 bg-white/20 border border-white/25 rounded-ns-md flex-shrink-0 flex items-center justify-center text-xs font-bold text-white">
-              NS
-            </div>
-            <div className="min-w-0">
-              <p className="font-semibold text-sm text-white truncate">NetSuite Forms</p>
-              <p className="text-[10px] text-white/70 truncate">Admin</p>
-            </div>
-          </div>
-        )}
+        <BrandLogo variant={isExpanded ? 'sidebar' : 'sidebar-collapsed'} />
         <button
           type="button"
           onClick={toggleSidebar}
@@ -217,14 +209,22 @@ function ClientAdminSidebar({
   isExpanded: boolean;
   toggleSidebar: () => void;
   pathname: string;
-  user: { name?: string } | null;
+  user: { name?: string; companyId?: string; companyName?: string; companyLogoUrl?: string } | null;
   onLogout: () => void;
 }) {
-  const { myAssignedForms, fetchMyAssignedForms } = useStore();
+  const { myAssignedForms, fetchMyAssignedForms, companies, fetchCompanies } = useStore();
 
   React.useEffect(() => {
     void fetchMyAssignedForms();
   }, [fetchMyAssignedForms, pathname]);
+
+  React.useEffect(() => {
+    void fetchCompanies();
+  }, [fetchCompanies]);
+
+  const company = user?.companyId ? companies.find(c => c.id === user.companyId) : null;
+  const companyName = company?.name || user?.companyName || 'My company';
+  const companyLogoUrl = company?.logoUrl || user?.companyLogoUrl;
 
   const transactionNav: NavItem[] = React.useMemo(
     () => getAssignedTransactionNavItems(myAssignedForms || []),
@@ -241,6 +241,9 @@ function ClientAdminSidebar({
   ];
 
   const myWorkspaceNav: NavItem[] = [{ name: 'My forms', icon: Home, path: '/my-forms' }];
+  if (transactionNav.length > 0) {
+    myWorkspaceNav.push({ name: 'Drafts', icon: FilePenLine, path: '/drafts' });
+  }
 
   return (
     <aside
@@ -255,16 +258,10 @@ function ClientAdminSidebar({
           isExpanded ? 'justify-between gap-2' : 'justify-center',
         )}
       >
-        {isExpanded && (
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 bg-white/20 border border-white/25 rounded-ns-md flex-shrink-0 flex items-center justify-center text-xs font-bold text-white">
-              FB
-            </div>
-            <div className="min-w-0">
-              <p className="font-semibold text-sm text-white truncate">FormBridge</p>
-              <p className="text-[10px] text-white/70 truncate">Company admin</p>
-            </div>
-          </div>
+        {isExpanded ? (
+          <CompanyLogo companyName={companyName} logoUrl={companyLogoUrl} variant="sidebar" />
+        ) : (
+          <CompanyLogo companyName={companyName} logoUrl={companyLogoUrl} variant="sidebar-collapsed" />
         )}
         <button
           type="button"
@@ -353,12 +350,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header className="h-14 ns-header-bar flex items-center justify-between px-6 z-20 flex-shrink-0">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            {isSuperAdmin ? (
-              <div className="hidden sm:flex items-center gap-2 text-white/80">
-                <Shield size={14} className="text-white" />
-                <span className="text-xs font-medium">NetSuite Forms · Admin</span>
-              </div>
-            ) : (
+            {!isSuperAdmin && (
               <div className="relative max-w-md w-full">
                 <Search className="absolute left-3 top-2.5 text-ns-text-muted" size={14} />
                 <input

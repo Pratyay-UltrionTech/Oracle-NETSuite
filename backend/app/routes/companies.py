@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from typing import List
 from bson import ObjectId
 from datetime import datetime
@@ -7,8 +7,27 @@ from ..database import get_database
 from ..utils.deps import get_super_admin, get_client_admin
 from ..services.activity import log_activity
 from ..services.company_service import delete_company_and_related_data
+from ..services.company_logo import save_company_logo, delete_company_logo_files
 
 router = APIRouter(prefix="/companies", tags=["Companies"])
+
+def _serialize_company(company: dict) -> dict:
+    out = dict(company)
+    out["id"] = str(out.pop("_id"))
+    return out
+
+
+def _assert_company_logo_access(current_user: dict, company_id: str) -> None:
+    if current_user["role"] == "super_admin":
+        return
+    if current_user["role"] == "client_admin":
+        if current_user.get("companyId") != company_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You can only manage your own company logo",
+            )
+        return
+    raise HTTPException(status_code=403, detail="Requires Super Admin or Client Admin role")
 
 @router.post("", response_model=CompanyOut)
 async def create_company(
@@ -46,9 +65,16 @@ async def list_companies(current_user: dict = Depends(get_client_admin)):
         query = {"_id": ObjectId(current_user["companyId"])}
         
     async for company in db.companies.find(query):
-        company["id"] = str(company["_id"])
-        companies.append(company)
+        companies.append(_serialize_company(company))
     return companies
+
+@router.get("/{id}", response_model=CompanyOut)
+async def get_company(id: str, current_admin: dict = Depends(get_super_admin)):
+    db = get_database()
+    company = await db.companies.find_one({"_id": ObjectId(id)})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return _serialize_company(company)
 
 @router.put("/{id}", response_model=CompanyOut)
 async def update_company(
@@ -71,7 +97,6 @@ async def update_company(
         raise HTTPException(status_code=404, detail="Company not found")
         
     updated_company = await db.companies.find_one({"_id": ObjectId(id)})
-    updated_company["id"] = str(updated_company["_id"])
     
     await log_activity(
         str(current_admin["_id"]), 
@@ -81,10 +106,54 @@ async def update_company(
         entity_type="COMPANY"
     )
     
-    return updated_company
+    return _serialize_company(updated_company)
+
+@router.post("/{id}/logo", response_model=CompanyOut)
+async def upload_company_logo(
+    id: str,
+    file: UploadFile = File(...),
+    current_admin: dict = Depends(get_client_admin),
+):
+    _assert_company_logo_access(current_admin, id)
+    db = get_database()
+    company = await db.companies.find_one({"_id": ObjectId(id)})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    logo_url = await save_company_logo(id, file)
+    await db.companies.update_one({"_id": ObjectId(id)}, {"$set": {"logoUrl": logo_url}})
+
+    await log_activity(
+        str(current_admin["_id"]),
+        "UPDATE_COMPANY_LOGO",
+        role=current_admin["role"],
+        entity_id=id,
+        entity_type="COMPANY",
+    )
+
+    updated = await db.companies.find_one({"_id": ObjectId(id)})
+    return _serialize_company(updated)
+
+@router.delete("/{id}/logo", response_model=CompanyOut)
+async def remove_company_logo(
+    id: str,
+    current_admin: dict = Depends(get_client_admin),
+):
+    _assert_company_logo_access(current_admin, id)
+    db = get_database()
+    company = await db.companies.find_one({"_id": ObjectId(id)})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    delete_company_logo_files(id)
+    await db.companies.update_one({"_id": ObjectId(id)}, {"$unset": {"logoUrl": ""}})
+
+    updated = await db.companies.find_one({"_id": ObjectId(id)})
+    return _serialize_company(updated)
 
 @router.delete("/{id}")
 async def delete_company(id: str, current_admin: dict = Depends(get_super_admin)):
+    delete_company_logo_files(id)
     result = await delete_company_and_related_data(id)
 
     await log_activity(

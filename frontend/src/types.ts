@@ -114,6 +114,7 @@ export interface User {
   role: UserRole;
   companyId?: string;
   companyName?: string;
+  companyLogoUrl?: string;
   jobTitle?: string;
   employeeId?: string;
   isActive: boolean;
@@ -124,6 +125,8 @@ export interface Company {
   id: string;
   name: string;
   createdAt: string;
+  logoUrl?: string;
+  createdBy?: string;
 }
 
 export interface CurrencyRow {
@@ -427,6 +430,7 @@ export interface Submission {
   documentNumber?: string;
   netsuiteSyncError?: string;
   errorMessage?: string;
+  transactionType?: TransactionType;
 }
 
 export interface CustomForm {
@@ -470,6 +474,8 @@ export interface AppState {
   companies: Company[];
   templates: FormTemplate[];
   submissions: Submission[];
+  mySubmissions: Submission[];
+  formDetailsCache: Record<string, CustomForm>;
   currentForm: CustomForm | null;
   activeTabId: string;
   selectedFieldId: string | null;
@@ -600,7 +606,10 @@ export interface AppState {
   addAllFields: () => void;
   
   // Company & User Actions
-  addCompany: (name: string) => Promise<void>;
+  addCompany: (name: string, logoFile?: File | null) => Promise<void>;
+  updateCompany: (id: string, name: string) => Promise<void>;
+  uploadCompanyLogo: (companyId: string, file: File) => Promise<Company>;
+  removeCompanyLogo: (companyId: string) => Promise<void>;
   deleteCompany: (id: string) => Promise<void>;
   addUser: (user: Omit<User, 'id' | 'isActive' | 'createdAt'> & { password?: string }) => Promise<void>;
   updateUserStatus: (userId: string, isActive: boolean) => Promise<void>;

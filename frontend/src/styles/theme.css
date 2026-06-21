@@ -55,9 +55,10 @@
   --color-brand-purple: #7c3aed;
   --color-brand-emerald: #10b981;
 
-  /* Radius — compact ERP corners */
-  --radius-ns-sm: 2px;
-  --radius-ns-md: 3px;
-  --radius-ns-card: 4px;
-  --radius-ns-lg: 6px;
+  /* Radius — rounded rectangular UI */
+  --radius-ns-sm: 6px;
+  --radius-ns-md: 10px;
+  --radius-ns-card: 14px;
+  --radius-ns-lg: 18px;
+  --radius-ns-xl: 22px;
 }
